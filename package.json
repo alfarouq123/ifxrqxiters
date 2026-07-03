@@ -1,0 +1,9 @@
+{
+  "name": "ifxrq-ai-chat",
+  "version": "1.0.0",
+  "private": true,
+  "description": "chat AI persona IFxrq pake Gemini API, deploy di Vercel",
+  "engines": {
+    "node": ">=18"
+  }
+}
