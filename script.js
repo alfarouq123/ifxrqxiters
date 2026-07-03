@@ -12,7 +12,7 @@ async function sendMessage() {
     input.value = "";
 
     try {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${apiKey}`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -21,10 +21,16 @@ async function sendMessage() {
         });
 
         const data = await response.json();
-        const botMsg = data.candidates[0].content.parts[0].text;
-        chatBox.innerHTML += `<div class="msg if">${botMsg}</div>`;
+        
+        if (data.candidates && data.candidates[0].content.parts[0].text) {
+            const botMsg = data.candidates[0].content.parts[0].text;
+            chatBox.innerHTML += `<div class="msg if">${botMsg}</div>`;
+        } else {
+            chatBox.innerHTML += `<div class="msg if">API Error: ${JSON.stringify(data.error || data)}</div>`;
+        }
+        
         chatBox.scrollTop = chatBox.scrollHeight;
     } catch (e) {
-        chatBox.innerHTML += `<div class="msg if">Waduh, error: ${e.message}</div>`;
+        chatBox.innerHTML += `<div class="msg if">Koneksi Error: ${e.message}</div>`;
     }
 }
