@@ -1,14 +1,21 @@
 // plugins/edit.js
 module.exports = async (req, res) => {
-  if (!['GET', 'POST'].includes(req.method)) {
-    return res.status(405).json({ error: { message: 'method not allowed' } });
+  // Set CORS headers biar ga error pas di-hit dari domain frontend lo
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
   }
 
-  const url = req.method === 'GET' ? req.query.url : req.body?.url;
-  const prompt = req.method === 'GET' ? req.query.prompt : req.body?.prompt;
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: { message: 'method tidak diizinkan, wajib pake POST jir 🗿' } });
+  }
 
+  const { url, prompt } = req.body || {};
   if (!url || !prompt) {
-    return res.status(400).json({ error: { message: 'url gambar atau prompt belum diisi' } });
+    return res.status(400).json({ error: { message: 'url gambar dari uguu atau prompt-nya kosong, isi dulu lah' } });
   }
 
   try {
@@ -20,11 +27,12 @@ module.exports = async (req, res) => {
     try {
       data = JSON.parse(text);
     } catch {
+      // jika response ternyata link text mentah, bungkus jadi json
       return res.status(200).json({ image: text, message: 'sukses' });
     }
 
     return res.status(upstream.status).json(data);
   } catch (err) {
-    return res.status(500).json({ error: { message: err.message || 'internal error' } });
+    return res.status(500).json({ error: { message: err.message || 'internal error pas edit foto' } });
   }
 };
