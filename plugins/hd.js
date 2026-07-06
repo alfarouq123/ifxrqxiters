@@ -132,7 +132,7 @@ async function createTask(sourceUrl, uid) {
 async function pollResult(taskId, uid) {
   // SSE gak bisa di-stream di serverless, jadi poll query endpoint langsung
   const POLL_URL = `https://www.beautyplus.com/core-api/v2/img-enhancer/query/${taskId}`;
-  for (let i = 0; i < 30; i++) {
+  for (let i = 0; i < 60; i++) {
     await new Promise(r => setTimeout(r, 3000));
     const res = await fetch(POLL_URL, { headers: bpHeaders(uid), signal:AbortSignal.timeout(15000) });
     if (!res.ok) continue;

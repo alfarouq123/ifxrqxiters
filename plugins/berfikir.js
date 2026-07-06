@@ -1,5 +1,4 @@
 // plugins/berfikir.js
-// kirim ke 3 AI paralel, hasil dianalisis copilot-ai
 
 async function fetchOpus(pesan) {
   const res = await fetch(
@@ -28,19 +27,18 @@ async function fetchHaiku(prompt) {
   return data?.result?.response || data?.result?.reply || null;
 }
 
-async function fetchCopilot(message) {
+async function fetchPowerbrain(message) {
   const res = await fetch(
-    `https://api.synoxcloud.xyz/ai-chat/copilot-ai?message=${encodeURIComponent(message)}&model=think-deeper`,
-    { signal: AbortSignal.timeout(60000) }
+    `https://api.synoxcloud.xyz/ai-chat/powerbrain-ai?message=${encodeURIComponent(message)}`,
+    { signal: AbortSignal.timeout(90000) }
   );
   const data = await res.json();
-  return data?.result?.text || data?.result?.message || null;
+  return data?.result?.answer || data?.result?.text || data?.result?.message || null;
 }
 
 async function runBerfikir(pesan) {
   if (!pesan) { const e = new Error('pertanyaan kosong'); e.status = 400; throw e; }
 
-  // 1. tanya 3 AI paralel
   const [r1, r2, r3] = await Promise.allSettled([
     fetchOpus(pesan),
     fetchSonnet(pesan),
@@ -51,16 +49,15 @@ async function runBerfikir(pesan) {
   const sonnet = r2.status === 'fulfilled' && r2.value ? r2.value : '[tidak ada jawaban]';
   const haiku  = r3.status === 'fulfilled' && r3.value ? r3.value : '[tidak ada jawaban]';
 
-  // 2. minta copilot analisis semua jawaban
   const analisisPrompt =
     `Pertanyaan user: "${pesan}"\n\n` +
     `Berikut jawaban dari 3 AI berbeda:\n` +
-    `[AI 1]: ${opus}\n` +
-    `[AI 2]: ${sonnet}\n` +
-    `[AI 3]: ${haiku}\n\n` +
-    `Analisis dan gabungkan ketiga jawaban di atas menjadi satu jawaban terbaik yang paling akurat, lengkap, dan mudah dipahami.`;
+    `[Perspektif 1]: ${opus}\n` +
+    `[Perspektif 2]: ${sonnet}\n` +
+    `[Perspektif 3]: ${haiku}\n\n` +
+    `Analisis dan gabungkan ketiga jawaban di atas menjadi satu jawaban terbaik yang paling akurat, lengkap, dan mudah dipahami. Berikan jawaban final yang komprehensif.`;
 
-  const finalAnswer = await fetchCopilot(analisisPrompt);
+  const finalAnswer = await fetchPowerbrain(analisisPrompt);
 
   return {
     drafts: { opus, sonnet, haiku },
