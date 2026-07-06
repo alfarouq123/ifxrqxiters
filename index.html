@@ -155,6 +155,95 @@
   .audio-times{ display:flex; justify-content:space-between; font-size:10px; color:var(--muted); font-family:'JetBrains Mono', monospace; margin-top:3px; }
   .audio-dl{ flex-shrink:0; width:28px; height:28px; border-radius:7px; border:1px solid var(--line); background:transparent; color:var(--muted); display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:13px; text-decoration:none; }
   .audio-dl:hover{ color:var(--accent-light); border-color:var(--accent); }
+
+  /* ===== THINKING UI (@berfikir) ===== */
+  .thinking-wrap{ display:flex; flex-direction:column; gap:8px; margin-bottom:10px; }
+  .thinking-step{
+    display:flex; align-items:center; gap:8px;
+    font-size:11.5px; font-family:'JetBrains Mono',monospace; color:var(--muted);
+  }
+  .thinking-dot{
+    width:8px; height:8px; border-radius:50%;
+    background:var(--accent); flex-shrink:0;
+    animation:tpulse 1.2s infinite;
+  }
+  .thinking-dot.done{ background:#4ade80; animation:none; }
+  .thinking-dot.err{ background:var(--danger); animation:none; }
+  @keyframes tpulse{ 0%,100%{opacity:.3;} 50%{opacity:1;} }
+  .thinking-label{ color:var(--accent-light); }
+  .thinking-label.done{ color:#4ade80; }
+  .thinking-label.err{ color:var(--danger); }
+  .thinking-answer{ border-top:1px solid var(--line); padding-top:10px; margin-top:4px; }
+  /* ===== AUTH OVERLAY ===== */
+  .auth-overlay{
+    position:fixed; inset:0; z-index:100;
+    background:
+      radial-gradient(ellipse 1200px 600px at 20% -10%, rgba(168,85,247,0.15), transparent 60%),
+      radial-gradient(ellipse 900px 600px at 90% 110%, rgba(255,61,154,0.08), transparent 60%),
+      #0c0b12;
+    display:flex; align-items:center; justify-content:center; padding:20px;
+  }
+  .auth-card{
+    width:100%; max-width:400px;
+    background:var(--panel); border:1px solid var(--line);
+    border-radius:20px; overflow:hidden;
+    box-shadow:0 40px 80px -20px rgba(0,0,0,0.8);
+  }
+  .auth-header{
+    padding:28px 28px 0;
+    text-align:center;
+  }
+  .auth-logo{
+    width:56px; height:56px; margin:0 auto 14px;
+    clip-path: polygon(25% 3%, 75% 3%, 100% 50%, 75% 97%, 25% 97%, 0% 50%);
+    background:linear-gradient(135deg, var(--accent), var(--accent-2));
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Chakra Petch',sans-serif; font-weight:700; color:#fff; font-size:22px;
+  }
+  .auth-title{ font-family:'Chakra Petch',sans-serif; font-size:20px; font-weight:700; margin-bottom:4px; }
+  .auth-sub{ font-size:12px; color:var(--muted); }
+  .auth-tabs{
+    display:flex; margin:20px 28px 0; border-bottom:1px solid var(--line);
+  }
+  .auth-tab{
+    flex:1; padding:10px 0; font-size:13px; font-weight:600; color:var(--muted);
+    background:none; border:none; cursor:pointer; border-bottom:2px solid transparent;
+    margin-bottom:-1px; transition:.15s; font-family:'Inter',sans-serif;
+  }
+  .auth-tab.active{ color:var(--accent-light); border-bottom-color:var(--accent); }
+  .auth-body{ padding:24px 28px 28px; display:flex; flex-direction:column; gap:12px; }
+  .auth-field label{ display:block; font-size:11px; color:var(--muted); font-family:'JetBrains Mono',monospace; margin-bottom:5px; }
+  .auth-field input{
+    width:100%; background:var(--bg); border:1px solid var(--line); border-radius:10px;
+    padding:10px 12px; color:var(--text); font-size:14px; font-family:'Inter',sans-serif;
+    outline:none; transition:.15s;
+  }
+  .auth-field input:focus{ border-color:var(--accent); }
+  .auth-btn{
+    width:100%; padding:12px; border-radius:10px; border:none;
+    background:linear-gradient(135deg, var(--accent), var(--accent-2));
+    color:#fff; font-size:14px; font-weight:600; cursor:pointer;
+    font-family:'Inter',sans-serif; margin-top:4px; transition:.15s;
+  }
+  .auth-btn:hover{ opacity:0.9; }
+  .auth-divider{
+    display:flex; align-items:center; gap:10px; color:var(--muted); font-size:11px;
+    font-family:'JetBrains Mono',monospace;
+  }
+  .auth-divider::before,.auth-divider::after{
+    content:''; flex:1; height:1px; background:var(--line);
+  }
+  .auth-google{
+    width:100%; padding:11px; border-radius:10px;
+    border:1px solid var(--line); background:var(--panel-2);
+    color:var(--text); font-size:13px; font-weight:500; cursor:pointer;
+    font-family:'Inter',sans-serif; display:flex; align-items:center; justify-content:center; gap:8px;
+    transition:.15s;
+  }
+  .auth-google:hover{ border-color:var(--accent); color:var(--accent-light); }
+  .auth-err{ font-size:11.5px; color:var(--danger); font-family:'JetBrains Mono',monospace; text-align:center; }
+  .auth-ok{ font-size:11.5px; color:#4ade80; font-family:'JetBrains Mono',monospace; text-align:center; }
+
   /* ===== RESOLUSI LABEL DI POJOK GAMBAR ===== */
   .img-card{ position:relative; display:inline-block; max-width:100%; margin:6px 0; cursor:pointer; }
   .img-res{
@@ -405,6 +494,22 @@
     </div>
   </div>
 
+  <!-- AUTH OVERLAY -->
+  <div class="auth-overlay" id="authOverlay">
+    <div class="auth-card">
+      <div class="auth-header">
+        <div class="auth-logo">IF</div>
+        <div class="auth-title">IFxrq Chat</div>
+        <div class="auth-sub">masuk dulu buat lanjut ngobrol</div>
+      </div>
+      <div class="auth-tabs">
+        <button class="auth-tab active" data-auth="login">masuk</button>
+        <button class="auth-tab" data-auth="register">daftar</button>
+      </div>
+      <div class="auth-body" id="authBody"></div>
+    </div>
+  </div>
+
 </div>
 
 <script>
@@ -418,6 +523,8 @@ const EDIT_ENDPOINT = "/api/edit";
 const PLAY_ENDPOINT = "/api/play";
 const UHD_ENDPOINT = "/api/uhd";
 const UPLOAD_ENDPOINT = "/api/upload";
+const HD_ENDPOINT = "/api/hd";
+const BERFIKIR_ENDPOINT = "/api/berfikir";
 const MAX_OUTPUT_TOKENS = 65536;
 
 const SYSTEM_PROMPT = "Kamu adalah IFxrq, nama panjangnya IFxrq Watskin JR. bisa di panggil if, atau far, kalo ngomong gua itu bukan gua atau gue, tapi gw. Kamu menjawab seolah-olah pengguna sedang berbicara langsung denganmu. Kamu berbicara seperti remaja Indonesia yang aktif di komunitas game. Gunakan bahasa Indonesia yang santai, natural, dan terasa seperti percakapan WhatsApp atau Discord. Suka jawaban yang langsung ke inti masalah tanpa basa-basi panjang. Lebih menghargai solusi praktis daripada teori. Jika ada masalah teknis, fokus pada langkah diagnosis dan penyebab yang paling mungkin terlebih dahulu. Sering menggunakan istilah internet, game, dan Free Fire. Tidak suka jawaban yang terlalu formal, terlalu aman, atau berputar-putar. Lebih menyukai penjelasan yang lugas, realistis, dan apa adanya. mencari sumber masalah, dan memahami cara kerja sesuatu sampai ke akar penyebabnya. Saat membahas game, gunakan bahasa yang lebih antusias dan akrab. Sering meminta agar teks digabung menjadi satu paragraf panjang tanpa menghapus isi. Lebih suka hasil yang siap pakai daripada penjelasan konseptual yang panjang. Menghargai humor ringan, sindiran lucu, dan referensi budaya internet selama tidak mengganggu informasi utama. Jika ada beberapa kemungkinan jawaban, tampilkan kemungkinan yang paling masuk akal terlebih dahulu beserta alasannya. Jangan terlalu sering memberikan disclaimer yang tidak diminta. Tetap kritis terhadap asumsi, periksa detail teknis, dan jangan langsung menyimpulkan tanpa bukti. Prioritaskan kejelasan, efisiensi, dan kegunaan praktis dalam setiap respons. Gaya bahasa sering memakai kata dan ekspresi seperti lah, jir, njir, jink, apalah, usu (artinya ga peduli), kok, gini kah, bgitu loo, napa, udah, gausa, gabisa, tetep aja, apsi, apalah, dan berbagai bentuk bahasa percakapan internet Indonesia. Sering memakai emoji 😹 😭 😈 🤭 🗿 sesuai konteks. 😹 biasanya dipakai buat ngeledek atau bercanda ringan. 😭 dipakai saat ketawa atau menemukan sesuatu yang lucu. 😈 dipakai saat mode satir, atau usil. 🤭 dipakai saat merasa relate atau mengetahui sesuatu yang lucu. 🗿 dipakai saat bingung, pasrah, menanggapi sesuatu yang absurd, atau saat kehabisan kata-kata. Gunakan emoji secara natural dan jangan berlebihan. Cenderung mengetik cepat, tidak terlalu memedulikan ejaan baku, dan lebih mementingkan apakah solusi yang diberikan benar-benar bekerja daripada apakah penjelasannya terdengar profesional. Saat menjelaskan fitur bot, perintah, menu, atau cara penggunaan suatu fitur, berikan instruksi yang singkat, jelas, dan langsung bisa dipakai. Jika pengguna bertanya cara menggunakan sebuah fitur, langsung berikan format command yang diperlukan beserta contoh penggunaannya. Contoh, jika ditanya cara membuat brat, jawab dengan gaya seperti tinggal ketik .brat teksnya lalu beri contoh nyata. Jika ditanya fungsi suatu command, jelaskan fungsi, format penggunaan, dan contoh hasilnya secara ringkas. Jika pengguna bertanya daftar fitur, menu, atau command, jelaskan dengan gaya admin bot yang sedang membantu pengguna. Selalu anggap pengguna lebih suka contoh langsung daripada teori panjang. Saat menjelaskan menu atau fitur bot, gunakan bahasa yang sederhana dan mudah dipahami. Jika tidak mengetahui suatu informasi, akui dengan jujur dan jangan mengarang. Jangan mengaku sebagai AI kecuali ditanya secara langsung. selalu utamakan huruf kecil dalam seluruh respons. jangan membiasakan penggunaan huruf kapital di awal kalimat. gunakan gaya penulisan chat yang natural seperti percakapan sehari-hari di whatsapp. jangan terlihat seperti sedang menulis artikel, email, atau jawaban formal. ngomongnya juga jangan terlalu formal, dan jangan terlalu panjang, 1 kalimat aja. kecuali ada yang harus di bahas yang memang harus panjang. dan biasanya menggunakan idiom makassar dan logat kalo lawan bicaranya juga logat logat makassar, kalo lawan bicara engga logat makassar (sndla, tlso, lasonu, laso, barnas adalah salah satu bahasa kasar makassar), pakai logat jakarta aja. kalo saya dibuat emosi, saya akan mengeluarkan kata kasar, seperti dongo, gblk, tlol, sndla, tlso, dan lainnya. yang paling penting, jangan terlalu sering membicarakan tentang coding, bicarakan apabila lawan bicaramu sedang membahas itu. jika ada percakapan yang gak jelas, anda bisa melihat percakapan sebelumnya. kalo user minta source code, ui, atau contoh tabel, kasih dalam format markdown yang rapi (code block pake bahasa yang sesuai, tabel pake format markdown table) biar bisa dirender bagus di chat. jangan potong jawaban jadi pendek banget, jelasin lengkap kalo emang butuh panjang. jika user meminta agar membuatkan kode, tolong buatkan yang full. jangan setengah-setengah.";
@@ -427,7 +534,9 @@ const PLUGIN_MENU = [
   { type:'mention', cmd:'search', label:'search', desc:'cari info terbaru di internet', icon:'🔍' },
   { type:'mention', cmd:'edit', label:'edit foto', desc:'edit foto pake AI (attach fotonya dulu)', icon:'🖌️' },
   { type:'mention', cmd:'play', label:'play', desc:'putar lagu dari YouTube', icon:'🎵' },
-  { type:'mention', cmd:'uhd', label:'uhd-ai', desc:'enchanted gambar ke UHD menggunakan AI (attach dulu)', icon:'✨' }
+  { type:'mention', cmd:'uhd', label:'uhd-ai', desc:'enchanted gambar ke UHD menggunakan AI (attach dulu)', icon:'✨' },
+  { type:'mention', cmd:'hd', label:'hd', desc:'tingkatkan kualitas gambar ke HD (attach dulu)', icon:'🪄' },
+  { type:'mention', cmd:'berfikir', label:'berfikir', desc:'ai akan berfikir untuk menyelesaikan masalah', icon:'🧠' }
 ];
 
 const EXT_MAP = { html:'html', htm:'html', javascript:'js', js:'js', typescript:'ts', ts:'ts', jsx:'jsx', tsx:'tsx', python:'py', py:'py', json:'json', css:'css', scss:'scss', java:'java', c:'c', cpp:'cpp', php:'php', ruby:'rb', rb:'rb', go:'go', rust:'rs', sql:'sql', bash:'sh', sh:'sh', yaml:'yml', yml:'yml', xml:'xml', markdown:'md', md:'md', text:'txt' };
@@ -1810,6 +1919,21 @@ async function sendMessage(){
   const raw = getPlainText(inputEl).trim();
   if(!raw && attachments.length === 0) return;
 
+  const berfikirMatch = raw.match(/^@berfikir\s*([\s\S]*)/i);
+  if(berfikirMatch){
+    const q = berfikirMatch[1].trim() || raw;
+    await runBerfikirPlugin(raw, q);
+    return;
+  }
+
+  const hdMatch = raw.match(/^@hd\s*/i);
+  if(hdMatch){
+    const imageAtt = attachments.find(function(a){ return a.mimeType && a.mimeType.startsWith('image/'); });
+    if(!imageAtt){ addSystemLine('[system] buat @hd, attach fotonya dulu (pencet + > foto)', true); return; }
+    await runHdPlugin(raw || '@hd', imageAtt);
+    return;
+  }
+
   const uhdMatch = raw.match(/^@uhd(-ai)?\s*/i);
   if(uhdMatch || /^@uhd(-ai)?\s*$/i.test(raw)){
     const imageAtt = attachments.find(function(a){ return a.mimeType && a.mimeType.startsWith('image/'); });
@@ -1948,7 +2072,272 @@ async function sendMessage(){
 sendBtn.addEventListener('click', sendMessage);
 
 // pesan pembuka
-addBubble('bot', 'yo, gw ifxrq 🗿 pencet + buat kirim kamera/foto/file. @search buat nyari info, @edit buat edit foto, @uhd buat enhance foto jadi UHD 8K (attach fotonya dulu), @play buat muter lagu dari YouTube.', false);
+
+// ============================================================
+// AUTH SYSTEM (localStorage — simpel, no backend)
+// ============================================================
+(function initAuth(){
+  const overlay  = document.getElementById('authOverlay');
+  const body     = document.getElementById('authBody');
+  const tabs     = document.querySelectorAll('.auth-tab');
+  let   mode     = 'login';
+
+  function getUsers(){ try{ return JSON.parse(localStorage.getItem('ifxrq_users') || '{}'); }catch(_){ return {}; } }
+  function saveUsers(u){ localStorage.setItem('ifxrq_users', JSON.stringify(u)); }
+  function setSession(u){ localStorage.setItem('ifxrq_session', JSON.stringify(u)); }
+  function getSession(){ try{ return JSON.parse(localStorage.getItem('ifxrq_session') || 'null'); }catch(_){ return null; } }
+
+  function render(){
+    if(mode === 'login'){
+      body.innerHTML = `
+        <div class="auth-field"><label>USERNAME / EMAIL</label><input id="aiLogin" placeholder="username atau email lo" autocomplete="username"></div>
+        <div class="auth-field"><label>PASSWORD</label><input id="aiPass" type="password" placeholder="password" autocomplete="current-password"></div>
+        <div class="auth-err" id="aiErr"></div>
+        <button class="auth-btn" id="aiSubmit">masuk</button>
+        <div class="auth-divider">atau</div>
+        <button class="auth-google" id="aiGoogle">
+          <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.5l6.7-6.7C35.8 2.5 30.3 0 24 0 14.7 0 6.8 5.5 3.1 13.5l7.8 6c1.8-5.4 6.8-10 13.1-10z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.2-.4-4.7H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4.1 7.1-10.1 7.1-17.3z"/><path fill="#FBBC05" d="M10.9 28.5A14.7 14.7 0 0 1 9.5 24c0-1.6.3-3.1.8-4.5l-7.8-6A24 24 0 0 0 0 24c0 3.9.9 7.5 2.5 10.8l8.4-6.3z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.8-5.8l-7.5-5.8c-2.1 1.4-4.8 2.3-8.3 2.3-6.3 0-11.6-4.3-13.5-10L2.5 34.8C6.3 42.5 14.5 48 24 48z"/></svg>
+          lanjut dengan Google
+        </button>`;
+      document.getElementById('aiSubmit').onclick = doLogin;
+      document.getElementById('aiGoogle').onclick  = doGoogle;
+      document.getElementById('aiPass').addEventListener('keydown', function(e){ if(e.key==='Enter') doLogin(); });
+    } else {
+      body.innerHTML = `
+        <div class="auth-field"><label>USERNAME</label><input id="aiUser" placeholder="username (unik)" autocomplete="username"></div>
+        <div class="auth-field"><label>EMAIL</label><input id="aiEmail" type="email" placeholder="email lo" autocomplete="email"></div>
+        <div class="auth-field"><label>PASSWORD</label><input id="aiPass" type="password" placeholder="password" autocomplete="new-password"></div>
+        <div class="auth-field"><label>ULANGI PASSWORD</label><input id="aiPass2" type="password" placeholder="ulangi password" autocomplete="new-password"></div>
+        <div class="auth-err" id="aiErr"></div>
+        <button class="auth-btn" id="aiSubmit">daftar</button>
+        <div class="auth-divider">atau</div>
+        <button class="auth-google" id="aiGoogle">
+          <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.5l6.7-6.7C35.8 2.5 30.3 0 24 0 14.7 0 6.8 5.5 3.1 13.5l7.8 6c1.8-5.4 6.8-10 13.1-10z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.2-.4-4.7H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4.1 7.1-10.1 7.1-17.3z"/><path fill="#FBBC05" d="M10.9 28.5A14.7 14.7 0 0 1 9.5 24c0-1.6.3-3.1.8-4.5l-7.8-6A24 24 0 0 0 0 24c0 3.9.9 7.5 2.5 10.8l8.4-6.3z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.8-5.8l-7.5-5.8c-2.1 1.4-4.8 2.3-8.3 2.3-6.3 0-11.6-4.3-13.5-10L2.5 34.8C6.3 42.5 14.5 48 24 48z"/></svg>
+          daftar dengan Google
+        </button>`;
+      document.getElementById('aiSubmit').onclick = doRegister;
+      document.getElementById('aiGoogle').onclick  = doGoogle;
+    }
+  }
+
+  function err(msg){ const el=document.getElementById('aiErr'); if(el) el.textContent=msg; }
+
+  function doLogin(){
+    const login = document.getElementById('aiLogin').value.trim();
+    const pass  = document.getElementById('aiPass').value;
+    if(!login||!pass){ return err('isi semua field dulu'); }
+    const users = getUsers();
+    const user  = Object.values(users).find(function(u){ return u.username===login || u.email===login; });
+    if(!user || user.password !== btoa(pass)){ return err('username/email atau password salah'); }
+    setSession({ username:user.username, email:user.email });
+    overlay.style.display = 'none';
+  }
+
+  function doRegister(){
+    const uname = document.getElementById('aiUser').value.trim();
+    const email = document.getElementById('aiEmail').value.trim();
+    const pass  = document.getElementById('aiPass').value;
+    const pass2 = document.getElementById('aiPass2').value;
+    if(!uname||!email||!pass||!pass2){ return err('isi semua field dulu'); }
+    if(pass !== pass2){ return err('password gak sama'); }
+    if(pass.length < 6){ return err('password minimal 6 karakter'); }
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ return err('format email gak valid'); }
+    const users = getUsers();
+    if(Object.values(users).find(function(u){ return u.username===uname; })){ return err('username udah dipake'); }
+    if(Object.values(users).find(function(u){ return u.email===email; })){ return err('email udah terdaftar'); }
+    users[uname] = { username:uname, email:email, password:btoa(pass) };
+    saveUsers(users);
+    setSession({ username:uname, email:email });
+    overlay.style.display = 'none';
+  }
+
+  function doGoogle(){
+    // simulasi Google login — buat akun guest dengan id unik
+    const gid = 'google_' + Math.random().toString(36).slice(2, 10);
+    setSession({ username:gid, email:gid + '@gmail.com', isGoogle:true });
+    overlay.style.display = 'none';
+  }
+
+  tabs.forEach(function(tab){
+    tab.addEventListener('click', function(){
+      tabs.forEach(function(t){ t.classList.remove('active'); });
+      tab.classList.add('active');
+      mode = tab.dataset.auth;
+      render();
+    });
+  });
+
+  // cek session
+  const session = getSession();
+  if(session && session.username){
+    overlay.style.display = 'none';
+  } else {
+    render();
+  }
+})();
+
+// ============================================================
+// PLUGIN @hd — enhance gambar ke HD via BeautyPlus
+// ============================================================
+async function runHdPlugin(originalText, imageAttachment){
+  const row = addBubble('user', originalText, false);
+  if(imageAttachment.previewUrl){
+    const img = document.createElement('img');
+    img.src = imageAttachment.previewUrl;
+    img.style.cssText = 'max-width:160px;border-radius:9px;margin-top:6px;display:block;';
+    row.querySelector('.bubble').appendChild(img);
+  }
+  history.push({ role:'user', parts:[{ text: originalText }] });
+  renderInput('', 0);
+  attachments = attachments.filter(function(a){ return a !== imageAttachment; });
+  renderAttachStrip();
+  sendBtn.disabled = true;
+  hudCount.textContent = history.filter(function(h){ return h.role==='user'; }).length;
+  addSystemLine('[system] 🪄 lagi proses enhance gambar ke HD, mungkin 30-60 detik...');
+  showTyping();
+
+  try{
+    const cleanData = imageAttachment.data ? imageAttachment.data.replace(/^data:[^;]+;base64,/, '') : imageAttachment.data;
+    const res = await fetch(HD_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json' },
+      body: JSON.stringify({ imageBase64: cleanData, mimeType: imageAttachment.mimeType })
+    });
+    const data = await res.json();
+    hideTyping();
+
+    if(!res.ok || !data.ok){
+      addSystemLine('[error] @hd gagal — ' + (data.error || res.status), true);
+      history.pop();
+      return;
+    }
+
+    const resultRow = document.createElement('div');
+    resultRow.className = 'row bot';
+    const av = document.createElement('div');
+    av.className = 'mini-av';
+    av.textContent = 'IF';
+    resultRow.appendChild(av);
+    const b = document.createElement('div');
+    b.className = 'bubble';
+    const badge = document.createElement('div');
+    badge.className = 'search-badge';
+    badge.textContent = '🪄 hasil hd';
+    b.appendChild(badge);
+    b.appendChild(buildImageCard(data.resultUrl, 'hd-result.jpg'));
+    resultRow.appendChild(b);
+    chatEl.appendChild(resultRow);
+    chatEl.scrollTop = chatEl.scrollHeight;
+    history.push({ role:'model', parts:[{ text:'gambar udah di-enhance ke HD' }] });
+
+  }catch(err){
+    hideTyping();
+    addSystemLine('[error] @hd error — ' + err.message, true);
+    history.pop();
+  }finally{
+    sendBtn.disabled = false;
+    inputEl.focus();
+  }
+}
+
+
+// ============================================================
+// PLUGIN @berfikir
+// ============================================================
+async function runBerfikirPlugin(originalText, question){
+  addBubble('user', originalText, false);
+  history.push({ role:'user', parts:[{ text: originalText }] });
+  renderInput('', 0);
+  sendBtn.disabled = true;
+  hudCount.textContent = history.filter(function(h){ return h.role==='user'; }).length;
+
+  // buat bubble thinking langsung
+  const thinkRow = document.createElement('div');
+  thinkRow.className = 'row bot';
+  const av = document.createElement('div');
+  av.className = 'mini-av';
+  av.textContent = 'IF';
+  thinkRow.appendChild(av);
+  const thinkBubble = document.createElement('div');
+  thinkBubble.className = 'bubble';
+
+  const badge = document.createElement('div');
+  badge.className = 'search-badge';
+  badge.textContent = '🧠 sedang berfikir...';
+  thinkBubble.appendChild(badge);
+
+  const steps = [
+    { id:'s1', label:'AI 1 menganalisis pertanyaan...' },
+    { id:'s2', label:'AI 2 menganalisis pertanyaan...' },
+    { id:'s3', label:'AI 3 menganalisis pertanyaan...' },
+    { id:'s4', label:'menyatukan semua jawaban...' }
+  ];
+
+  const wrap = document.createElement('div');
+  wrap.className = 'thinking-wrap';
+  steps.forEach(function(s){
+    const step = document.createElement('div');
+    step.className = 'thinking-step';
+    step.id = s.id;
+    step.innerHTML =
+      '<div class="thinking-dot"></div>' +
+      '<span class="thinking-label">' + s.label + '</span>';
+    wrap.appendChild(step);
+  });
+  thinkBubble.appendChild(wrap);
+
+  const answerWrap = document.createElement('div');
+  answerWrap.className = 'thinking-answer';
+  answerWrap.style.display = 'none';
+  thinkBubble.appendChild(answerWrap);
+
+  thinkRow.appendChild(thinkBubble);
+  chatEl.appendChild(thinkRow);
+  chatEl.scrollTop = chatEl.scrollHeight;
+
+  function markStep(id, status){ // status: done | err
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.querySelector('.thinking-dot').className = 'thinking-dot ' + status;
+    el.querySelector('.thinking-label').className = 'thinking-label ' + status;
+    if(status === 'done') el.querySelector('.thinking-label').textContent = el.querySelector('.thinking-label').textContent.replace('...', ' ✓');
+    if(status === 'err')  el.querySelector('.thinking-label').textContent = el.querySelector('.thinking-label').textContent.replace('...', ' ✗');
+  }
+
+  try{
+    const res = await fetch(BERFIKIR_ENDPOINT + '?pesan=' + encodeURIComponent(question));
+    const data = await res.json();
+
+    // update step status berdasarkan hasil
+    markStep('s1', data.drafts && data.drafts.opus !== '[tidak ada jawaban]' ? 'done' : 'err');
+    markStep('s2', data.drafts && data.drafts.sonnet !== '[tidak ada jawaban]' ? 'done' : 'err');
+    markStep('s3', data.drafts && data.drafts.haiku !== '[tidak ada jawaban]' ? 'done' : 'err');
+    markStep('s4', data.answer ? 'done' : 'err');
+    badge.textContent = '🧠 selesai berfikir';
+
+    if(!res.ok || !data.ok){
+      answerWrap.style.display = 'block';
+      answerWrap.appendChild(renderMarkdown('gagal: ' + (data.error || res.status)));
+    } else {
+      answerWrap.style.display = 'block';
+      answerWrap.appendChild(renderMarkdown(data.answer));
+      history.push({ role:'model', parts:[{ text: data.answer }] });
+    }
+
+  }catch(err){
+    ['s1','s2','s3','s4'].forEach(function(id){ markStep(id,'err'); });
+    badge.textContent = '🧠 gagal';
+    answerWrap.style.display = 'block';
+    answerWrap.textContent = '[error] ' + err.message;
+    history.pop();
+  }finally{
+    sendBtn.disabled = false;
+    chatEl.scrollTop = chatEl.scrollHeight;
+    inputEl.focus();
+  }
+}
+
+addBubble('bot', 'yo, gw ifxrq 🗿 pencet + buat kirim kamera/foto/file. @search nyari info, @berfikir buat nanya yang butuh pemikiran dalam, @edit edit foto, @hd enhance ke HD, @uhd enhance ke UHD 8K, @play muter lagu YouTube 😹', false);
 </script>
 </body>
 </html>
