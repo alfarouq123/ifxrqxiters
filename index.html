@@ -36,7 +36,7 @@
     font-family:'Inter', sans-serif;
     overflow:hidden;
   }
-  .app{ width:100%; height:100vh; height:100dvh; background:var(--panel); display:flex; flex-direction:column; overflow:hidden; position:relative; }
+  .app{ width:100%; height:100vh; height:100dvh; background:var(--panel); display:flex; overflow:hidden; position:relative; }
 
   /* ===== HEADER ===== */
   .head{ padding:14px 18px; border-bottom:1px solid var(--line); display:flex; align-items:center; gap:12px; background:linear-gradient(180deg, var(--panel-2), var(--panel)); }
@@ -156,6 +156,90 @@
   .audio-dl{ flex-shrink:0; width:28px; height:28px; border-radius:7px; border:1px solid var(--line); background:transparent; color:var(--muted); display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:13px; text-decoration:none; }
   .audio-dl:hover{ color:var(--accent-light); border-color:var(--accent); }
 
+
+  /* ===== SIDEBAR (history sesi + info akun) ===== */
+  .app{ flex-direction:row; }
+  .sidebar{
+    width:260px; flex-shrink:0;
+    background:var(--panel-2); border-right:1px solid var(--line);
+    display:flex; flex-direction:column; height:100vh;
+    transition:transform .25s;
+  }
+  .sidebar-head{
+    padding:16px 14px 10px;
+    border-bottom:1px solid var(--line);
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .sidebar-title{
+    font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:14px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .sidebar-new{
+    width:30px; height:30px; border-radius:8px; border:1px solid var(--line);
+    background:transparent; color:var(--muted); cursor:pointer; font-size:16px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .sidebar-new:hover{ color:var(--accent-light); border-color:var(--accent); }
+  .session-list{
+    flex:1; overflow-y:auto; padding:8px 6px;
+  }
+  .session-list::-webkit-scrollbar{ width:4px; }
+  .session-list::-webkit-scrollbar-thumb{ background:var(--line); border-radius:2px; }
+  .session-item{
+    padding:9px 10px; border-radius:9px; cursor:pointer;
+    font-size:12.5px; color:var(--text); margin-bottom:2px;
+    display:flex; align-items:center; gap:8px;
+    border:1px solid transparent;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .session-item:hover{ background:var(--bg); border-color:var(--line); }
+  .session-item.active{ background:rgba(168,85,247,0.12); border-color:rgba(168,85,247,0.3); color:var(--accent-light); }
+  .session-item .s-icon{ font-size:14px; flex-shrink:0; }
+  .session-item .s-title{ flex:1; overflow:hidden; text-overflow:ellipsis; }
+  .session-item .s-del{
+    flex-shrink:0; opacity:0; width:18px; height:18px; border-radius:4px;
+    background:none; border:none; color:var(--danger); cursor:pointer; font-size:12px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .session-item:hover .s-del{ opacity:1; }
+  .session-empty{ padding:20px 10px; text-align:center; color:var(--muted); font-size:11.5px; font-family:'JetBrains Mono',monospace; }
+  .sidebar-account{
+    border-top:1px solid var(--line); padding:12px 14px;
+    display:flex; align-items:center; gap:10px;
+  }
+  .account-avatar{
+    width:34px; height:34px; border-radius:50%; flex-shrink:0;
+    background:linear-gradient(135deg, var(--accent), var(--accent-2));
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Chakra Petch',sans-serif; font-weight:700; color:#fff; font-size:13px;
+  }
+  .account-info{ flex:1; min-width:0; }
+  .account-name{ font-size:12.5px; font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .account-email{ font-size:10px; color:var(--muted); font-family:'JetBrains Mono',monospace; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .account-logout{
+    flex-shrink:0; width:28px; height:28px; border-radius:7px;
+    border:1px solid var(--line); background:transparent; color:var(--muted);
+    cursor:pointer; font-size:13px; display:flex; align-items:center; justify-content:center;
+  }
+  .account-logout:hover{ color:var(--danger); border-color:var(--danger); }
+  .main-wrap{ flex:1; display:flex; flex-direction:column; overflow:hidden; min-width:0; }
+
+  /* mobile: sidebar hidden by default */
+  .sidebar-toggle{
+    display:none; width:34px; height:34px; border-radius:9px;
+    border:1px solid var(--line); background:var(--panel-2);
+    color:var(--muted); cursor:pointer; align-items:center; justify-content:center; flex-shrink:0;
+  }
+  .sidebar-toggle:hover{ color:var(--accent-light); border-color:var(--accent); }
+
+  @media(max-width:680px){
+    .sidebar{
+      position:absolute; left:0; top:0; bottom:0; z-index:25;
+      transform:translateX(-100%);
+    }
+    .sidebar.open{ transform:translateX(0); box-shadow:4px 0 20px rgba(0,0,0,0.5); }
+    .sidebar-toggle{ display:flex; }
+  }
   /* ===== THINKING UI (@berfikir) ===== */
   .thinking-wrap{ display:flex; flex-direction:column; gap:8px; margin-bottom:10px; }
   .thinking-step{
@@ -391,7 +475,21 @@
 
 <div class="app">
 
+  <!-- SIDEBAR -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-head">
+      <div class="sidebar-title">💬 sesi chat</div>
+      <button class="sidebar-new" id="newSessionBtn" title="sesi baru">+</button>
+    </div>
+    <div class="session-list" id="sessionList"></div>
+    <div class="sidebar-account" id="sidebarAccount"></div>
+  </div>
+
+  <!-- MAIN CONTENT WRAP -->
+  <div class="main-wrap">
+
   <div class="head">
+    <button class="sidebar-toggle" id="sidebarToggle">☰</button>
     <div class="avatar">IF<div class="dot"></div></div>
     <div class="head-info">
       <div class="head-name">ifxrq <span class="head-tag">ONLINE</span></div>
@@ -493,6 +591,8 @@
       <button type="button" id="lightboxClose">✕ tutup</button>
     </div>
   </div>
+
+  </div><!-- /main-wrap -->
 
   <!-- AUTH OVERLAY -->
   <div class="auth-overlay" id="authOverlay">
@@ -2066,6 +2166,7 @@ async function sendMessage(){
   }finally{
     sendBtn.disabled = false;
     inputEl.focus();
+    if(typeof window.saveCurrentSession === 'function') window.saveCurrentSession();
   }
 }
 
@@ -2266,11 +2367,19 @@ async function runBerfikirPlugin(originalText, question){
   badge.textContent = '🧠 sedang berfikir...';
   thinkBubble.appendChild(badge);
 
+  // thinking phrases - rotate random biar berasa natural kayak Claude/DeepSeek
+  const thinkPhrases = [
+    ['memahami konteks pertanyaan...', 'menggali sudut pandang pertama...', 'mempertimbangkan kemungkinan...'],
+    ['menelaah informasi yang relevan...', 'menyusun kerangka jawaban...', 'memverifikasi logika...'],
+    ['mengeksplorasi pendekatan alternatif...', 'mempertimbangkan implikasi...', 'merefinasi pemikiran...'],
+    ['mengintegrasikan semua perspektif...', 'merumuskan kesimpulan akhir...', 'menyempurnakan jawaban...']
+  ];
+  function randPhrase(i){ return thinkPhrases[i][Math.floor(Math.random()*thinkPhrases[i].length)]; }
   const steps = [
-    { id:'s1', label:'AI 1 menganalisis pertanyaan...' },
-    { id:'s2', label:'AI 2 menganalisis pertanyaan...' },
-    { id:'s3', label:'AI 3 menganalisis pertanyaan...' },
-    { id:'s4', label:'menyatukan semua jawaban...' }
+    { id:'s1', label: randPhrase(0) },
+    { id:'s2', label: randPhrase(1) },
+    { id:'s3', label: randPhrase(2) },
+    { id:'s4', label: randPhrase(3) }
   ];
 
   const wrap = document.createElement('div');
@@ -2286,6 +2395,20 @@ async function runBerfikirPlugin(originalText, question){
   });
   thinkBubble.appendChild(wrap);
 
+  // rotasi label thinking tiap 2.5 detik biar berasa "lagi mikir beneran"
+  const thinkTimers = [];
+  [0,1,2,3].forEach(function(i){
+    const timer = setInterval(function(){
+      const el = document.getElementById(steps[i].id);
+      if(!el) return clearInterval(timer);
+      const labelEl = el.querySelector('.thinking-label');
+      if(labelEl && labelEl.className === 'thinking-label'){
+        labelEl.textContent = thinkPhrases[i][Math.floor(Math.random()*thinkPhrases[i].length)];
+      } else { clearInterval(timer); }
+    }, 2500);
+    thinkTimers.push(timer);
+  });
+
   const answerWrap = document.createElement('div');
   answerWrap.className = 'thinking-answer';
   answerWrap.style.display = 'none';
@@ -2295,24 +2418,28 @@ async function runBerfikirPlugin(originalText, question){
   chatEl.appendChild(thinkRow);
   chatEl.scrollTop = chatEl.scrollHeight;
 
-  function markStep(id, status){ // status: done | err
+  function markStep(id, status, customLabel){
     const el = document.getElementById(id);
     if(!el) return;
     el.querySelector('.thinking-dot').className = 'thinking-dot ' + status;
     el.querySelector('.thinking-label').className = 'thinking-label ' + status;
-    if(status === 'done') el.querySelector('.thinking-label').textContent = el.querySelector('.thinking-label').textContent.replace('...', ' ✓');
-    if(status === 'err')  el.querySelector('.thinking-label').textContent = el.querySelector('.thinking-label').textContent.replace('...', ' ✗');
+    const base = customLabel || el.querySelector('.thinking-label').textContent.replace(/\.\.\..*/, '');
+    if(status === 'done') el.querySelector('.thinking-label').textContent = base.replace('...','') + ' ✓';
+    if(status === 'err')  el.querySelector('.thinking-label').textContent = base.replace('...','') + ' ✗';
   }
+  // stop all timers when done
+  function stopThinkTimers(){ thinkTimers.forEach(function(t){ clearInterval(t); }); }
 
   try{
     const res = await fetch(BERFIKIR_ENDPOINT + '?pesan=' + encodeURIComponent(question));
     const data = await res.json();
 
     // update step status berdasarkan hasil
-    markStep('s1', data.drafts && data.drafts.opus !== '[tidak ada jawaban]' ? 'done' : 'err');
-    markStep('s2', data.drafts && data.drafts.sonnet !== '[tidak ada jawaban]' ? 'done' : 'err');
-    markStep('s3', data.drafts && data.drafts.haiku !== '[tidak ada jawaban]' ? 'done' : 'err');
-    markStep('s4', data.answer ? 'done' : 'err');
+    stopThinkTimers();
+    markStep('s1', data.drafts && data.drafts.opus !== '[tidak ada jawaban]' ? 'done' : 'err', 'mempertimbangkan perspektif pertama');
+    markStep('s2', data.drafts && data.drafts.sonnet !== '[tidak ada jawaban]' ? 'done' : 'err', 'mempertimbangkan perspektif kedua');
+    markStep('s3', data.drafts && data.drafts.haiku !== '[tidak ada jawaban]' ? 'done' : 'err', 'mempertimbangkan perspektif ketiga');
+    markStep('s4', data.answer ? 'done' : 'err', 'kesimpulan terbentuk');
     badge.textContent = '🧠 selesai berfikir';
 
     if(!res.ok || !data.ok){
@@ -2325,6 +2452,7 @@ async function runBerfikirPlugin(originalText, question){
     }
 
   }catch(err){
+    stopThinkTimers();
     ['s1','s2','s3','s4'].forEach(function(id){ markStep(id,'err'); });
     badge.textContent = '🧠 gagal';
     answerWrap.style.display = 'block';
@@ -2336,6 +2464,170 @@ async function runBerfikirPlugin(originalText, question){
     inputEl.focus();
   }
 }
+
+
+// ============================================================
+// SIDEBAR — SESSION HISTORY + ACCOUNT INFO
+// ============================================================
+(function initSidebar(){
+  const SESSION_KEY = 'ifxrq_sessions';
+  const ACTIVE_KEY  = 'ifxrq_active_session';
+
+  function getSessions(){ try{ return JSON.parse(localStorage.getItem(SESSION_KEY)||'[]'); }catch(_){ return []; } }
+  function saveSessions(s){ localStorage.setItem(SESSION_KEY, JSON.stringify(s)); }
+  function getActiveId(){ return localStorage.getItem(ACTIVE_KEY)||null; }
+  function setActiveId(id){ localStorage.setItem(ACTIVE_KEY, id); }
+  function getSession(){ try{ return JSON.parse(localStorage.getItem('ifxrq_session')||'null'); }catch(_){ return null; } }
+
+  function newSessionId(){ return 's_' + Date.now() + '_' + Math.random().toString(36).slice(2,6); }
+
+  function getFirstMsg(hist){ 
+    const u = hist && hist.find && hist.find(function(h){ return h.role==='user'; });
+    if(!u) return 'sesi baru';
+    const p = u.parts && u.parts[0];
+    const t = (p && p.text) || 'sesi baru';
+    return t.slice(0,40) + (t.length>40?'…':'');
+  }
+
+  function renderSessionList(){
+    const list = document.getElementById('sessionList');
+    if(!list) return;
+    const sessions = getSessions();
+    const activeId = getActiveId();
+    if(!sessions.length){
+      list.innerHTML = '<div class="session-empty">belum ada sesi chat 🗿<br>mulai aja dulu</div>';
+      return;
+    }
+    list.innerHTML = '';
+    // tampilkan dari terbaru
+    sessions.slice().reverse().forEach(function(s){
+      const item = document.createElement('div');
+      item.className = 'session-item' + (s.id===activeId?' active':'');
+      item.innerHTML =
+        '<span class="s-icon">💬</span>' +
+        '<span class="s-title">' + escapeHtml(s.title||'sesi baru') + '</span>' +
+        '<button class="s-del" title="hapus">✕</button>';
+      item.querySelector('.s-title').addEventListener('click', function(){ loadSession(s.id); });
+      item.querySelector('.s-icon').addEventListener('click', function(){ loadSession(s.id); });
+      item.querySelector('.s-del').addEventListener('click', function(e){
+        e.stopPropagation(); deleteSession(s.id);
+      });
+      list.appendChild(item);
+    });
+  }
+
+  function renderAccount(){
+    const el = document.getElementById('sidebarAccount');
+    if(!el) return;
+    const session = getSession();
+    if(!session){ el.innerHTML = ''; return; }
+    const initials = (session.username||'?').slice(0,2).toUpperCase();
+    el.innerHTML =
+      '<div class="account-avatar">' + initials + '</div>' +
+      '<div class="account-info">' +
+        '<div class="account-name">' + escapeHtml(session.username||'user') + '</div>' +
+        '<div class="account-email">' + escapeHtml(session.email||'') + '</div>' +
+      '</div>' +
+      '<button class="account-logout" id="logoutBtn" title="keluar">⏏</button>';
+    document.getElementById('logoutBtn').addEventListener('click', function(){
+      localStorage.removeItem('ifxrq_session');
+      location.reload();
+    });
+  }
+
+  window.saveCurrentSession = function(){
+    if(!history || !history.length) return;
+    const sessions = getSessions();
+    let activeId = getActiveId();
+    const title = getFirstMsg(history);
+    const existing = sessions.find(function(s){ return s.id===activeId; });
+    if(existing){
+      existing.title = title;
+      existing.history = JSON.parse(JSON.stringify(history));
+      existing.updated = Date.now();
+    } else {
+      activeId = newSessionId();
+      setActiveId(activeId);
+      sessions.push({ id:activeId, title:title, history:JSON.parse(JSON.stringify(history)), updated:Date.now() });
+    }
+    saveSessions(sessions);
+    renderSessionList();
+  };
+
+  function loadSession(id){
+    window.saveCurrentSession();
+    const sessions = getSessions();
+    const s = sessions.find(function(x){ return x.id===id; });
+    if(!s) return;
+    setActiveId(id);
+    history.length = 0;
+    (s.history||[]).forEach(function(h){ history.push(h); });
+    const chatEl = document.getElementById('chat');
+    chatEl.innerHTML = '';
+    history.forEach(function(h){
+      if(h.role==='user'){
+        const txt = (h.parts&&h.parts[0]&&h.parts[0].text)||'';
+        addBubble('user', txt, false);
+      } else if(h.role==='model'){
+        const txt = (h.parts&&h.parts[0]&&h.parts[0].text)||'';
+        addBubble('bot', txt, true);
+      }
+    });
+    document.getElementById('hudCount').textContent = history.filter(function(h){ return h.role==='user'; }).length;
+    renderSessionList();
+    // tutup sidebar di mobile
+    document.getElementById('sidebar').classList.remove('open');
+  }
+
+  function deleteSession(id){
+    let sessions = getSessions();
+    sessions = sessions.filter(function(s){ return s.id!==id; });
+    saveSessions(sessions);
+    if(getActiveId()===id){
+      localStorage.removeItem(ACTIVE_KEY);
+      history.length=0;
+      document.getElementById('chat').innerHTML='';
+      document.getElementById('hudCount').textContent='0';
+    }
+    renderSessionList();
+  }
+
+  function startNewSession(){
+    window.saveCurrentSession();
+    localStorage.removeItem(ACTIVE_KEY);
+    history.length = 0;
+    const chatEl = document.getElementById('chat');
+    chatEl.innerHTML = '';
+    document.getElementById('hudCount').textContent = '0';
+    addBubble('bot','yo, sesi baru dimulai 🗿 mau ngobrol apa?', false);
+    renderSessionList();
+    document.getElementById('sidebar').classList.remove('open');
+  }
+
+  document.getElementById('newSessionBtn').addEventListener('click', startNewSession);
+
+  // sidebar toggle mobile
+  const toggleBtn = document.getElementById('sidebarToggle');
+  if(toggleBtn){
+    toggleBtn.addEventListener('click', function(){
+      document.getElementById('sidebar').classList.toggle('open');
+    });
+  }
+  // close sidebar ketika klik di luar (mobile)
+  document.addEventListener('click', function(e){
+    const sb = document.getElementById('sidebar');
+    if(sb && sb.classList.contains('open') && !sb.contains(e.target) && e.target !== toggleBtn){
+      sb.classList.remove('open');
+    }
+  });
+
+  // auto-save setiap kali ada pesan baru
+  const origAddBubble = addBubble;
+  // patch dilakukan setelah inisialisasi
+
+  renderSessionList();
+  renderAccount();
+})();
 
 addBubble('bot', 'yo, gw ifxrq 🗿 pencet + buat kirim kamera/foto/file. @search nyari info, @berfikir buat nanya yang butuh pemikiran dalam, @edit edit foto, @hd enhance ke HD, @uhd enhance ke UHD 8K, @play muter lagu YouTube 😹', false);
 </script>
