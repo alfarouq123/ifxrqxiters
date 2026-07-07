@@ -1,68 +1,71 @@
 // plugins/berfikir.js
 
-async function fetchOpus(pesan) {
-  const res = await fetch(
-    `https://api.synoxcloud.xyz/ai-chat/claude-opus-4.5?pesan=${encodeURIComponent(pesan)}`,
-    { signal: AbortSignal.timeout(30000) }
-  );
-  const data = await res.json();
-  return data?.result?.reply || null;
+async function fetchOpus(pesan){
+  const r=await fetch(`https://api.synoxcloud.xyz/ai-chat/claude-opus-4.5?pesan=${encodeURIComponent(pesan)}`,
+    {signal:AbortSignal.timeout(30000)});
+  const d=await r.json(); return d?.result?.reply||null;
+}
+async function fetchSonnet(pesan){
+  const r=await fetch(`https://api.synoxcloud.xyz/ai-chat/claude-sonnet-4.6?pesan=${encodeURIComponent(pesan)}`,
+    {signal:AbortSignal.timeout(30000)});
+  const d=await r.json(); return d?.result?.reply||null;
+}
+async function fetchHaiku(prompt){
+  const r=await fetch(`https://api.synoxcloud.xyz/ai-chat/claude-haiku-3?prompt=${encodeURIComponent(prompt)}`,
+    {signal:AbortSignal.timeout(30000)});
+  const d=await r.json(); return d?.result?.response||d?.result?.reply||null;
+}
+async function fetchPowerbrain(message){
+  const r=await fetch(`https://api.synoxcloud.xyz/ai-chat/powerbrain-ai?message=${encodeURIComponent(message)}`,
+    {signal:AbortSignal.timeout(120000)});
+  const d=await r.json(); return d?.result?.answer||d?.result?.text||d?.result?.message||null;
 }
 
-async function fetchSonnet(pesan) {
-  const res = await fetch(
-    `https://api.synoxcloud.xyz/ai-chat/claude-sonnet-4.6?pesan=${encodeURIComponent(pesan)}`,
-    { signal: AbortSignal.timeout(30000) }
-  );
-  const data = await res.json();
-  return data?.result?.reply || null;
-}
+async function runBerfikir(pesan, history){
+  if(!pesan){ const e=new Error('pertanyaan kosong'); e.status=400; throw e; }
 
-async function fetchHaiku(prompt) {
-  const res = await fetch(
-    `https://api.synoxcloud.xyz/ai-chat/claude-haiku-3?prompt=${encodeURIComponent(prompt)}`,
-    { signal: AbortSignal.timeout(30000) }
-  );
-  const data = await res.json();
-  return data?.result?.response || data?.result?.reply || null;
-}
-
-async function fetchPowerbrain(message) {
-  const res = await fetch(
-    `https://api.synoxcloud.xyz/ai-chat/powerbrain-ai?message=${encodeURIComponent(message)}`,
-    { signal: AbortSignal.timeout(90000) }
-  );
-  const data = await res.json();
-  return data?.result?.answer || data?.result?.text || data?.result?.message || null;
-}
-
-async function runBerfikir(pesan) {
-  if (!pesan) { const e = new Error('pertanyaan kosong'); e.status = 400; throw e; }
-
-  const [r1, r2, r3] = await Promise.allSettled([
-    fetchOpus(pesan),
-    fetchSonnet(pesan),
-    fetchHaiku(pesan)
+  const [r1,r2,r3]=await Promise.allSettled([
+    fetchOpus(pesan), fetchSonnet(pesan), fetchHaiku(pesan)
   ]);
 
-  const opus   = r1.status === 'fulfilled' && r1.value ? r1.value : '[tidak ada jawaban]';
-  const sonnet = r2.status === 'fulfilled' && r2.value ? r2.value : '[tidak ada jawaban]';
-  const haiku  = r3.status === 'fulfilled' && r3.value ? r3.value : '[tidak ada jawaban]';
+  const opus   = r1.status==='fulfilled'&&r1.value ? r1.value : null;
+  const sonnet = r2.status==='fulfilled'&&r2.value ? r2.value : null;
+  const haiku  = r3.status==='fulfilled'&&r3.value ? r3.value : null;
 
-  const analisisPrompt =
-    `Pertanyaan user: "${pesan}"\n\n` +
-    `Berikut jawaban dari 3 AI berbeda:\n` +
-    `[Perspektif 1]: ${opus}\n` +
-    `[Perspektif 2]: ${sonnet}\n` +
-    `[Perspektif 3]: ${haiku}\n\n` +
-    `Analisis dan gabungkan ketiga jawaban di atas menjadi satu jawaban terbaik yang paling akurat, lengkap, dan mudah dipahami. Berikan jawaban final yang komprehensif.`;
+  // kumpulin jawaban yang valid
+  const validAnswers = [opus,sonnet,haiku].filter(Boolean);
 
-  const finalAnswer = await fetchPowerbrain(analisisPrompt);
+  // konteks history percakapan sebelumnya (max 6 pesan terakhir)
+  let historyContext = '';
+  if(history && history.length > 0){
+    const recent = history.slice(-6);
+    historyContext = '\n\nKonteks percakapan sebelumnya:\n' +
+      recent.map(function(h){
+        const role = h.role==='user' ? 'User' : 'Asisten';
+        const text = (h.parts&&h.parts[0]&&h.parts[0].text)||'';
+        return `${role}: ${text.slice(0,300)}`;
+      }).join('\n') + '\n\n';
+  }
+
+  // prompt ke powerbrain — jangan nyebut "3 AI", dia punya sumber sendiri
+  const prompt =
+    `${historyContext}` +
+    `Pertanyaan: "${pesan}"\n\n` +
+    (validAnswers.length > 0
+      ? `Berikut beberapa perspektif awal yang bisa dijadikan referensi:\n${validAnswers.map((a,i)=>`- ${a}`).join('\n')}\n\n`
+      : '') +
+    `Berikan jawaban yang komprehensif, akurat, dan lengkap. Gunakan pengetahuan dan sumber yang kamu miliki untuk menyempurnakan dan memberikan jawaban terbaik. Jangan potong jawaban, jelaskan selengkap mungkin. Jawab dalam bahasa yang sama dengan pertanyaan.`;
+
+  const finalAnswer = await fetchPowerbrain(prompt);
 
   return {
-    drafts: { opus, sonnet, haiku },
-    answer: finalAnswer || 'gagal menganalisis jawaban'
+    drafts: {
+      opus:   opus   || '[tidak ada jawaban]',
+      sonnet: sonnet || '[tidak ada jawaban]',
+      haiku:  haiku  || '[tidak ada jawaban]'
+    },
+    answer: finalAnswer || 'gagal mendapatkan jawaban'
   };
 }
 
-module.exports = { runBerfikir };
+module.exports={runBerfikir};
