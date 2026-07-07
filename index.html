@@ -1100,6 +1100,41 @@ document.getElementById('artifactClose').addEventListener('click', function(){
   document.getElementById('artifactPreviewFrame').srcdoc = '';
 });
 
+// typewriter effect untuk markdown content
+async function typewriterMarkdown(container, text){
+  // tampilkan per-karakter untuk teks pendek, per-chunk untuk teks panjang
+  const el = document.createElement('div');
+  container.appendChild(el);
+  const CHUNK = text.length > 500 ? 8 : 2;
+  const DELAY = text.length > 500 ? 8 : 20;
+  for(let i=0; i<text.length; i+=CHUNK){
+    el.textContent = text.slice(0, i+CHUNK);
+    chatEl.scrollTop = chatEl.scrollHeight;
+    await new Promise(r=>setTimeout(r,DELAY));
+  }
+  // render markdown final
+  el.remove();
+  container.appendChild(renderMarkdown(text));
+  chatEl.scrollTop = chatEl.scrollHeight;
+}
+
+// typewriter untuk bubble bot biasa
+async function addBubbleTyped(content){
+  const row = document.createElement('div');
+  row.className = 'row bot';
+  const av = document.createElement('div');
+  av.className = 'mini-av';
+  av.textContent = 'IF';
+  row.appendChild(av);
+  const b = document.createElement('div');
+  b.className = 'bubble';
+  row.appendChild(b);
+  chatEl.appendChild(row);
+  chatEl.scrollTop = chatEl.scrollHeight;
+  await typewriterMarkdown(b, content);
+  return row;
+}
+
 function addBubble(role, content, isMarkdown){
   const row = document.createElement('div');
   row.className = 'row ' + role;
@@ -2022,7 +2057,9 @@ async function sendMessage(){
   const berfikirMatch = raw.match(/^@berfikir\s*([\s\S]*)/i);
   if(berfikirMatch){
     const q = berfikirMatch[1].trim() || raw;
-    await runBerfikirPlugin(raw, q);
+    // kalo ada gambar, attach context gambar ke pertanyaan
+    const imgAtt = attachments.find(function(a){ return a.mimeType && a.mimeType.startsWith('image/'); });
+    await runBerfikirPlugin(raw, q, imgAtt || null);
     return;
   }
 
@@ -2156,7 +2193,7 @@ async function sendMessage(){
     const reply = (data.candidates && data.candidates[0] && data.candidates[0].content &&
                    data.candidates[0].content.parts && data.candidates[0].content.parts.map(function(p){ return p.text; }).filter(Boolean).join(''))
                   || '[kosong — kena filter atau candidate abis]';
-    addBubble('bot', reply, true);
+    await addBubbleTyped(reply);
     history.push({ role:'model', parts:[{ text: reply }] });
 
   }catch(err){
@@ -2248,8 +2285,18 @@ sendBtn.addEventListener('click', sendMessage);
     if(Object.values(users).find(function(u){ return u.email===email; })){ return err('email udah terdaftar'); }
     users[uname] = { username:uname, email:email, password:btoa(pass) };
     saveUsers(users);
-    setSession({ username:uname, email:email });
-    overlay.style.display = 'none';
+    // setelah daftar, jangan langsung masuk — suruh login dulu
+    const okMsg = document.createElement('div');
+    okMsg.className = 'auth-ok';
+    okMsg.textContent = 'akun berhasil dibuat! silakan login dengan email/username dan password kamu.';
+    document.getElementById('aiErr').replaceWith(okMsg);
+    // switch ke tab login
+    setTimeout(function(){
+      tabs.forEach(function(t){ t.classList.remove('active'); });
+      tabs[0].classList.add('active');
+      mode = 'login';
+      render();
+    }, 1800);
   }
 
   function doGoogle(){
@@ -2345,7 +2392,7 @@ async function runHdPlugin(originalText, imageAttachment){
 // ============================================================
 // PLUGIN @berfikir
 // ============================================================
-async function runBerfikirPlugin(originalText, question){
+async function runBerfikirPlugin(originalText, question, imageAttachment){
   addBubble('user', originalText, false);
   history.push({ role:'user', parts:[{ text: originalText }] });
   renderInput('', 0);
@@ -2367,47 +2414,47 @@ async function runBerfikirPlugin(originalText, question){
   badge.textContent = '🧠 sedang berfikir...';
   thinkBubble.appendChild(badge);
 
-  // thinking phrases - rotate random biar berasa natural kayak Claude/DeepSeek
+  // thinking phrases - 1 dot animasi aja kayak Claude/DeepSeek
   const thinkPhrases = [
-    ['memahami konteks pertanyaan...', 'menggali sudut pandang pertama...', 'mempertimbangkan kemungkinan...'],
-    ['menelaah informasi yang relevan...', 'menyusun kerangka jawaban...', 'memverifikasi logika...'],
-    ['mengeksplorasi pendekatan alternatif...', 'mempertimbangkan implikasi...', 'merefinasi pemikiran...'],
-    ['mengintegrasikan semua perspektif...', 'merumuskan kesimpulan akhir...', 'menyempurnakan jawaban...']
+    'memahami konteks pertanyaan...',
+    'menggali sudut pandang yang relevan...',
+    'mempertimbangkan berbagai kemungkinan...',
+    'menyusun kerangka jawaban...',
+    'memverifikasi logika dan fakta...',
+    'mengeksplorasi pendekatan terbaik...',
+    'mempertimbangkan implikasi...',
+    'merefinasi pemikiran...',
+    'mengintegrasikan semua perspektif...',
+    'merumuskan kesimpulan akhir...',
+    'menyempurnakan jawaban...',
+    'menganalisis dari sudut pandang berbeda...',
+    'memastikan keakuratan informasi...',
+    'menyusun respons yang komprehensif...'
   ];
-  function randPhrase(i){ return thinkPhrases[i][Math.floor(Math.random()*thinkPhrases[i].length)]; }
-  const steps = [
-    { id:'s1', label: randPhrase(0) },
-    { id:'s2', label: randPhrase(1) },
-    { id:'s3', label: randPhrase(2) },
-    { id:'s4', label: randPhrase(3) }
-  ];
+  let phraseIdx = 0;
+  const steps = [{ id:'s1', label: thinkPhrases[0] }];
 
   const wrap = document.createElement('div');
   wrap.className = 'thinking-wrap';
-  steps.forEach(function(s){
-    const step = document.createElement('div');
-    step.className = 'thinking-step';
-    step.id = s.id;
-    step.innerHTML =
-      '<div class="thinking-dot"></div>' +
-      '<span class="thinking-label">' + s.label + '</span>';
-    wrap.appendChild(step);
-  });
+  const singleStep = document.createElement('div');
+  singleStep.className = 'thinking-step';
+  singleStep.id = 's1';
+  singleStep.innerHTML = '<div class="thinking-dot"></div><span class="thinking-label">' + thinkPhrases[0] + '</span>';
+  wrap.appendChild(singleStep);
   thinkBubble.appendChild(wrap);
 
-  // rotasi label thinking tiap 2.5 detik biar berasa "lagi mikir beneran"
+  // rotasi frasa tiap 2.5 detik — 1 dot aja
   const thinkTimers = [];
-  [0,1,2,3].forEach(function(i){
-    const timer = setInterval(function(){
-      const el = document.getElementById(steps[i].id);
-      if(!el) return clearInterval(timer);
-      const labelEl = el.querySelector('.thinking-label');
-      if(labelEl && labelEl.className === 'thinking-label'){
-        labelEl.textContent = thinkPhrases[i][Math.floor(Math.random()*thinkPhrases[i].length)];
-      } else { clearInterval(timer); }
-    }, 2500);
-    thinkTimers.push(timer);
-  });
+  const rotateTimer = setInterval(function(){
+    const el = document.getElementById('s1');
+    if(!el) return clearInterval(rotateTimer);
+    const labelEl = el.querySelector('.thinking-label');
+    if(labelEl && labelEl.className === 'thinking-label'){
+      phraseIdx = (phraseIdx + 1) % thinkPhrases.length;
+      labelEl.textContent = thinkPhrases[phraseIdx];
+    } else { clearInterval(rotateTimer); }
+  }, 2200);
+  thinkTimers.push(rotateTimer);
 
   const answerWrap = document.createElement('div');
   answerWrap.className = 'thinking-answer';
@@ -2431,29 +2478,48 @@ async function runBerfikirPlugin(originalText, question){
   function stopThinkTimers(){ thinkTimers.forEach(function(t){ clearInterval(t); }); }
 
   try{
-    const res = await fetch(BERFIKIR_ENDPOINT + '?pesan=' + encodeURIComponent(question));
+    // kalo ada gambar, upload dulu lalu sertakan URL-nya di pertanyaan
+    let finalQuestion = question;
+    if(imageAttachment && imageAttachment.data){
+      try {
+        const cleanData = imageAttachment.data.replace(/^data:[^;]+;base64,/, '');
+        const upRes  = await fetch(UPLOAD_ENDPOINT, {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ imageBase64:cleanData, mimeType:imageAttachment.mimeType, filename:imageAttachment.name })
+        });
+        const upData = await upRes.json();
+        if(upData.ok && upData.url){
+          finalQuestion = question + ' [gambar terlampir: ' + upData.url + ']';
+        }
+      } catch(_) {}
+    }
+    const recentHistory = history.slice(-10);
+    const res = await fetch(BERFIKIR_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pesan: finalQuestion, history: recentHistory })
+    });
     const data = await res.json();
 
     // update step status berdasarkan hasil
     stopThinkTimers();
-    markStep('s1', data.drafts && data.drafts.opus !== '[tidak ada jawaban]' ? 'done' : 'err', 'mempertimbangkan perspektif pertama');
-    markStep('s2', data.drafts && data.drafts.sonnet !== '[tidak ada jawaban]' ? 'done' : 'err', 'mempertimbangkan perspektif kedua');
-    markStep('s3', data.drafts && data.drafts.haiku !== '[tidak ada jawaban]' ? 'done' : 'err', 'mempertimbangkan perspektif ketiga');
-    markStep('s4', data.answer ? 'done' : 'err', 'kesimpulan terbentuk');
-    badge.textContent = '🧠 selesai berfikir';
+    // hapus thinking UI setelah done
+    wrap.remove();
+    badge.textContent = '🧠 berfikir';
 
     if(!res.ok || !data.ok){
       answerWrap.style.display = 'block';
       answerWrap.appendChild(renderMarkdown('gagal: ' + (data.error || res.status)));
     } else {
       answerWrap.style.display = 'block';
-      answerWrap.appendChild(renderMarkdown(data.answer));
+      // animasi ngetik
+      await typewriterMarkdown(answerWrap, data.answer);
       history.push({ role:'model', parts:[{ text: data.answer }] });
     }
 
   }catch(err){
     stopThinkTimers();
-    ['s1','s2','s3','s4'].forEach(function(id){ markStep(id,'err'); });
+    markStep('s1','err','gagal berfikir');
     badge.textContent = '🧠 gagal';
     answerWrap.style.display = 'block';
     answerWrap.textContent = '[error] ' + err.message;
@@ -2540,19 +2606,45 @@ async function runBerfikirPlugin(originalText, question){
     const sessions = getSessions();
     let activeId = getActiveId();
     const title = getFirstMsg(history);
+    const histCopy = JSON.parse(JSON.stringify(history));
     const existing = sessions.find(function(s){ return s.id===activeId; });
     if(existing){
       existing.title = title;
-      existing.history = JSON.parse(JSON.stringify(history));
+      existing.history = histCopy;
       existing.updated = Date.now();
     } else {
       activeId = newSessionId();
       setActiveId(activeId);
-      sessions.push({ id:activeId, title:title, history:JSON.parse(JSON.stringify(history)), updated:Date.now() });
+      sessions.push({ id:activeId, title:title, history:histCopy, updated:Date.now() });
     }
     saveSessions(sessions);
+    // juga simpan ke dedicated key buat recovery kalau sesi aktif hilang
+    try{ localStorage.setItem('ifxrq_current_' + activeId, JSON.stringify(histCopy)); }catch(_){}
     renderSessionList();
   };
+
+  // restore sesi aktif saat page load
+  (function restoreActiveSession(){
+    const activeId = getActiveId();
+    if(!activeId) return;
+    const sessions = getSessions();
+    const s = sessions.find(function(x){ return x.id===activeId; });
+    if(!s||!s.history||!s.history.length) return;
+    s.history.forEach(function(h){ history.push(h); });
+    const chatEl = document.getElementById('chat');
+    chatEl.innerHTML = '';
+    s.history.forEach(function(h){
+      if(h.role==='user'){
+        const txt=(h.parts&&h.parts[0]&&h.parts[0].text)||'';
+        addBubble('user',txt,false);
+      } else if(h.role==='model'){
+        const txt=(h.parts&&h.parts[0]&&h.parts[0].text)||'';
+        addBubble('bot',txt,true);
+      }
+    });
+    document.getElementById('hudCount').textContent = history.filter(function(h){ return h.role==='user'; }).length;
+    document.getElementById('hudSession').textContent = activeId.slice(-6);
+  })();
 
   function loadSession(id){
     window.saveCurrentSession();
