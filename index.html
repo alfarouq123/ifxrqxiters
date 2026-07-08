@@ -2478,26 +2478,27 @@ async function runBerfikirPlugin(originalText, question, imageAttachment){
   function stopThinkTimers(){ thinkTimers.forEach(function(t){ clearInterval(t); }); }
 
   try{
-    // kalo ada gambar, upload dulu lalu sertakan URL-nya di pertanyaan
-    let finalQuestion = question;
+    // upload gambar ke server proxy dulu biar dapat URL publik
+    let imagePublicUrl = null;
     if(imageAttachment && imageAttachment.data){
-      try {
+      try{
         const cleanData = imageAttachment.data.replace(/^data:[^;]+;base64,/, '');
         const upRes  = await fetch(UPLOAD_ENDPOINT, {
           method:'POST', headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({ imageBase64:cleanData, mimeType:imageAttachment.mimeType, filename:imageAttachment.name })
+          body:JSON.stringify({imageBase64:cleanData, mimeType:imageAttachment.mimeType, filename:imageAttachment.name})
         });
         const upData = await upRes.json();
-        if(upData.ok && upData.url){
-          finalQuestion = question + ' [gambar terlampir: ' + upData.url + ']';
-        }
-      } catch(_) {}
+        if(upData.ok && upData.url) imagePublicUrl = upData.url;
+      }catch(_){}
     }
-    const recentHistory = history.slice(-10);
+    // kirim history + imageUrl ke server
+    const recentHistory = history.slice(-12).map(function(h){
+      return { role:h.role, parts:h.parts ? h.parts.map(function(p){ return {text:(p.text||'').slice(0,500)}; }) : [] };
+    });
     const res = await fetch(BERFIKIR_ENDPOINT, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pesan: finalQuestion, history: recentHistory })
+      body: JSON.stringify({ pesan: question, history: recentHistory, imageUrl: imagePublicUrl })
     });
     const data = await res.json();
 
