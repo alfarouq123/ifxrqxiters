@@ -2393,8 +2393,26 @@ async function runHdPlugin(originalText, imageAttachment){
 // PLUGIN @berfikir
 // ============================================================
 async function runBerfikirPlugin(originalText, question, imageAttachment){
-  addBubble('user', originalText, false);
-  history.push({ role:'user', parts:[{ text: originalText }] });
+  // === BUBBLE USER: teks + preview gambar ===
+  const userRow = document.createElement('div');
+  userRow.className = 'row user';
+  const userBubble = document.createElement('div');
+  userBubble.className = 'bubble';
+  userBubble.innerHTML = mentionAndLinkHtml(originalText || question || '@berfikir');
+  if(imageAttachment && imageAttachment.previewUrl){
+    const prevImg = document.createElement('img');
+    prevImg.src = imageAttachment.previewUrl;
+    prevImg.style.cssText = 'max-width:180px;border-radius:9px;margin-top:6px;display:block;';
+    userBubble.appendChild(prevImg);
+    // hapus dari strip
+    attachments = attachments.filter(function(a){ return a !== imageAttachment; });
+    renderAttachStrip();
+  }
+  userRow.appendChild(userBubble);
+  chatEl.appendChild(userRow);
+  chatEl.scrollTop = chatEl.scrollHeight;
+
+  history.push({ role:'user', parts:[{ text: question || originalText }] });
   renderInput('', 0);
   sendBtn.disabled = true;
   hudCount.textContent = history.filter(function(h){ return h.role==='user'; }).length;
