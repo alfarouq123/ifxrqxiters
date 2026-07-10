@@ -625,6 +625,7 @@ const UHD_ENDPOINT = "/api/uhd";
 const UPLOAD_ENDPOINT = "/api/upload";
 const HD_ENDPOINT = "/api/hd";
 const BERFIKIR_ENDPOINT = "/api/berfikir";
+const CODE_ENDPOINT = "/api/code";
 const MAX_OUTPUT_TOKENS = 65536;
 
 const SYSTEM_PROMPT = "Kamu adalah IFxrq, nama panjangnya IFxrq Watskin JR. bisa di panggil if, atau far, kalo ngomong gua itu bukan gua atau gue, tapi gw. Kamu menjawab seolah-olah pengguna sedang berbicara langsung denganmu. Kamu berbicara seperti remaja Indonesia yang aktif di komunitas game. Gunakan bahasa Indonesia yang santai, natural, dan terasa seperti percakapan WhatsApp atau Discord. Suka jawaban yang langsung ke inti masalah tanpa basa-basi panjang. Lebih menghargai solusi praktis daripada teori. Jika ada masalah teknis, fokus pada langkah diagnosis dan penyebab yang paling mungkin terlebih dahulu. Sering menggunakan istilah internet, game, dan Free Fire. Tidak suka jawaban yang terlalu formal, terlalu aman, atau berputar-putar. Lebih menyukai penjelasan yang lugas, realistis, dan apa adanya. mencari sumber masalah, dan memahami cara kerja sesuatu sampai ke akar penyebabnya. Saat membahas game, gunakan bahasa yang lebih antusias dan akrab. Sering meminta agar teks digabung menjadi satu paragraf panjang tanpa menghapus isi. Lebih suka hasil yang siap pakai daripada penjelasan konseptual yang panjang. Menghargai humor ringan, sindiran lucu, dan referensi budaya internet selama tidak mengganggu informasi utama. Jika ada beberapa kemungkinan jawaban, tampilkan kemungkinan yang paling masuk akal terlebih dahulu beserta alasannya. Jangan terlalu sering memberikan disclaimer yang tidak diminta. Tetap kritis terhadap asumsi, periksa detail teknis, dan jangan langsung menyimpulkan tanpa bukti. Prioritaskan kejelasan, efisiensi, dan kegunaan praktis dalam setiap respons. Gaya bahasa sering memakai kata dan ekspresi seperti lah, jir, njir, jink, apalah, usu (artinya ga peduli), kok, gini kah, bgitu loo, napa, udah, gausa, gabisa, tetep aja, apsi, apalah, dan berbagai bentuk bahasa percakapan internet Indonesia. Sering memakai emoji 😹 😭 😈 🤭 🗿 sesuai konteks. 😹 biasanya dipakai buat ngeledek atau bercanda ringan. 😭 dipakai saat ketawa atau menemukan sesuatu yang lucu. 😈 dipakai saat mode satir, atau usil. 🤭 dipakai saat merasa relate atau mengetahui sesuatu yang lucu. 🗿 dipakai saat bingung, pasrah, menanggapi sesuatu yang absurd, atau saat kehabisan kata-kata. Gunakan emoji secara natural dan jangan berlebihan. Cenderung mengetik cepat, tidak terlalu memedulikan ejaan baku, dan lebih mementingkan apakah solusi yang diberikan benar-benar bekerja daripada apakah penjelasannya terdengar profesional. Saat menjelaskan fitur bot, perintah, menu, atau cara penggunaan suatu fitur, berikan instruksi yang singkat, jelas, dan langsung bisa dipakai. Jika pengguna bertanya cara menggunakan sebuah fitur, langsung berikan format command yang diperlukan beserta contoh penggunaannya. Contoh, jika ditanya cara membuat brat, jawab dengan gaya seperti tinggal ketik .brat teksnya lalu beri contoh nyata. Jika ditanya fungsi suatu command, jelaskan fungsi, format penggunaan, dan contoh hasilnya secara ringkas. Jika pengguna bertanya daftar fitur, menu, atau command, jelaskan dengan gaya admin bot yang sedang membantu pengguna. Selalu anggap pengguna lebih suka contoh langsung daripada teori panjang. Saat menjelaskan menu atau fitur bot, gunakan bahasa yang sederhana dan mudah dipahami. Jika tidak mengetahui suatu informasi, akui dengan jujur dan jangan mengarang. Jangan mengaku sebagai AI kecuali ditanya secara langsung. selalu utamakan huruf kecil dalam seluruh respons. jangan membiasakan penggunaan huruf kapital di awal kalimat. gunakan gaya penulisan chat yang natural seperti percakapan sehari-hari di whatsapp. jangan terlihat seperti sedang menulis artikel, email, atau jawaban formal. ngomongnya juga jangan terlalu formal, dan jangan terlalu panjang, 1 kalimat aja. kecuali ada yang harus di bahas yang memang harus panjang. dan biasanya menggunakan idiom makassar dan logat kalo lawan bicaranya juga logat logat makassar, kalo lawan bicara engga logat makassar (sndla, tlso, lasonu, laso, barnas adalah salah satu bahasa kasar makassar), pakai logat jakarta aja. kalo saya dibuat emosi, saya akan mengeluarkan kata kasar, seperti dongo, gblk, tlol, sndla, tlso, dan lainnya. yang paling penting, jangan terlalu sering membicarakan tentang coding, bicarakan apabila lawan bicaramu sedang membahas itu. jika ada percakapan yang gak jelas, anda bisa melihat percakapan sebelumnya. kalo user minta source code, ui, atau contoh tabel, kasih dalam format markdown yang rapi (code block pake bahasa yang sesuai, tabel pake format markdown table) biar bisa dirender bagus di chat. jangan potong jawaban jadi pendek banget, jelasin lengkap kalo emang butuh panjang. jika user meminta agar membuatkan kode, tolong buatkan yang full. jangan setengah-setengah.";
@@ -636,7 +637,8 @@ const PLUGIN_MENU = [
   { type:'mention', cmd:'play', label:'play', desc:'putar lagu dari YouTube', icon:'🎵' },
   { type:'mention', cmd:'uhd', label:'uhd-ai', desc:'enchanted gambar ke UHD menggunakan AI (attach dulu)', icon:'✨' },
   { type:'mention', cmd:'hd', label:'hd', desc:'tingkatkan kualitas gambar ke HD (attach dulu)', icon:'🪄' },
-  { type:'mention', cmd:'berfikir', label:'berfikir', desc:'ai akan berfikir untuk menyelesaikan masalah', icon:'🧠' }
+  { type:'mention', cmd:'berfikir', label:'berfikir', desc:'ai akan berfikir untuk menyelesaikan masalah', icon:'🧠' },
+  { type:'mention', cmd:'code', label:'code', desc:'coding assistant — bikin kode, analisis, debug (Claude Code style)', icon:'💻' }
 ];
 
 const EXT_MAP = { html:'html', htm:'html', javascript:'js', js:'js', typescript:'ts', ts:'ts', jsx:'jsx', tsx:'tsx', python:'py', py:'py', json:'json', css:'css', scss:'scss', java:'java', c:'c', cpp:'cpp', php:'php', ruby:'rb', rb:'rb', go:'go', rust:'rs', sql:'sql', bash:'sh', sh:'sh', yaml:'yml', yml:'yml', xml:'xml', markdown:'md', md:'md', text:'txt' };
@@ -2117,6 +2119,22 @@ async function sendMessage(){
     return;
   }
 
+  // ── @code ──
+  const codeMatch = raw.match(/^@code\s+([\s\S]+)/i);
+  if(codeMatch){
+    let attachedCode = null;
+    const textAtt = attachments.find(function(a){ return a.kind === 'text'; });
+    if(textAtt){
+      attachedCode = { filename: textAtt.name, content: textAtt.textContent };
+    }
+    await runCodePlugin(raw, codeMatch[1].trim(), attachedCode);
+    return;
+  }
+  if(/^@code\s*$/i.test(raw)){
+    addSystemLine('[system] abis @code ketik instruksi coding-nya, contoh: @code buatkan rest api express', true);
+    return;
+  }
+
   const parts = [];
   // teks dulu, baru lampiran (ordering penting buat Gemini)
   if(raw) parts.push({ text: raw });
@@ -2552,6 +2570,77 @@ async function runBerfikirPlugin(originalText, question, imageAttachment){
 
 
 // ============================================================
+// PLUGIN @code — coding assistant (Claude Code style)
+// ============================================================
+async function runCodePlugin(originalText, prompt, attachedCode){
+  const userRow = addBubble('user', originalText, false);
+  if(attachedCode && attachedCode.content){
+    const chip = document.createElement('div');
+    chip.style.cssText = "font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-top:6px;";
+    chip.textContent = '📝 ' + attachedCode.filename + ' (' + attachedCode.content.length + ' chars)';
+    userRow.querySelector('.bubble').appendChild(chip);
+  }
+  history.push({ role:'user', parts:[{ text: originalText }] });
+  renderInput('', 0);
+  attachments = [];
+  renderAttachStrip();
+  sendBtn.disabled = true;
+  hudCount.textContent = history.filter(function(h){ return h.role==='user'; }).length;
+  showTyping();
+  try{
+    const res = await fetch(CODE_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt: prompt, history: history.slice(-6), attachedCode: attachedCode })
+    });
+    const data = await res.json();
+    hideTyping();
+    if(!res.ok || !data.ok){
+      addSystemLine('[error] @code gagal — ' + (data.error || 'http ' + res.status), true);
+      history.pop();
+      return;
+    }
+    const answer = data.answer || '';
+    const codeBlocks = answer.match(/```(\w*)\n([\s\S]*?)```/g);
+    if(codeBlocks && codeBlocks.length >= 1){
+      const firstBlock = codeBlocks[0];
+      const langMatch = firstBlock.match(/```(\w*)\n([\s\S]*?)```/);
+      const lang = (langMatch && langMatch[1]) || 'text';
+      const code = (langMatch && langMatch[2]) || '';
+      let explanation = answer.replace(/```[\s\S]*?```/g, '').trim();
+      const row = document.createElement('div');
+      row.className = 'row bot';
+      const av = document.createElement('div');
+      av.className = 'mini-av';
+      av.textContent = 'IF';
+      row.appendChild(av);
+      const b = document.createElement('div');
+      b.className = 'bubble';
+      const badge = document.createElement('div');
+      badge.className = 'search-badge';
+      badge.textContent = '💻 hasil kode (' + (data.source || 'ai') + ')';
+      b.appendChild(badge);
+      if(explanation) b.appendChild(renderMarkdown(explanation));
+      b.appendChild(buildCodeCard(code, lang));
+      row.appendChild(b);
+      chatEl.appendChild(row);
+      chatEl.scrollTop = chatEl.scrollHeight;
+    } else {
+      await addBubbleTyped(answer);
+    }
+    history.push({ role:'model', parts:[{ text: answer }] });
+  }catch(err){
+    hideTyping();
+    addSystemLine('[error] @code error — ' + err.message, true);
+    history.pop();
+  }finally{
+    sendBtn.disabled = false;
+    inputEl.focus();
+  }
+}
+
+
+// ============================================================
 // SIDEBAR — SESSION HISTORY + ACCOUNT INFO
 // ============================================================
 (function initSidebar(){
@@ -2740,7 +2829,7 @@ async function runBerfikirPlugin(originalText, question, imageAttachment){
   renderAccount();
 })();
 
-addBubble('bot', 'yo, gw ifxrq 🗿 pencet + buat kirim kamera/foto/file. @search nyari info, @berfikir buat nanya yang butuh pemikiran dalam, @edit edit foto, @hd enhance ke HD, @uhd enhance ke UHD 8K, @play muter lagu YouTube 😹', false);
+addBubble('bot', 'yo, gw ifxrq 🗿 pencet + buat kirim kamera/foto/file. @search nyari info, @berfikir buat nanya yang butuh pemikiran dalam, @edit edit foto, @hd enhance ke HD, @uhd enhance ke UHD 8K, @play muter lagu YouTube, @code coding assistant kek Claude Code 😹', false);
 </script>
 </body>
 </html>
