@@ -1,0 +1,11 @@
+Metadata-Version: 2.4
+Name: claude-code
+Version: 1.0.0
+Summary: Local AI Coding Assistant CLI (Ollama Edition)
+Author: Claude Code Builder
+Requires-Python: >=3.8
+Requires-Dist: requests>=2.25.0
+Dynamic: author
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary

@@ -1,0 +1,2 @@
+[console_scripts]
+claude-code = claude_code.cli:main
