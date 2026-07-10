@@ -1,29 +1,35 @@
-// api/play.js — route handler, logic di plugins/play.js
-const { searchYoutube, downloadAudio, downloadVideo, fmtDuration, fmtViews } = require('../plugins/play');
+const { searchYoutube, downloadAudio, downloadVideo } = require('../plugins/play');
 
 module.exports = async (req, res) => {
-  if (req.method !== 'GET') return res.status(405).json({ error: { message: 'pake GET' } });
-
-  const { action, query, url } = req.query;
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method !== 'GET') return res.status(405).json({ error: 'pake GET' });
 
   try {
+    const action = req.query.action;
+    const url    = req.query.url;
+
+    if (!action || !url) return res.status(400).json({ error: 'action dan url diperlukan' });
+
     if (action === 'search') {
-      if (!query) return res.status(400).json({ error: { message: 'query kosong' } });
-      const info = await searchYoutube(query);
-      return res.status(200).json({ ok: true, ...info });
+      const q = req.query.q;
+      if (!q) return res.status(400).json({ error: 'query search diperlukan' });
+      const result = await searchYoutube(q);
+      return res.status(200).json(result);
     }
+
     if (action === 'audio') {
-      if (!url) return res.status(400).json({ error: { message: 'url kosong' } });
       const audioUrl = await downloadAudio(url);
-      return res.status(200).json({ ok: true, audioUrl });
+      return res.status(200).json({ audioUrl });
     }
+
     if (action === 'video') {
-      if (!url) return res.status(400).json({ error: { message: 'url kosong' } });
       const videoUrl = await downloadVideo(url);
-      return res.status(200).json({ ok: true, videoUrl });
+      return res.status(200).json({ videoUrl });
     }
-    return res.status(400).json({ error: { message: 'action harus: search / audio / video' } });
+
+    return res.status(400).json({ error: 'action harus search/audio/video' });
   } catch (err) {
-    return res.status(err.status || 500).json({ error: { message: err.message } });
+    return res.status(500).json({ error: { message: err.message } });
   }
 };

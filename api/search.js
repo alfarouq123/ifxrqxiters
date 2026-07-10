@@ -1,20 +1,21 @@
-// api/search.js — tipis, logic asli di plugins/search.js (lihat catatan di api/chat.js)
-
 const { runSearch } = require('../plugins/search');
 
 module.exports = async (req, res) => {
-  if (req.method !== 'GET' && req.method !== 'POST') {
-    res.status(405).json({ error: { message: 'method not allowed' } });
-    return;
-  }
-
-  const message = req.method === 'GET' ? req.query.message : req.body?.message;
-  const model = (req.method === 'GET' ? req.query.model : req.body?.model) || 'think-deeper';
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method !== 'GET') return res.status(405).json({ error: 'pake GET' });
 
   try {
+    const message = req.query.message;
+    const model   = req.query.model || 'think-deeper';
+    if (!message) return res.status(400).json({ error: 'query kosong' });
+
     const data = await runSearch(message, model);
-    res.status(200).json(data);
+    return res.status(200).json(data);
   } catch (err) {
-    res.status(err.status || 500).json(err.payload || { error: { message: err.message } });
+    return res.status(err.status || 500).json({
+      error: { message: err.message },
+      payload: err.payload || null
+    });
   }
 };
