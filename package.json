@@ -1,9 +1,20 @@
 {
   "name": "ifxrq-ai-chat",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
-  "description": "chat AI persona IFxrq pake Gemini API, deploy di Vercel",
+  "description": "IFxrq AI web chat + plugin system (menu, tools, games, canvas, download, dll) - deploy di Vercel",
   "engines": {
     "node": ">=18"
+  },
+  "dependencies": {
+    "axios": "^1.7.9",
+    "cheerio": "^1.0.0",
+    "form-data": "^4.0.1",
+    "mime-types": "^2.1.35",
+    "tough-cookie": "^5.0.0",
+    "axios-cookiejar-support": "^5.0.3",
+    "gsmarena-api": "^1.2.7",
+    "qrcode": "^1.5.4",
+    "@napi-rs/canvas": "^0.1.65"
   }
 }

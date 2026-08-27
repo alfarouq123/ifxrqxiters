@@ -2831,5 +2831,217 @@ async function runCodePlugin(originalText, prompt, attachedCode){
 
 addBubble('bot', 'yo, gw ifxrq 🗿 pencet + buat kirim kamera/foto/file. @search nyari info, @berfikir buat nanya yang butuh pemikiran dalam, @edit edit foto, @hd enhance ke HD, @uhd enhance ke UHD 8K, @play muter lagu YouTube, @code coding assistant kek Claude Code 😹', false);
 </script>
+
+<!-- ===================== PLUGIN PANEL (menu, tools, canvas, ai, dll) ===================== -->
+<style>
+  #pluginFab{
+    position:fixed; right:18px; bottom:84px; z-index:60;
+    width:52px; height:52px; border-radius:50%;
+    background:linear-gradient(135deg, var(--accent), var(--accent-2));
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 4px 18px rgba(168,85,247,.45); cursor:pointer; border:none;
+  }
+  #pluginFab svg{ width:24px; height:24px; stroke:#fff; }
+  #pluginOverlay{
+    position:fixed; inset:0; background:rgba(0,0,0,.55); backdrop-filter:blur(2px);
+    z-index:80; display:none; align-items:flex-end; justify-content:center;
+  }
+  #pluginOverlay.open{ display:flex; }
+  #pluginSheet{
+    width:100%; max-width:560px; max-height:86vh; background:var(--panel,#15121e);
+    border-radius:18px 18px 0 0; display:flex; flex-direction:column;
+    border:1px solid var(--line,#2a2438); overflow:hidden;
+    font-family:inherit; color:#eee;
+  }
+  #pluginSheet header{
+    padding:14px 16px; display:flex; align-items:center; justify-content:space-between;
+    border-bottom:1px solid var(--line,#2a2438);
+  }
+  #pluginSheet header b{ font-size:15px; }
+  #pluginClose{ background:none; border:none; color:#aaa; font-size:20px; cursor:pointer; }
+  #pluginBody{ overflow-y:auto; padding:10px 14px 20px; flex:1; }
+  .pg-cat{ margin-bottom:14px; }
+  .pg-cat-title{ font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--accent-light,#c084fc); margin:10px 0 6px; font-weight:700; }
+  .pg-item{
+    display:flex; flex-direction:column; padding:10px 12px; margin-bottom:6px;
+    background:#1b1826; border:1px solid #2a2438; border-radius:12px; cursor:pointer;
+  }
+  .pg-item:hover{ border-color:var(--accent,#a855f7); }
+  .pg-item b{ font-size:13.5px; }
+  .pg-item span{ font-size:11.5px; color:#9a93ab; margin-top:2px; }
+  #pluginRunView{ display:none; flex-direction:column; gap:10px; }
+  #pluginRunView.open{ display:flex; }
+  #pluginListView.hidden{ display:none; }
+  .pg-back{ background:none; border:none; color:var(--accent-light,#c084fc); font-size:13px; cursor:pointer; padding:0; text-align:left; margin-bottom:4px; }
+  #pluginRunView textarea, #pluginRunView input[type=text]{
+    width:100%; background:#100e17; border:1px solid #2a2438; border-radius:10px;
+    color:#eee; padding:10px 12px; font-size:13.5px; font-family:inherit; resize:vertical;
+  }
+  #pluginRunView input[type=file]{ font-size:12.5px; color:#9a93ab; }
+  #pluginRunBtn{
+    background:linear-gradient(135deg, var(--accent), var(--accent-2)); color:#fff; border:none;
+    padding:11px; border-radius:10px; font-weight:600; cursor:pointer; font-size:14px;
+  }
+  #pluginRunBtn:disabled{ opacity:.6; cursor:default; }
+  #pluginResult{ margin-top:6px; }
+  #pluginResult img{ max-width:100%; border-radius:10px; }
+  #pluginResult audio{ width:100%; }
+  #pluginResult pre{ white-space:pre-wrap; background:#100e17; border:1px solid #2a2438; border-radius:10px; padding:10px; font-size:12.5px; }
+  #pluginResult .pg-err{ color:#f87171; font-size:13px; }
+  #pluginResult .pg-dl{ display:inline-block; margin-top:8px; background:var(--accent); color:#fff; padding:7px 14px; border-radius:8px; font-size:12.5px; text-decoration:none; }
+</style>
+
+<button id="pluginFab" title="Plugins">
+  <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a2 2 0 0 1 2 2v1.34a1 1 0 0 0 1.5.86l1.16-.66a2 2 0 0 1 2.73.73l1 1.73a2 2 0 0 1-.73 2.73l-1.16.67a1 1 0 0 0 0 1.73l1.16.67a2 2 0 0 1 .73 2.73l-1 1.73a2 2 0 0 1-2.73.73l-1.16-.67a1 1 0 0 0-1.5.87V20a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2v-1.34a1 1 0 0 0-1.5-.86l-1.16.66a2 2 0 0 1-2.73-.73l-1-1.73a2 2 0 0 1 .73-2.73l1.16-.67a1 1 0 0 0 0-1.73l-1.16-.67a2 2 0 0 1-.73-2.73l1-1.73a2 2 0 0 1 2.73-.73l1.16.67a1 1 0 0 0 1.5-.87V4a2 2 0 0 1 2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+</button>
+
+<div id="pluginOverlay">
+  <div id="pluginSheet">
+    <header>
+      <b id="pluginHeaderTitle">🔌 Plugins</b>
+      <button id="pluginClose">✕</button>
+    </header>
+    <div id="pluginBody">
+      <div id="pluginListView"></div>
+      <div id="pluginRunView"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const fab = document.getElementById('pluginFab');
+  const overlay = document.getElementById('pluginOverlay');
+  const closeBtn = document.getElementById('pluginClose');
+  const listView = document.getElementById('pluginListView');
+  const runView = document.getElementById('pluginRunView');
+  const headerTitle = document.getElementById('pluginHeaderTitle');
+  let manifest = null;
+
+  fab.addEventListener('click', async () => {
+    overlay.classList.add('open');
+    if (!manifest) await loadManifest();
+  });
+  closeBtn.addEventListener('click', () => overlay.classList.remove('open'));
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.classList.remove('open'); });
+
+  async function loadManifest(){
+    listView.innerHTML = '<div style="padding:20px;text-align:center;color:#9a93ab">Memuat daftar plugin...</div>';
+    try{
+      const res = await fetch('/api/menu');
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || 'gagal memuat menu');
+      manifest = data;
+      renderList();
+    }catch(err){
+      listView.innerHTML = '<div class="pg-err" style="padding:20px">Gagal memuat plugin: '+ escapeHtml(err.message) +'</div>';
+    }
+  }
+
+  function renderList(){
+    runView.classList.remove('open');
+    listView.classList.remove('hidden');
+    headerTitle.textContent = '🔌 Plugins (' + manifest.totalPlugins + ')';
+    let html = '';
+    for (const cat of manifest.categories){
+      html += '<div class="pg-cat"><div class="pg-cat-title">'+cat.emoji+' '+escapeHtml(cat.label)+'</div>';
+      for (const p of cat.plugins){
+        html += '<div class="pg-item" data-name="'+p.name+'">'+
+          '<b>/'+escapeHtml(p.name)+'</b><span>'+escapeHtml(p.description||'')+'</span></div>';
+      }
+      html += '</div>';
+    }
+    listView.innerHTML = html;
+    listView.querySelectorAll('.pg-item').forEach((el) => {
+      el.addEventListener('click', () => openRunner(el.getAttribute('data-name')));
+    });
+  }
+
+  function findPlugin(name){
+    for (const cat of manifest.categories){
+      const found = cat.plugins.find((p) => p.name === name);
+      if (found) return { ...found, categoryLabel: cat.label, categoryEmoji: cat.emoji };
+    }
+    return null;
+  }
+
+  function openRunner(name){
+    const p = findPlugin(name);
+    if (!p) return;
+    listView.classList.add('hidden');
+    runView.classList.add('open');
+    headerTitle.textContent = p.categoryEmoji + ' /' + p.name;
+
+    const needsText = p.inputType === 'text' || p.inputType === 'text+image';
+    const needsImage = p.inputType === 'image' || p.inputType === 'text+image';
+
+    let html = '<button class="pg-back">&larr; kembali ke daftar plugin</button>';
+    html += '<div style="font-size:12.5px;color:#9a93ab">'+escapeHtml(p.description||'')+'<br>Contoh: <code>'+escapeHtml(p.example||p.usage||'')+'</code></div>';
+    if (needsText) html += '<textarea id="pgInputText" rows="2" placeholder="'+escapeHtml(p.usage||'masukkan teks...')+'"></textarea>';
+    if (needsImage) html += '<input type="file" id="pgInputImage" accept="image/*">';
+    html += '<button id="pluginRunBtn">Jalankan</button>';
+    html += '<div id="pluginResult"></div>';
+    runView.innerHTML = html;
+
+    runView.querySelector('.pg-back').addEventListener('click', renderList);
+    runView.querySelector('#pluginRunBtn').addEventListener('click', () => runPlugin(p.name));
+  }
+
+  function fileToDataUrl(file){
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function runPlugin(name){
+    const btn = document.getElementById('pluginRunBtn');
+    const resultEl = document.getElementById('pluginResult');
+    const textEl = document.getElementById('pgInputText');
+    const imageEl = document.getElementById('pgInputImage');
+
+    btn.disabled = true; btn.textContent = 'Memproses...';
+    resultEl.innerHTML = '';
+
+    try{
+      const body = { command: name, text: textEl ? textEl.value : '' };
+      if (imageEl && imageEl.files && imageEl.files[0]) {
+        body.imageBase64 = await fileToDataUrl(imageEl.files[0]);
+      }
+      const res = await fetch('/api/run', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || 'terjadi kesalahan');
+
+      if (data.type === 'text') {
+        resultEl.innerHTML = '<pre>'+escapeHtml(data.text)+'</pre>';
+      } else if (data.type === 'image') {
+        resultEl.innerHTML = '<img src="'+data.imageDataUrl+'">' +
+          (data.caption ? '<div style="font-size:12px;color:#9a93ab;margin-top:4px">'+escapeHtml(data.caption)+'</div>' : '') +
+          '<br><a class="pg-dl" download="'+name+'.png" href="'+data.imageDataUrl+'">Download</a>';
+      } else if (data.type === 'audio') {
+        resultEl.innerHTML = '<audio controls src="'+data.audioDataUrl+'"></audio>';
+      } else if (data.type === 'file') {
+        resultEl.innerHTML = '<a class="pg-dl" download="'+(data.filename||'file')+'" href="'+data.fileDataUrl+'">Download '+escapeHtml(data.filename||'file')+'</a>';
+      } else if (data.type === 'json') {
+        resultEl.innerHTML = '<pre>'+escapeHtml(JSON.stringify(data.data, null, 2))+'</pre>';
+      } else {
+        resultEl.innerHTML = '<pre>'+escapeHtml(JSON.stringify(data, null, 2))+'</pre>';
+      }
+    }catch(err){
+      resultEl.innerHTML = '<div class="pg-err">❌ '+escapeHtml(err.message)+'</div>';
+    }finally{
+      btn.disabled = false; btn.textContent = 'Jalankan';
+    }
+  }
+
+  function escapeHtml(s){
+    return String(s==null?'':s).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+})();
+</script>
 </body>
 </html>
