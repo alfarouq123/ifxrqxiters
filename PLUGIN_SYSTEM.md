@@ -65,7 +65,7 @@ module.exports = {
 };
 ```
 
-## Apa yang SUDAH di-porting (fokus tahap ini: tools, canvas, ai)
+## Apa yang SUDAH di-porting (update terbaru — 79 plugin di 9 kategori)
 
 ### `main/` (5)
 menu, ping, stats, rules, carifitur — utilitas dasar buat browsing plugin itu sendiri.
@@ -78,14 +78,43 @@ hitungwrmlbb (kalkulator winrate, murni matematika), carbon (kode jadi gambar), 
 website), tempmail (email sementara), dafont (cari font).
 
 ### `canvas/` (12)
-fakeff (fake lobby Free Fire — **contoh yang kamu minta**), fakeml, balogo, watercolortext, iqc,
-musiccard, animequotes, starboy, pakustad, topixel (pixel art, dirender lokal pakai
-`@napi-rs/canvas`), fakestory (kartu ala IG story, dirender lokal), quotesv1.
+fakeff (fake lobby Free Fire), fakeml, balogo, watercolortext, iqc, musiccard, animequotes, starboy,
+pakustad, topixel (pixel art, dirender lokal pakai `@napi-rs/canvas`), fakestory (kartu ala IG story,
+dirender lokal), quotesv1.
 
 ### `ai/` (8)
 gpt5, deepseek (mode reasoning), qwen3, claudehaiku (semua model AI teks gratis tanpa API key),
 txt2img (text-to-image pakai FLUX, ada auto-moderation dari upstream), img2img (edit gambar pakai
 AI), img2prompt (tebak prompt dari gambar), persona (chat dengan karakter AI **fiksi**).
+
+### `games/` (9) — BARU
+tebakbendera, tebakkata, family100, caklontong, tebaktebakan, tebakhewan, tebaknegara, tebakmakanan,
+susunkata. Semua **stateless** (gak butuh session/database) — pas mulai ronde, nomor soal
+dikembalikan ke kamu, terus balas dengan format `/namagame <no_soal>|<jawabanmu>`. Datanya asli dari
+bot WA (`src/data/*.json`, sudah dipindah ke `lib/data/`).
+
+### `fun/` (15) — BARU
+akankah, apakah, bagaimana, berapa, bisakah, dimana, haruskah, kapan, mengapa, siapa (generator
+jawaban random ala magic-8-ball), rate, truth, dare, bucin, cekkhodam.
+
+### `search/` (3) — BARU
+wikipedia, npm (cari package Node.js), resep (cari resep masakan).
+
+### `info/` (2) — BARU
+gempa (data real-time BMKG), harilibur (hari libur nasional per tahun).
+
+### `random/` (3) — BARU
+meme (Reddit, difilter NSFW), quotesimage (quote motivasi), wallpaper (Unsplash).
+
+### `religi/` (3) — BARU
+quran (ayat + terjemahan), jadwalsholat (per kota), asmaulhusna (random dari 99 nama).
+
+### `primbon/` (3) — BARU
+zodiak (dari tanggal lahir), artinama (karakter dari nama, hasil konsisten), tafsirmimpi (tafsir
+berdasarkan kata kunci).
+
+## Kategori yang MASIH KOSONG (folder sudah disiapkan)
+`cek/`, `download/`, `sticker/` — belum digarap, giliran berikutnya kalau kamu mau lanjut.
 
 ## Apa yang SENGAJA TIDAK di-porting, dan kenapa
 
@@ -104,9 +133,30 @@ AI), img2prompt (tebak prompt dari gambar), persona (chat dengan karakter AI **f
 - **`musikapaini`, `videotranscribe`, sebagian `hd2/hd3/hd4/hdvid/wink`** — butuh API key
   berbayar milik developer bot aslinya atau butuh FFmpeg biner yang berat untuk serverless;
   di-skip di tahap ini untuk fokus ke kualitas daripada kuantitas.
-- **Kategori lain** (games, fun, download, search, cek, info, random, religi, primbon, sticker) —
-  BELUM digarap di tahap ini sesuai request kamu ("fokus tools, canvas, ai dulu"). Foldernya sudah
+- **Kategori lain** (cek, download, sticker) — BELUM digarap di fase ini. Foldernya sudah
   disiapkan kosong di `/plugins`, tinggal lanjut kapan-kapan.
+
+## Fix penting di update ini: integrasi ke sistem "@" yang sudah ada
+
+Sebelumnya plugin baru cuma bisa diakses lewat panel floating "🔌 Plugins", **belum nyambung** ke
+sistem `@command` yang sudah ada di chat (yang dipakai buat `@search`, `@edit`, dst). Ini sudah
+diperbaiki:
+
+1. `index.html` sekarang fetch `/api/menu` sekali pas halaman dibuka (`loadDynamicPlugins()`),
+   lalu semua 79 plugin baru otomatis didaftarkan ke array `PLUGIN_MENU` yang sama dipakai buat
+   dropdown "@" dan menu "+".
+2. Ketik `@` di kolom chat sekarang bakal nampilin plugin bawaan (search, edit, dst) **dan**
+   semua plugin baru (fakeff, tebakbendera, gpt5, qrcode, dst) — plus alias-nya masing-masing.
+3. Ditambah fungsi `runGenericPlugin()` di `index.html` yang otomatis dipanggil kalau kamu ketik
+   `@namaplugin ...` dan nama itu bukan salah satu command bawaan — dia yang urus kirim ke
+   `/api/run`, render hasilnya (gambar/teks/audio/file), dan simpan ke history chat.
+4. Dropdown & menu "+" sekarang bisa di-scroll (`max-height` + `overflow-y:auto`) karena
+   isinya udah puluhan item, bukan cuma 7 kayak sebelumnya.
+
+**Cara pakai sekarang:** ketik `@` aja di kolom chat → ketik beberapa huruf nama plugin (misal
+`@fakeff` atau `@tebakbendera`) → pilih dari dropdown atau lanjut ketik argumennya langsung →
+kirim. Panel floating "🔌 Plugins" tetap ada sebagai cara alternatif buat browse semua plugin per
+kategori kalau kamu lupa nama command-nya.
 
 ## Environment variables opsional
 

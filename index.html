@@ -422,7 +422,7 @@
   .send:disabled{ background:var(--line); color:var(--muted); cursor:not-allowed; }
 
   /* ===== PLUS MENU ===== */
-  .plus-menu{ position:absolute; bottom:56px; left:14px; width:210px; background:var(--panel-2); border:1px solid var(--line); border-radius:12px; padding:6px; display:none; flex-direction:column; gap:2px; box-shadow:0 12px 30px -10px rgba(0,0,0,0.6); z-index:20; }
+  .plus-menu{ position:absolute; bottom:56px; left:14px; width:230px; max-height:340px; overflow-y:auto; background:var(--panel-2); border:1px solid var(--line); border-radius:12px; padding:6px; display:none; flex-direction:column; gap:2px; box-shadow:0 12px 30px -10px rgba(0,0,0,0.6); z-index:20; }
   .plus-menu.show{ display:flex; }
   .plus-item{ display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:8px; cursor:pointer; font-size:13px; color:var(--text); }
   .plus-item span{ flex:1; }
@@ -430,7 +430,7 @@
   .plus-item.back{ color:var(--muted); font-size:11.5px; border-bottom:1px solid var(--line); margin-bottom:3px; padding-bottom:10px; }
 
   /* ===== @ MENTION DROPDOWN ===== */
-  .mention-dropdown{ position:absolute; bottom:52px; left:0; width:100%; background:var(--panel-2); border:1px solid var(--line); border-radius:12px; padding:6px; display:none; z-index:20; box-shadow:0 12px 30px -10px rgba(0,0,0,0.6); }
+  .mention-dropdown{ position:absolute; bottom:52px; left:0; width:100%; max-height:320px; overflow-y:auto; background:var(--panel-2); border:1px solid var(--line); border-radius:12px; padding:6px; display:none; z-index:20; box-shadow:0 12px 30px -10px rgba(0,0,0,0.6); }
   .mention-dropdown.show{ display:block; }
   .mention-item{ display:flex; align-items:center; gap:8px; padding:8px 10px; border-radius:8px; cursor:pointer; }
   .mention-item:hover{ background:var(--bg); }
@@ -640,6 +640,46 @@ const PLUGIN_MENU = [
   { type:'mention', cmd:'berfikir', label:'berfikir', desc:'ai akan berfikir untuk menyelesaikan masalah', icon:'🧠' },
   { type:'mention', cmd:'code', label:'code', desc:'coding assistant — bikin kode, analisis, debug (Claude Code style)', icon:'💻' }
 ];
+
+// ============================================================
+// PLUGIN DINAMIS (dari /api/menu — folder /plugins/<kategori>/*.js)
+// Di-load sekali pas halaman dibuka, terus digabung ke PLUGIN_MENU
+// biar langsung muncul di dropdown "@" dan menu "+".
+// ============================================================
+const BUILTIN_CMDS = ['search','edit','play','uhd','hd','berfikir','code'];
+let DYNAMIC_PLUGINS = {}; // cmd(lowercase) -> { name, category, categoryEmoji, description, usage, example, inputType, outputType }
+
+async function loadDynamicPlugins(){
+  try{
+    const res = await fetch('/api/menu');
+    const data = await res.json();
+    if(!data.ok) return;
+    data.categories.forEach(function(cat){
+      cat.plugins.forEach(function(p){
+        const cmd = p.name.toLowerCase();
+        if(BUILTIN_CMDS.indexOf(cmd) !== -1) return; // jangan timpa command bawaan
+        if(DYNAMIC_PLUGINS[cmd]) return; // udah ada (hindari duplikat kalo dipanggil 2x)
+        DYNAMIC_PLUGINS[cmd] = {
+          name: p.name, category: cat.key, categoryEmoji: cat.emoji, categoryLabel: cat.label,
+          description: p.description, usage: p.usage, example: p.example,
+          inputType: p.inputType, outputType: p.outputType
+        };
+        PLUGIN_MENU.push({ type:'mention', cmd: cmd, label: p.name, desc: p.description || cat.label, icon: cat.emoji });
+        // alias juga didaftarkan biar dropdown "@" nemuin lewat alias
+        (p.alias || []).forEach(function(a){
+          const ac = a.toLowerCase();
+          if(!DYNAMIC_PLUGINS[ac] && BUILTIN_CMDS.indexOf(ac) === -1){
+            DYNAMIC_PLUGINS[ac] = DYNAMIC_PLUGINS[cmd];
+            PLUGIN_MENU.push({ type:'mention', cmd: ac, label: p.name, desc: '(alias @' + cmd + ') ' + (p.description||''), icon: cat.emoji });
+          }
+        });
+      });
+    });
+  }catch(err){
+    console.warn('gagal load plugin dinamis:', err.message);
+  }
+}
+loadDynamicPlugins();
 
 const EXT_MAP = { html:'html', htm:'html', javascript:'js', js:'js', typescript:'ts', ts:'ts', jsx:'jsx', tsx:'tsx', python:'py', py:'py', json:'json', css:'css', scss:'scss', java:'java', c:'c', cpp:'cpp', php:'php', ruby:'rb', rb:'rb', go:'go', rust:'rs', sql:'sql', bash:'sh', sh:'sh', yaml:'yml', yml:'yml', xml:'xml', markdown:'md', md:'md', text:'txt' };
 const TEXT_EXT_REGEX = /\.(txt|md|markdown|csv|json|js|jsx|ts|tsx|py|java|c|cpp|h|hpp|go|rs|php|rb|sh|bash|yml|yaml|xml|html|htm|css|scss|sql|log|ini|env|conf|toml)$/i;
@@ -930,7 +970,7 @@ function triggerMentionCheck(text, caret){
   const match = beforeCaret.match(/@(\w*)$/);
   if(match){
     const q = match[1].toLowerCase();
-    const filtered = PLUGIN_MENU.filter(function(p){ return p.type === 'mention' && p.cmd.startsWith(q); });
+    const filtered = PLUGIN_MENU.filter(function(p){ return p.type === 'mention' && p.cmd.startsWith(q); }).slice(0, 30);
     if(filtered.length){ renderMentionDropdown(filtered); return; }
   }
   mentionDropdown.classList.remove('show');
@@ -2135,6 +2175,16 @@ async function sendMessage(){
     return;
   }
 
+  // ── plugin dinamis (folder /plugins/<kategori>) ──
+  const genericMatch = raw.match(/^@(\w+)(?:\s+([\s\S]*))?$/i);
+  if(genericMatch && DYNAMIC_PLUGINS[genericMatch[1].toLowerCase()]){
+    const cmd = genericMatch[1].toLowerCase();
+    const argText = (genericMatch[2] || '').trim();
+    const imageAtt = attachments.find(function(a){ return a.mimeType && a.mimeType.indexOf('image/') === 0; });
+    await runGenericPlugin(cmd, raw, argText, imageAtt || null);
+    return;
+  }
+
   const parts = [];
   // teks dulu, baru lampiran (ordering penting buat Gemini)
   if(raw) parts.push({ text: raw });
@@ -2399,6 +2449,112 @@ async function runHdPlugin(originalText, imageAttachment){
   }catch(err){
     hideTyping();
     addSystemLine('[error] @hd error — ' + err.message, true);
+    history.pop();
+  }finally{
+    sendBtn.disabled = false;
+    inputEl.focus();
+  }
+}
+
+
+// ============================================================
+// PLUGIN DINAMIS — jalanin apapun yang ada di /plugins/<kategori>/*.js
+// lewat satu endpoint generik /api/run
+// ============================================================
+async function runGenericPlugin(cmd, originalText, argText, imageAttachment){
+  const meta = DYNAMIC_PLUGINS[cmd] || { name: cmd, categoryEmoji: '🔌', categoryLabel: 'plugin' };
+  const needsImage = meta.inputType === 'image' || meta.inputType === 'text+image';
+
+  if(needsImage && !imageAttachment){
+    addSystemLine('[system] plugin @' + cmd + ' butuh gambar, attach dulu (pencet + > foto) baru ketik @' + cmd + (meta.usage ? ' — contoh: ' + meta.example : ''), true);
+    return;
+  }
+
+  const row = addBubble('user', originalText, false);
+  if(imageAttachment && imageAttachment.previewUrl){
+    const img = document.createElement('img');
+    img.src = imageAttachment.previewUrl;
+    img.style.cssText = 'max-width:160px;border-radius:9px;margin-top:6px;display:block;';
+    row.querySelector('.bubble').appendChild(img);
+  }
+  history.push({ role:'user', parts:[{ text: originalText }] });
+  renderInput('', 0);
+  if(imageAttachment){ attachments = attachments.filter(function(a){ return a !== imageAttachment; }); renderAttachStrip(); }
+  sendBtn.disabled = true;
+  hudCount.textContent = history.filter(function(h){ return h.role==='user'; }).length;
+  addSystemLine('[system] ' + meta.categoryEmoji + ' lagi proses @' + cmd + '...');
+  showTyping();
+
+  try{
+    const body = { command: cmd, text: argText };
+    if(imageAttachment){
+      const cleanData = imageAttachment.data ? imageAttachment.data.replace(/^data:[^;]+;base64,/, '') : imageAttachment.data;
+      body.imageBase64 = cleanData;
+      body.imageMime = imageAttachment.mimeType;
+    }
+    const res = await fetch('/api/run', {
+      method: 'POST', headers: { 'Content-Type':'application/json' }, body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    hideTyping();
+
+    if(!res.ok || !data.ok){
+      addSystemLine('[error] @' + cmd + ' gagal — ' + (data.error || res.status), true);
+      history.pop();
+      return;
+    }
+
+    const resultRow = document.createElement('div');
+    resultRow.className = 'row bot';
+    const av = document.createElement('div');
+    av.className = 'mini-av';
+    av.textContent = 'IF';
+    resultRow.appendChild(av);
+    const b = document.createElement('div');
+    b.className = 'bubble';
+    const badge = document.createElement('div');
+    badge.className = 'search-badge';
+    badge.textContent = meta.categoryEmoji + ' hasil @' + cmd;
+    b.appendChild(badge);
+
+    let historyNote = 'plugin @' + cmd + ' selesai dijalankan';
+
+    if(data.type === 'image'){
+      b.appendChild(buildImageCard(data.imageDataUrl, cmd + '-result.png'));
+      if(data.caption){
+        const cap = document.createElement('div');
+        cap.style.cssText = 'font-size:12px;color:var(--muted);margin-top:6px;';
+        cap.textContent = data.caption;
+        b.appendChild(cap);
+      }
+    } else if(data.type === 'audio'){
+      b.appendChild(buildAudioPlayer(data.audioDataUrl, cmd + '-result'));
+    } else if(data.type === 'file'){
+      const link = document.createElement('a');
+      link.href = data.fileDataUrl; link.download = data.filename || 'file';
+      link.textContent = '⬇️ download ' + (data.filename || 'file');
+      link.style.cssText = 'display:inline-block;margin-top:6px;color:var(--accent-light);text-decoration:underline;';
+      b.appendChild(link);
+    } else if(data.type === 'json'){
+      const pre = document.createElement('pre');
+      pre.style.cssText = 'white-space:pre-wrap;font-size:12px;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px;';
+      pre.textContent = JSON.stringify(data.data, null, 2);
+      b.appendChild(pre);
+    } else {
+      const textDiv = document.createElement('div');
+      textDiv.innerHTML = mentionAndLinkHtml(data.text || '(kosong)');
+      b.appendChild(textDiv);
+      historyNote = data.text || historyNote;
+    }
+
+    resultRow.appendChild(b);
+    chatEl.appendChild(resultRow);
+    chatEl.scrollTop = chatEl.scrollHeight;
+    history.push({ role:'model', parts:[{ text: historyNote }] });
+
+  }catch(err){
+    hideTyping();
+    addSystemLine('[error] @' + cmd + ' error — ' + err.message, true);
     history.pop();
   }finally{
     sendBtn.disabled = false;
