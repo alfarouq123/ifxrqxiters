@@ -648,38 +648,58 @@ const PLUGIN_MENU = [
 // ============================================================
 const BUILTIN_CMDS = ['search','edit','play','uhd','hd','berfikir','code'];
 let DYNAMIC_PLUGINS = {}; // cmd(lowercase) -> { name, category, categoryEmoji, description, usage, example, inputType, outputType }
+let dynamicPluginsLoaded = false;
+let dynamicPluginsLoading = null;
 
-async function loadDynamicPlugins(){
-  try{
-    const res = await fetch('/api/menu');
-    const data = await res.json();
-    if(!data.ok) return;
-    data.categories.forEach(function(cat){
-      cat.plugins.forEach(function(p){
-        const cmd = p.name.toLowerCase();
-        if(BUILTIN_CMDS.indexOf(cmd) !== -1) return; // jangan timpa command bawaan
-        if(DYNAMIC_PLUGINS[cmd]) return; // udah ada (hindari duplikat kalo dipanggil 2x)
-        DYNAMIC_PLUGINS[cmd] = {
-          name: p.name, category: cat.key, categoryEmoji: cat.emoji, categoryLabel: cat.label,
-          description: p.description, usage: p.usage, example: p.example,
-          inputType: p.inputType, outputType: p.outputType
-        };
-        PLUGIN_MENU.push({ type:'mention', cmd: cmd, label: p.name, desc: p.description || cat.label, icon: cat.emoji });
-        // alias juga didaftarkan biar dropdown "@" nemuin lewat alias
-        (p.alias || []).forEach(function(a){
-          const ac = a.toLowerCase();
-          if(!DYNAMIC_PLUGINS[ac] && BUILTIN_CMDS.indexOf(ac) === -1){
-            DYNAMIC_PLUGINS[ac] = DYNAMIC_PLUGINS[cmd];
-            PLUGIN_MENU.push({ type:'mention', cmd: ac, label: p.name, desc: '(alias @' + cmd + ') ' + (p.description||''), icon: cat.emoji });
-          }
+function loadDynamicPlugins(){
+  // dibungkus biar gak double-fetch kalau dipanggil bersamaan (misal pas halaman baru dibuka DAN user langsung ngetik "@")
+  if(dynamicPluginsLoading) return dynamicPluginsLoading;
+  dynamicPluginsLoading = (async () => {
+    try{
+      const res = await fetch('/api/menu');
+      const data = await res.json();
+      if(!data.ok){
+        console.error('[plugin] /api/menu balikin ok:false ->', data.error);
+        return;
+      }
+      let added = 0;
+      data.categories.forEach(function(cat){
+        cat.plugins.forEach(function(p){
+          const cmd = p.name.toLowerCase();
+          if(BUILTIN_CMDS.indexOf(cmd) !== -1) return; // jangan timpa command bawaan
+          if(DYNAMIC_PLUGINS[cmd]) return; // udah ada (hindari duplikat kalo dipanggil 2x)
+          DYNAMIC_PLUGINS[cmd] = {
+            name: p.name, category: cat.key, categoryEmoji: cat.emoji, categoryLabel: cat.label,
+            description: p.description, usage: p.usage, example: p.example,
+            inputType: p.inputType, outputType: p.outputType
+          };
+          PLUGIN_MENU.push({ type:'mention', cmd: cmd, label: p.name, desc: p.description || cat.label, icon: cat.emoji });
+          added++;
+          // alias juga didaftarkan biar dropdown "@" nemuin lewat alias
+          (p.alias || []).forEach(function(a){
+            const ac = a.toLowerCase();
+            if(!DYNAMIC_PLUGINS[ac] && BUILTIN_CMDS.indexOf(ac) === -1){
+              DYNAMIC_PLUGINS[ac] = DYNAMIC_PLUGINS[cmd];
+              PLUGIN_MENU.push({ type:'mention', cmd: ac, label: p.name, desc: '(alias @' + cmd + ') ' + (p.description||''), icon: cat.emoji });
+            }
+          });
         });
       });
-    });
-  }catch(err){
-    console.warn('gagal load plugin dinamis:', err.message);
-  }
+      dynamicPluginsLoaded = true;
+      console.log('[plugin] berhasil load ' + added + ' plugin dinamis dari /api/menu (total kategori: ' + data.totalCategories + ')');
+    }catch(err){
+      console.error('[plugin] gagal load plugin dinamis dari /api/menu:', err);
+    }finally{
+      dynamicPluginsLoading = null;
+    }
+  })();
+  return dynamicPluginsLoading;
 }
+// load pas halaman dibuka...
 loadDynamicPlugins();
+// ...dan auto-retry kalau user ketik "@" tapi plugin dinamis somehow belum sukses ke-load
+// (misal request pertama race/gagal network sesaat pas page baru dibuka)
+document.addEventListener('DOMContentLoaded', loadDynamicPlugins);
 
 const EXT_MAP = { html:'html', htm:'html', javascript:'js', js:'js', typescript:'ts', ts:'ts', jsx:'jsx', tsx:'tsx', python:'py', py:'py', json:'json', css:'css', scss:'scss', java:'java', c:'c', cpp:'cpp', php:'php', ruby:'rb', rb:'rb', go:'go', rust:'rs', sql:'sql', bash:'sh', sh:'sh', yaml:'yml', yml:'yml', xml:'xml', markdown:'md', md:'md', text:'txt' };
 const TEXT_EXT_REGEX = /\.(txt|md|markdown|csv|json|js|jsx|ts|tsx|py|java|c|cpp|h|hpp|go|rs|php|rb|sh|bash|yml|yaml|xml|html|htm|css|scss|sql|log|ini|env|conf|toml)$/i;
@@ -970,6 +990,13 @@ function triggerMentionCheck(text, caret){
   const match = beforeCaret.match(/@(\w*)$/);
   if(match){
     const q = match[1].toLowerCase();
+    // kalau plugin dinamis belum ke-load, coba load duluan (jangan nunggu, biar dropdown gak "ketutup" cuma nampilin command bawaan doang)
+    if(!dynamicPluginsLoaded){
+      loadDynamicPlugins().then(function(){
+        const stillTyping = getPlainText(inputEl).slice(0, getCaretOffset(inputEl)).match(/@(\w*)$/);
+        if(stillTyping && stillTyping[1].toLowerCase() === q) triggerMentionCheck(text, caret);
+      });
+    }
     const filtered = PLUGIN_MENU.filter(function(p){ return p.type === 'mention' && p.cmd.startsWith(q); }).slice(0, 30);
     if(filtered.length){ renderMentionDropdown(filtered); return; }
   }
@@ -1553,6 +1580,9 @@ function handlePlusAction(action){
   } else if(action === 'plugin'){
     plusMode = 'plugin';
     renderPlusMenu();
+    if(!dynamicPluginsLoaded){
+      loadDynamicPlugins().then(function(){ if(plusMode === 'plugin') renderPlusMenu(); });
+    }
   } else if(action === 'back'){
     plusMode = 'main';
     renderPlusMenu();

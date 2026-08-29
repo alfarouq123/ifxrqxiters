@@ -65,7 +65,42 @@ module.exports = {
 };
 ```
 
-## Apa yang SUDAH di-porting (update terbaru — 79 plugin di 9 kategori)
+## ⚠️ FIX PENTING (update ini): prefix HARUS "@", bukan "/"
+
+Sebelumnya ada bug: mekanisme dispatch di `index.html` cuma ngenalin prefix **"@"**, tapi teks
+`usage`/`example` di 65+ file plugin (dan output `@menu`, `@carifitur`) masih nulis contoh pakai
+**"/"** — jadi kalau user ngetik `/fakeff ...` beneran gak kepanggil apa-apa dan otomatis jatuh ke
+chat AI biasa. Ini yang bikin "plugin belum masuk ke @".
+
+Yang sudah diperbaiki:
+1. **Semua `config.usage` / `config.example` di 79 plugin** (dan di 3 file engine generik:
+   `lib/engine/randomAnswer.js`, `lib/engine/aiChatModel.js`, `lib/engine/quizGame.js`) diganti dari
+   `/nama` jadi `@nama`.
+2. **Semua pesan error/instruksi di dalam `run()`** yang sebelumnya nyebut `/nama` (misal
+   `"contoh: /qrcode ..."`) juga diganti ke `@nama`.
+3. **`plugins/main/menu.js`** dan **`plugins/main/carifitur.js`** — output teksnya sekarang nampilin
+   `@nama` bukan `/nama`.
+4. **Bug race-condition di `index.html`**: sebelumnya kalau plugin dinamis (`/api/menu`) belum
+   selesai di-fetch pas user ngetik `@`, dropdown tetap muncul isinya cuma 7 command bawaan
+   (search/edit/play/dst) — jadi user ngira "plugin baru gak ada". Sekarang `triggerMentionCheck()`
+   otomatis coba `loadDynamicPlugins()` ulang kalau belum sukses, dan dropdown/menu "+" auto-refresh
+   begitu selesai.
+5. Ditambah `console.log`/`console.error` di browser console pas plugin berhasil/gagal di-load dari
+   `/api/menu` — buka DevTools (F12) > Console kalau mau debug kenapa plugin gak muncul.
+
+**Cara pakai yang BENAR sekarang:** ketik `@` di kolom chat → dropdown nongol → ketik beberapa huruf
+nama plugin (misal `@fakeff`) → pilih dari dropdown ATAU lanjut ketik argumennya langsung setelah
+nama plugin → kirim. **Jangan pakai `/`**, itu gak dikenali sama sekali dan bakal dianggap chat
+biasa ke AI.
+
+Kalau setelah update ini plugin masih belum muncul pas ketik `@`, kemungkinan penyebabnya:
+- Belum `npm install` ulang / belum redeploy setelah replace file-file baru.
+- Folder `/plugins`, `/lib`, `/api/menu.js`, `/api/run.js` gak ke-upload semua (pastikan struktur
+  foldernya lengkap sama kayak di zip).
+- Buka DevTools Console di browser, cek ada log `[plugin] berhasil load...` atau `[plugin] gagal
+  load...` — itu bakal kasih tau persis penyebabnya (misal `/api/menu` 404 atau 500).
+
+## Apa yang SUDAH di-porting (update terbaru — 87 plugin di 11 kategori)
 
 ### `main/` (5)
 menu, ping, stats, rules, carifitur — utilitas dasar buat browsing plugin itu sendiri.
@@ -113,8 +148,12 @@ quran (ayat + terjemahan), jadwalsholat (per kota), asmaulhusna (random dari 99 
 zodiak (dari tanggal lahir), artinama (karakter dari nama, hasil konsisten), tafsirmimpi (tafsir
 berdasarkan kata kunci).
 
+### `download/` (8) — BARU
+youtube (audio mp3/video mp4), tiktok (tanpa watermark), instagram, twitter/x, facebook, mediafire,
+terabox, reddit. Semua pakai scraper murni dari `lib/scrapers/downloader/` (hasil port bot WA).
+
 ## Kategori yang MASIH KOSONG (folder sudah disiapkan)
-`cek/`, `download/`, `sticker/` — belum digarap, giliran berikutnya kalau kamu mau lanjut.
+`cek/`, `sticker/` — belum digarap, giliran berikutnya kalau kamu mau lanjut.
 
 ## Apa yang SENGAJA TIDAK di-porting, dan kenapa
 
