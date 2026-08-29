@@ -13,7 +13,7 @@
     "mime-types": "^2.1.35",
     "tough-cookie": "^5.0.0",
     "axios-cookiejar-support": "^5.0.3",
-    "gsmarena-api": "^1.2.7",
+    "gsmarena-api": "^2.0.5",
     "qrcode": "^1.5.4",
     "@napi-rs/canvas": "^0.1.65"
   }
