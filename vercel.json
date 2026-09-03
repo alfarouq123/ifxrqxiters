@@ -1,6 +1,5 @@
 {
   "functions": {
-    "api/run.js": { "maxDuration": 60 },
-    "api/menu.js": { "maxDuration": 10 }
+    "api/*.js": { "maxDuration": 60 }
   }
 }

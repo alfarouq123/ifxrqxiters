@@ -629,10 +629,10 @@ function renderPlusMenu(){
       <div class="plus-item" data-action="camera">📷<span>kamera</span></div>
       <div class="plus-item" data-action="photo">🖼️<span>foto</span></div>
       <div class="plus-item" data-action="file">📄<span>file</span></div>
-      <div class="plus-item" data-action="plugin">🧩<span>plugin</span></div>
+      <div class="plus-item" >🧩<span>plugin</span></div>
     `;
   } else {
-    const items = PLUGINS.map(p => `<div class="plus-item" data-action="plugin:${p.cmd}">${p.icon}<span>@${p.cmd}</span></div>`).join('');
+
     plusMenu.innerHTML = `<div class="plus-item back" data-action="back">← kembali</div>${items}`;
   }
   plusMenu.querySelectorAll('.plus-item').forEach(el=>{
@@ -656,13 +656,11 @@ function handlePlusAction(action){
     fileInput.setAttribute('accept', '*/*');
     fileInput.click();
     closePlusMenu();
-  } else if(action === 'plugin'){
-    plusMode = 'plugin';
     renderPlusMenu();
   } else if(action === 'back'){
     plusMode = 'main';
     renderPlusMenu();
-  } else if(action && action.startsWith('plugin:')){
+
     insertMention(action.split(':')[1]);
     closePlusMenu();
   }
