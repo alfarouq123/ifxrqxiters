@@ -469,37 +469,100 @@
   .arcade-frame{ flex:1; border:none; width:100%; background:#0c0e12; }
   .gsection-title{ font-size:11px; font-weight:800; letter-spacing:1.5px; text-transform:uppercase; color:#c084fc; margin:18px 0 10px; font-family:'JetBrains Mono',monospace; }
 
-  /* ═══════════ MUSIC PLAYER (spotify-style) ═══════════ */
-  .mtabs{ display:flex; gap:6px; margin-bottom:12px; overflow-x:auto; scrollbar-width:none; }
-  .mtabs::-webkit-scrollbar{ display:none; }
-  .mtab{ padding:7px 14px; border-radius:20px; background:var(--panel-2); border:1px solid var(--line); color:var(--muted); font-size:12px; font-weight:700; cursor:pointer; white-space:nowrap; }
-  .mtab.on{ background:#c084fc; color:#160f24; border-color:#c084fc; }
-  .msearch{ display:flex; gap:8px; margin-bottom:14px; }
-  .msearch input{ flex:1; background:var(--panel-2); border:1px solid var(--line); border-radius:12px; padding:10px 14px; color:var(--text); font-size:13px; outline:none; }
-  .msearch input:focus{ border-color:#c084fc; }
-  .msearch button{ padding:0 16px; border-radius:12px; border:none; background:linear-gradient(135deg,#7c3aed,#a855f7); color:#fff; font-weight:700; cursor:pointer; }
-  .mrow{ display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:12px; cursor:pointer; }
-  .mrow:hover{ background:var(--panel-2); }
-  .mrow.playing{ background:rgba(192,132,252,.12); }
-  .mrow img{ width:46px; height:46px; border-radius:8px; object-fit:cover; flex-shrink:0; }
-  .mrow .mi{ flex:1; min-width:0; }
-  .mrow .mi b{ display:block; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .mrow .mi span{ font-size:10.5px; color:var(--muted); }
-  .mrow .ma{ display:flex; gap:4px; flex-shrink:0; }
-  .mrow .ma button{ background:none; border:none; cursor:pointer; font-size:15px; padding:4px; }
-  .msection{ font-size:11px; font-weight:800; letter-spacing:1.5px; text-transform:uppercase; color:#c084fc; margin:16px 0 8px; font-family:'JetBrains Mono',monospace; }
-  .nowbar{ position:fixed; left:0; right:0; bottom:0; z-index:60; background:rgba(20,23,29,.97); border-top:1px solid rgba(192,132,252,.3);
-    padding:8px 14px; display:none; align-items:center; gap:12px; backdrop-filter:blur(8px); }
+  /* ═══════════ MUSIC PLAYER — spotify-style ═══════════ */
+  #viewMusic .viewpage{ background:#121212; padding-bottom:110px; }
+  .sp-head{ padding:4px 0 6px; }
+  .sp-greet{ color:#fff; font-size:26px; font-weight:800; letter-spacing:-.5px; margin:8px 0 16px; }
+  .sp-search{ display:flex; align-items:center; gap:10px; background:#242424; border-radius:500px; padding:0 16px; height:46px; margin-bottom:14px; }
+  .sp-search:focus-within{ outline:2px solid #fff; }
+  .sp-search input{ flex:1; background:none; border:none; outline:none; color:#fff; font-size:14px; font-family:'Inter',sans-serif; }
+  .sp-search input::placeholder{ color:#a7a7a7; }
+  .sp-ico{ font-size:15px; opacity:.8; }
+  .sp-chips{ display:flex; gap:8px; overflow-x:auto; scrollbar-width:none; margin-bottom:6px; }
+  .sp-chips::-webkit-scrollbar{ display:none; }
+  .sp-chip{ background:#232323; color:#eaeaea; border:none; border-radius:500px; padding:6px 16px; font-size:13px; font-weight:600; cursor:pointer; white-space:nowrap; }
+  .sp-chip.on{ background:#eaeaea; color:#000; }
+  .sp-sec{ color:#fff; font-size:19px; font-weight:800; margin:18px 0 12px; letter-spacing:-.3px; }
+  .sp-empty{ color:#a7a7a7; font-size:13px; text-align:center; padding:44px 20px; }
+  .sp-row{ display:grid; grid-template-columns:16px 48px 1fr auto; align-items:center; gap:12px; padding:8px 10px; border-radius:6px; cursor:pointer; }
+  .sp-row:hover{ background:#1a1a1a; }
+  .sp-row.playing .sp-t{ color:#1ed760; }
+  .sp-idx{ color:#a7a7a7; font-size:13px; text-align:center; font-variant-numeric:tabular-nums; }
+  .sp-cov{ width:48px; height:48px; border-radius:4px; object-fit:cover; background:#282828; }
+  .sp-t{ color:#fff; font-size:14px; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .sp-a{ color:#b3b3b3; font-size:12px; margin-top:3px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .sp-side{ display:flex; align-items:center; gap:14px; color:#b3b3b3; }
+  .sp-fav{ background:none; border:none; cursor:pointer; font-size:15px; padding:4px; filter:grayscale(1) opacity(.6); }
+  .sp-fav.on{ filter:none; }
+  .sp-dur{ font-size:13px; font-variant-numeric:tabular-nums; }
+  .sp-plgrid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:14px; margin-top:6px; }
+  .sp-card{ background:#181818; border-radius:8px; padding:14px; cursor:pointer; transition:background .2s; }
+  .sp-card:hover{ background:#282828; }
+  .sp-cardcov{ width:100%; aspect-ratio:1; border-radius:6px; background:#282828; display:flex; align-items:center; justify-content:center; font-size:40px; overflow:hidden; margin-bottom:12px; }
+  .sp-cardcov img{ width:100%; height:100%; object-fit:cover; }
+  .sp-cardt{ color:#fff; font-size:14px; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .sp-cardd{ color:#b3b3b3; font-size:12px; margin-top:4px; }
+  .sp-newpl{ background:#181818; color:#fff; border:1px dashed #535353; border-radius:8px; padding:12px; width:100%; font-weight:700; font-size:13px; cursor:pointer; margin:6px 0 14px; }
+  .sp-newpl:hover{ background:#282828; }
+
+  /* ═══ mini now-bar (spotify) ═══ */
+  .nowbar{ position:fixed; left:0; right:0; bottom:0; z-index:60; background:#181818; border-top:1px solid #000;
+    height:70px; padding:0 12px; display:none; align-items:center; gap:12px; }
   .nowbar.show{ display:flex; }
-  .nowbar img{ width:44px; height:44px; border-radius:8px; object-fit:cover; }
-  .nowbar .ni{ flex:1; min-width:0; }
-  .nowbar .ni b{ display:block; font-size:12.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .nowbar .ni span{ font-size:10px; color:var(--muted); font-family:'JetBrains Mono',monospace; }
-  .nowbar button{ background:var(--panel-2); border:1px solid var(--line); color:#fff; width:36px; height:36px; border-radius:50%; cursor:pointer; font-size:14px; }
-  .nowbar button.main{ background:linear-gradient(135deg,#7c3aed,#a855f7); border:none; width:44px; height:44px; font-size:16px; }
-  .nprog{ position:absolute; top:0; left:0; height:3px; background:linear-gradient(90deg,#a855f7,#c084fc); width:0%; }
-  .lyricsbox{ margin-top:12px; background:var(--panel-2); border:1px solid var(--line); border-radius:12px; padding:14px;
-    font-size:12.5px; line-height:1.7; max-height:260px; overflow-y:auto; white-space:pre-wrap; color:var(--text); }
+  .nprog{ position:absolute; top:0; left:0; height:3px; background:#1ed760; width:0%; }
+  .nb-left{ display:flex; align-items:center; gap:10px; min-width:0; flex:1; cursor:pointer; }
+  .nb-left img{ width:48px; height:48px; border-radius:4px; object-fit:cover; background:#282828; }
+  .nb-left b{ display:block; color:#fff; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .nb-left span{ display:block; color:#b3b3b3; font-size:11px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .nb-mid{ display:flex; align-items:center; gap:14px; flex-shrink:0; }
+  .nb-mid button{ background:none; border:none; color:#b3b3b3; font-size:15px; cursor:pointer; padding:6px; }
+  .nb-mid button:hover{ color:#fff; }
+  .nb-mid .main{ width:34px; height:34px; border-radius:50%; background:#fff; color:#000; font-size:13px; display:flex; align-items:center; justify-content:center; }
+  .nb-mid .main:hover{ transform:scale(1.06); color:#000; }
+
+  /* ═══ NOW PLAYING FULLSCREEN — kartuMusik (port play.js v6) ═══ */
+  .npov{ position:fixed; inset:0; z-index:120; display:none; overflow-y:auto; background:#121212; }
+  .npov.show{ display:block; }
+  .np-wrap{ min-height:100vh; display:flex; align-items:center; justify-content:center; padding:14px; }
+  .np-card{ position:relative; width:100%; max-width:430px; padding:16px; border-radius:18px;
+    background:linear-gradient(180deg,#3b2a6b 0%,#121212 65%,#0e0e10 100%);
+    border:1px solid rgba(255,255,255,.1); box-shadow:0 12px 32px rgba(0,0,0,.7); overflow:hidden; }
+  .np-close{ position:absolute; top:12px; left:12px; z-index:5; background:rgba(0,0,0,.35); border:none; color:#fff;
+    width:34px; height:34px; border-radius:50%; font-size:16px; cursor:pointer; }
+  .np-kicker{ color:rgba(255,255,255,.6); font:bold 9px -apple-system,sans-serif; letter-spacing:1.4px;
+    text-transform:uppercase; text-align:center; margin:6px 0 14px; }
+  .np-coverbox{ width:100%; max-width:min(300px,72vw); aspect-ratio:1/1; margin:0 auto 14px; border-radius:10px; overflow:hidden;
+    background:#141416; box-shadow:0 10px 28px rgba(0,0,0,.65); transition:transform .3s ease; }
+  .np-coverbox.playing{ transform:scale(1.02); }
+  .np-coverbox img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .np-inforow{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:2px; }
+  .np-title{ color:#fff; font:bold 16px -apple-system,sans-serif; line-height:1.25; overflow:hidden; text-overflow:ellipsis; flex:1; min-width:0; }
+  .np-artist{ margin-top:3px; color:rgba(255,255,255,.6); font:12px -apple-system,sans-serif; overflow:hidden; text-overflow:ellipsis; }
+  .np-like{ background:transparent; border:none; color:rgba(255,255,255,.7); cursor:pointer; padding:6px; font-size:17px; flex:none; }
+  .np-like.liked{ color:#1ed760; }
+  .np-lyricarea{ position:relative; z-index:2; height:58px; overflow:hidden; margin:10px 0 4px;
+    -webkit-mask-image:linear-gradient(180deg,transparent 0%,#000 22%,#000 78%,transparent 100%);
+    mask-image:linear-gradient(180deg,transparent 0%,#000 22%,#000 78%,transparent 100%); }
+  .np-lyricscroll{ position:absolute; left:0; right:0; top:0; padding:14px 4px;
+    transition:transform .4s cubic-bezier(.2,.8,.2,1),opacity .5s ease; }
+  .np-lyline{ margin:4px 0; color:rgba(255,255,255,.32); font:bold 12.5px -apple-system,sans-serif; line-height:1.25;
+    text-align:left; transition:color .3s ease,transform .3s ease; transform:scale(.97); transform-origin:left center; }
+  .np-lyline.active{ color:#fff; transform:scale(1.03); text-shadow:0 0 14px rgba(255,255,255,.45); }
+  .np-progarea{ margin:8px 0 2px; cursor:pointer; padding:8px 0; touch-action:none; }
+  .np-prog{ position:relative; width:100%; height:4px; border-radius:2px; background:rgba(255,255,255,.18); }
+  .np-progbar{ position:absolute; left:0; top:0; height:100%; width:0%; border-radius:2px; background:#fff; }
+  .np-progdot{ position:absolute; left:0%; top:50%; width:10px; height:10px; transform:translate(-50%,-50%);
+    border-radius:50%; background:#fff; box-shadow:0 0 6px rgba(0,0,0,.4); }
+  .np-times{ display:flex; justify-content:space-between; margin-top:5px; color:rgba(255,255,255,.45); font:10px monospace; }
+  .np-ctrls{ display:flex; align-items:center; justify-content:space-between; margin-top:8px; }
+  .np-cbtn{ background:transparent; border:none; color:rgba(255,255,255,.75); cursor:pointer; padding:6px; font-size:15px; border-radius:50%; }
+  .np-cbtn:active{ transform:scale(.88); color:#fff; }
+  .np-cbtn.on{ color:#1ed760; }
+  .np-playbtn{ width:52px; height:52px; border-radius:50%; background:#fff; color:#000; border:none; cursor:pointer;
+    font-size:17px; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 14px rgba(0,0,0,.5); }
+  .np-playbtn:active{ transform:scale(.92); }
+  .np-dl{ display:block; text-align:center; text-decoration:none; border:1.5px solid rgba(255,255,255,.22);
+    color:rgba(255,255,255,.8); font:bold 11px -apple-system,sans-serif; border-radius:10px; padding:9px; margin-top:8px; }
   .plitem{ display:flex; align-items:center; gap:8px; padding:10px 12px; background:var(--panel-2); border:1px solid var(--line); border-radius:12px; margin-bottom:8px; cursor:pointer; }
   .plitem b{ flex:1; font-size:13px; }
   .plitem span{ font-size:10px; color:var(--muted); font-family:'JetBrains Mono',monospace; }
@@ -636,15 +699,49 @@
   <button class="drawer-new" id="newSessBtn">＋ sesi baru</button>
 </div>
 
-<!-- ═══ NOW PLAYING (music) ═══ -->
+<!-- ═══ MINI PLAYER (spotify bar) ═══ -->
 <div class="nowbar" id="nowBar">
   <div class="nprog" id="nowProg"></div>
-  <img id="nowThumb" src="" alt="">
-  <div class="ni"><b id="nowTitle">-</b><span id="nowArtist">-</span></div>
-  <button id="nowPrev">⏮</button>
-  <button class="main" id="nowPlay">▶</button>
-  <button id="nowNext">⏭</button>
-  <button id="nowLyrics" title="lirik">📄</button>
+  <div class="nb-left" id="nbOpen">
+    <img id="nowThumb" src="" alt="">
+    <div style="min-width:0"><b id="nowTitle">-</b><span id="nowArtist">-</span></div>
+  </div>
+  <div class="nb-mid">
+    <button id="nowPrev">⏮</button>
+    <button class="main" id="nowPlay">▶</button>
+    <button id="nowNext">⏭</button>
+  </div>
+</div>
+
+<!-- ═══ NOW PLAYING FULLSCREEN — kartuMusik (play.js v6 port) ═══ -->
+<div class="npov" id="npOv">
+  <div class="np-wrap">
+    <div class="np-card" id="npCard">
+      <button class="np-close" id="npClose">✕</button>
+      <div class="np-kicker">▶ IFXRQ MUSIC</div>
+      <div class="np-coverbox" id="npCoverBox"><img id="npCover" src="" alt="cover"></div>
+      <div class="np-inforow">
+        <div style="min-width:0;flex:1">
+          <div class="np-title" id="npTitle">-</div>
+          <div class="np-artist" id="npArtist">-</div>
+        </div>
+        <button class="np-like" id="npLike">🤍</button>
+      </div>
+      <div class="np-lyricarea" id="npLyricBox"><div class="np-lyricscroll" id="npLyricScroll"></div></div>
+      <div class="np-progarea" id="npProgArea">
+        <div class="np-prog"><div class="np-progbar" id="npProgBar"></div><div class="np-progdot" id="npProgDot"></div></div>
+        <div class="np-times"><span id="npTCur">0:00</span><span id="npTDur">0:00</span></div>
+      </div>
+      <div class="np-ctrls">
+        <button class="np-cbtn" id="npLoop" title="ulangi">🔁</button>
+        <button class="np-cbtn" id="npBack10" title="-10s">⏪</button>
+        <button class="np-playbtn" id="npPlay">▶</button>
+        <button class="np-cbtn" id="npFwd10" title="+10s">⏩</button>
+        <button class="np-cbtn" id="npLike2">🤍</button>
+      </div>
+      <a class="np-dl" id="npDl" href="#" target="_blank" rel="noopener">⬇️ Unduh lagu full (MP3)</a>
+    </div>
+  </div>
 </div>
 <audio id="mAudio" preload="none"></audio>
 
@@ -2301,9 +2398,11 @@ function gameWin(msg, answers, deskripsi){
 const _origStartGame = startGame;
 startGame = function(key){ window.__gcur = key; _origStartGame(key); };
 
-/* ─────────── MUSIC PLAYER ─────────── */
+/* ─────────── MUSIC PLAYER — spotify-style + kartuMusik (port play.js v6) ─────────── */
 const mAudio = $('mAudio');
-let mQueue = [], mIndex = -1, mTab = 'cari', mSearchResults = [], mMusicData = { favorites: [], playlists: {}, top: [] };
+let mQueue = [], mIndex = -1, mTab = 'cari', mSearchResults = [];
+let mMusicData = { favorites: [], playlists: {}, top: [] };
+let npLyric = [], npLyEls = [], npLyActive = -1, npLoopOn = false;
 const mToken = () => localStorage.getItem(AUTH_TOKEN_KEY) || '';
 
 function fmtDur(s){ s = Number(s) || 0; return Math.floor(s/60) + ':' + String(Math.floor(s%60)).padStart(2,'0'); }
@@ -2317,176 +2416,304 @@ async function musicPost(body){
 async function musicLoadData(){
   try { mMusicData = await musicPost({ action:'data' }); } catch(_e){}
 }
-function musicView(){
-  renderMusicPage();
-}
+function musicView(){ renderMusicPage(); }
+
+function greetTxt(){ const h = new Date().getHours();
+  return h < 4 ? 'Selamat dini hari' : h < 11 ? 'Selamat pagi' : h < 15 ? 'Selamat siang' : h < 19 ? 'Selamat sore' : 'Selamat malam'; }
+
 function renderMusicPage(){
   const page = $('musicPage');
-  const tabs = [['cari','🔍 Cari'],['favorit','❤️ Favorit'],['playlist','📂 Playlist'],['top','🔥 Top Lagu']];
-  let body = '';
+  const tabs = [['cari','Cari'],['favorit','Favorit'],['playlist','Playlist'],['top','Top Lagu']];
+  page.innerHTML = `
+    <div class="sp-head">
+      <div class="sp-greet">${greetTxt()}</div>
+      <div class="sp-search"><span class="sp-ico">🔍</span><input id="mQ" placeholder="Apa yang mau kamu putar?" value="${escapeHtml(window.__mq || '')}" autocomplete="off"></div>
+      <div class="sp-chips">${tabs.map(([k, l]) => `<div class="sp-chip ${mTab === k ? 'on' : ''}" data-t="${k}">${l}</div>`).join('')}</div>
+    </div>
+    <div id="mBody"></div>`;
+  page.querySelectorAll('.sp-chip').forEach((el) => el.addEventListener('click', () => { mTab = el.dataset.t; renderMusicPage(); }));
   if (mTab === 'cari') {
-    body = `<div class="msearch">
-        <input id="mQ" placeholder="cari judul lagu / artis..." value="${escapeHtml(window.__mq || '')}">
-        <button id="mGo">Cari</button>
-      </div><div id="mList">${mSearchResults.length ? '' : '<div style="color:var(--muted);text-align:center;padding:30px;font-size:12px;">ketik judul lagu buat mulai 🔍</div>'}</div>`;
-  } else if (mTab === 'favorit') {
-    body = `<div class="msection">❤️ lagu favorit (${mMusicData.favorites.length})</div>
-      <div id="mList">${mMusicData.favorites.length ? '' : '<div style="color:var(--muted);text-align:center;padding:30px;font-size:12px;">belum ada favorit — tap ❤️ di lagu</div>'}</div>`;
-  } else if (mTab === 'playlist') {
-    const pls = Object.entries(mMusicData.playlists || {});
-    body = `<div class="msection">📂 playlist lu (${pls.length})</div>
-      <button class="gbtn" id="mNewPl" style="width:100%;margin-bottom:10px;">＋ bikin playlist</button>
-      <div id="mPls">${pls.length ? pls.map(([n, s]) => `
-        <div class="plitem" data-pl="${escapeHtml(n)}"><b>📂 ${escapeHtml(n)}</b><span>${s.length} lagu</span></div>`).join('') : '<div style="color:var(--muted);text-align:center;padding:20px;font-size:12px;">belum ada playlist</div>'}</div><div id="mList"></div>`;
-  } else {
-    body = `<div class="msection">🔥 paling sering diputar lu</div>
-      <div id="mList">${(mMusicData.top || []).length ? '' : '<div style="color:var(--muted);text-align:center;padding:30px;font-size:12px;">belum ada yang diputar — mulai dulu 🎵</div>'}</div>`;
-  }
-  page.innerHTML = `<div class="mtabs">${tabs.map(([k, l]) => `<div class="mtab ${mTab === k ? 'on' : ''}" data-t="${k}">${l}</div>`).join('')}</div>${body}`;
-  page.querySelectorAll('.mtab').forEach((el) => el.addEventListener('click', () => { mTab = el.dataset.t; renderMusicPage(); }));
-  if (mTab === 'cari') {
-    $('mGo').onclick = musicSearch;
+    if (mSearchResults.length) renderSongList(mSearchResults);
+    else $('mBody').innerHTML = '<div class="sp-empty">ketik judul lagu di atas buat mulai mencari 🎧</div>';
     $('mQ').addEventListener('keydown', (e) => { if (e.key === 'Enter') musicSearch(); });
-    renderSongList('mList', mSearchResults);
-  } else if (mTab === 'favorit') renderSongList('mList', mMusicData.favorites);
-  else if (mTab === 'top') renderSongList('mList', (mMusicData.top || []));
-  else {
-    if ($('mNewPl')) $('mNewPl').onclick = async () => {
-      const n = prompt('nama playlist:'); if (!n) return;
-      await musicPost({ action:'playlist-create', name: n.trim() });
-      await musicLoadData(); renderMusicPage();
-    };
-    page.querySelectorAll('.plitem').forEach((el) => el.addEventListener('click', () => openPlaylist(el.dataset.pl)));
+  } else if (mTab === 'favorit') {
+    if (!(mMusicData.favorites || []).length) $('mBody').innerHTML = '<div class="sp-empty">belum ada lagu favorit — tap 🤍 di lagunya</div>';
+    else renderSongList(mMusicData.favorites);
+  } else if (mTab === 'top') {
+    if (!(mMusicData.top || []).length) $('mBody').innerHTML = '<div class="sp-empty">belum ada yang diputar — top lagu dari <b>semua user</b> bakal muncul di sini 🔥</div>';
+    else { $('mBody').innerHTML = '<div class="sp-sec">🔥 Top lagu — terpopuler di kalangan semua user</div>'; renderSongList(mMusicData.top, true); }
+  } else {
+    renderPlaylistTab();
   }
 }
 async function musicSearch(){
   const q = $('mQ').value.trim();
   if (!q) return;
   window.__mq = q;
-  $('mList').innerHTML = '<div style="color:var(--muted);text-align:center;padding:20px;font-family:JetBrains Mono,monospace;font-size:11px;">⏳ nyari...</div>';
+  $('mBody').innerHTML = '<div class="sp-empty">⏳ nyari...</div>';
   try{
     const r = await fetch('/api/music/search?q=' + encodeURIComponent(q));
     const d = await r.json();
     mSearchResults = d.items || [];
-    renderSongList('mList', mSearchResults);
-  }catch(e){ $('mList').innerHTML = '<div style="color:#ff5c5c;text-align:center;padding:20px;">' + e.message + '</div>'; }
+    if (mTab === 'cari') { if (!mSearchResults.length) $('mBody').innerHTML = '<div class="sp-empty">gak ketemu 😔 coba kata kunci lain</div>'; else renderSongList(mSearchResults); }
+  }catch(e){ $('mBody').innerHTML = '<div class="sp-empty">' + e.message + '</div>'; }
 }
-function songRow(s, opts = {}){
-  const fav = (mMusicData.favorites || []).some((f) => f.id === s.id);
-  const playing = mIndex >= 0 && mQueue[mIndex] && mQueue[mIndex].id === s.id;
-  return `<div class="mrow ${playing ? 'playing' : ''}" data-id="${s.id}">
-    <img src="${s.thumb || ''}" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.visibility='hidden'">
-    <div class="mi"><b>${escapeHtml(s.title || '-')}</b><span>${escapeHtml(s.artist || '-')} · ${fmtDur(s.duration)}</span></div>
-    <div class="ma">
-      ${opts.noFav ? '' : `<button data-fav="${s.id}" title="favorit">${fav ? '❤️' : '🤍'}</button>`}
-      <button data-pl="${s.id}" title="tambah ke playlist">＋</button>
-      <button data-play="${s.id}" title="putar">${playing ? '🔊' : '▶'}</button>
-    </div></div>`;
-}
-function renderSongList(elId, list, opts = {}){
-  const el = $(elId);
-  if (!el) return;
-  if (!list || !list.length) { if (elId === 'mList') el.innerHTML = '<div style="color:var(--muted);text-align:center;padding:20px;font-size:12px;">kosong</div>'; return; }
-  el.innerHTML = list.map((s) => songRow(s, opts)).join('');
-  el.querySelectorAll('[data-play]').forEach((b) => b.addEventListener('click', () => {
-    const i = list.findIndex((x) => x.id === b.dataset.play);
-    playSong(list, i);
+function isFav(id){ return (mMusicData.favorites || []).some((f) => f.id === id); }
+function renderSongList(list, numbered){
+  const body = $('mBody');
+  const isPlaying = (id) => mIndex >= 0 && mQueue[mIndex] && mQueue[mIndex].id === id;
+  const rows = list.map((s, i) => `
+    <div class="sp-row ${isPlaying(s.id) ? 'playing' : ''}" data-i="${i}">
+      <div class="sp-idx">${isPlaying(s.id) ? '▶' : (numbered ? i + 1 : '♪')}</div>
+      <img class="sp-cov" src="${s.thumb || ''}" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.visibility='hidden'">
+      <div style="min-width:0"><div class="sp-t">${escapeHtml(s.title || '-')}</div><div class="sp-a">${escapeHtml(s.artist || '-')}</div></div>
+      <div class="sp-side">
+        <button class="sp-fav ${isFav(s.id) ? 'on' : ''}" data-fav="${i}">${isFav(s.id) ? '❤️' : '🤍'}</button>
+        <span class="sp-dur">${fmtDur(s.duration)}</span>
+      </div>
+    </div>`).join('');
+  const div = document.createElement('div');
+  div.innerHTML = rows;
+  body.appendChild(div);
+  div.querySelectorAll('.sp-row').forEach((el) => el.addEventListener('click', (e) => {
+    if (e.target.closest('.sp-fav')) return;
+    playSong(list, +el.dataset.i, true); /* pencet lagu → masuk kartuMusik */
   }));
-  el.querySelectorAll('[data-fav]').forEach((b) => b.addEventListener('click', async (e) => {
+  div.querySelectorAll('.sp-fav').forEach((b) => b.addEventListener('click', async (e) => {
     e.stopPropagation();
-    const s = list.find((x) => x.id === b.dataset.fav);
-    const d = await musicPost({ action:'fav', song: s });
+    const s = list[+b.dataset.fav];
+    await musicPost({ action:'fav', song: s });
     await musicLoadData();
     renderMusicPage();
+    syncNpLike();
   }));
-  el.querySelectorAll('[data-pl]').forEach((b) => b.addEventListener('click', async (e) => {
-    e.stopPropagation();
-    const s = list.find((x) => x.id === b.dataset.pl);
-    const pls = Object.keys(mMusicData.playlists || {});
-    if (!pls.length) {
-      const n = prompt('belum ada playlist — nama playlist baru:'); if (!n) return;
-      await musicPost({ action:'playlist-create', name: n.trim() });
-      await musicPost({ action:'playlist-add', name: n.trim(), song: s });
-    } else {
-      const n = prompt('tambah ke playlist (nama persis):\n' + pls.join('\n'));
-      if (!n) return;
-      try { await musicPost({ action:'playlist-add', name: n.trim(), song: s }); } catch(err){ alert(err.message); return; }
-    }
-    await musicLoadData();
-    alert('✅ ditambahin ke playlist');
-  }));
-  el.querySelectorAll('.mrow').forEach((r) => r.addEventListener('click', (e) => {
-    if (e.target.closest('button')) return;
-    const i = list.findIndex((x) => x.id === r.dataset.id);
-    playSong(list, i);
-  }));
+}
+function renderPlaylistTab(){
+  const body = $('mBody');
+  const pls = Object.entries(mMusicData.playlists || {});
+  body.innerHTML = `<button class="sp-newpl" id="mNewPl">＋ Buat playlist</button>` +
+    (pls.length ? `<div class="sp-plgrid">${pls.map(([n, s]) => `
+      <div class="sp-card" data-pl="${escapeHtml(n)}">
+        <div class="sp-cardcov">${s[0] && s[0].thumb ? `<img src="${s[0].thumb}" loading="lazy">` : '📂'}</div>
+        <div class="sp-cardt">${escapeHtml(n)}</div>
+        <div class="sp-cardd">${s.length} lagu</div>
+      </div>`).join('')}</div>`
+    : '<div class="sp-empty">belum ada playlist — buat yang pertama!</div>');
+  $('mNewPl').onclick = async () => {
+    const n = prompt('nama playlist:'); if (!n) return;
+    await musicPost({ action:'playlist-create', name: n.trim() });
+    await musicLoadData(); renderMusicPage();
+  };
+  body.querySelectorAll('.sp-card').forEach((el) => el.addEventListener('click', () => openPlaylist(el.dataset.pl)));
 }
 function openPlaylist(name){
   const songs = mMusicData.playlists[name] || [];
-  mTab = 'playlist';
   renderMusicPage();
-  const host = $('mList');
-  host.innerHTML = `<div class="msection">📂 ${escapeHtml(name)} (${songs.length}) <button data-delpl style="float:right;background:none;border:1px solid #ff5c5c;color:#ff5c5c;border-radius:6px;font-size:9px;padding:2px 6px;cursor:pointer;">hapus playlist</button></div>`;
-  renderSongList('mList', songs, {});
-  const del = host.querySelector('[data-delpl]');
+  const body = $('mBody');
+  body.insertAdjacentHTML('afterbegin',
+    `<div class="sp-sec" style="display:flex;align-items:center;gap:10px">📂 ${escapeHtml(name)}
+      <button data-delpl style="margin-left:auto;background:none;border:1px solid #ff5c5c;color:#ff5c5c;border-radius:6px;font-size:10px;padding:3px 8px;cursor:pointer;">hapus</button></div>`);
+  if (!songs.length) body.insertAdjacentHTML('beforeend', '<div class="sp-empty">playlist kosong</div>');
+  else renderSongList(songs);
+  const del = body.querySelector('[data-delpl]');
   if (del) del.onclick = async () => {
     if (!confirm('hapus playlist "' + name + '"?')) return;
     await musicPost({ action:'playlist-delete', name });
-    await musicLoadData();
-    renderMusicPage();
+    await musicLoadData(); renderMusicPage();
   };
 }
-async function playSong(list, i){
+
+/* ── warna dominan dari cover (kartu nyesuaian album, kayak play.js) ── */
+function darken(hex, f){
+  const n = parseInt(hex.slice(1), 16);
+  const r = Math.round(((n >> 16) & 255) * f), g = Math.round(((n >> 8) & 255) * f), b = Math.round((n & 255) * f);
+  return '#' + [r, g, b].map((v) => v.toString(16).padStart(2, '0')).join('');
+}
+function dominantColor(url){
+  return new Promise((res) => {
+    try{
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        try{
+          const c = document.createElement('canvas'); c.width = c.height = 24;
+          const x = c.getContext('2d'); x.drawImage(img, 0, 0, 24, 24);
+          const d = x.getImageData(0, 0, 24, 24).data;
+          let r = 0, g = 0, b = 0, n = 0;
+          for (let i = 0; i < d.length; i += 4) {
+            const mx = Math.max(d[i], d[i+1], d[i+2]), mn = Math.min(d[i], d[i+1], d[i+2]);
+            if (mx - mn > 28 && mx > 60) { r += d[i]; g += d[i+1]; b += d[i+2]; n++; }
+          }
+          if (!n) return res('#3b2a6b');
+          res('#' + [r, g, b].map((v) => Math.round(v / n).toString(16).padStart(2, '0')).join(''));
+        }catch(e){ res('#3b2a6b'); }
+      };
+      img.onerror = () => res('#3b2a6b');
+      img.src = url;
+    }catch(e){ res('#3b2a6b'); }
+  });
+}
+function applyNpBg(hex){
+  $('npCard').style.background = `linear-gradient(180deg, ${darken(hex, 0.68)} 0%, #121212 65%, #0e0e10 100%)`;
+}
+
+/* ── lirik sinkron (port play.js: LRC → baris aktif scroll + mask) ── */
+function parseLRC(lrc){
+  const out = [];
+  for (const line of String(lrc).split('\n')) {
+    const tags = line.match(/\[(\d+):(\d+(?:[.:]\d+)?)\]/g);
+    const text = line.replace(/\[[^\]]*\]/g, '').trim();
+    if (!tags) continue;
+    for (const tag of tags) {
+      const m = tag.match(/\[(\d+):(\d+(?:[.:]\d+)?)\]/);
+      out.push([Math.round(+m[1] * 60000 + parseFloat(m[2].replace(':', '.')) * 1000), text]);
+    }
+  }
+  return out.sort((a, b) => a[0] - b[0]);
+}
+function cleanTrackName(s){
+  return String(s || '')
+    .replace(/\((?:official|lyric|video|audio|mv|visualizer|lirik)[^)]*\)/gi, '')
+    .replace(/\[(?:official|lyric|video|audio|mv|visualizer|lirik)[^\]]*\]/gi, '')
+    .replace(/\b(?:official|lyrics?|lirik|music\s*video|mv)\b/gi, '')
+    .replace(/\s{2,}/g, ' ').replace(/^[-\s]+|[-\s]+$/g, '').trim();
+}
+async function loadLyrics(s){
+  npLyric = []; npLyEls = []; npLyActive = -1; renderNpLyrics();
+  try{
+    const raw = cleanTrackName(s.title);
+    const parts = raw.split(' - ').map((x) => x.trim()).filter(Boolean);
+    const ups = (s.artist || '').replace(/ - Topic$/i, '');
+    /* judul YT sering "JUDUL - ARTIS ..." / "ARTIS - JUDUL ..." — coba beberapa kombinasi */
+    const tries = [];
+    if (parts.length > 1) {
+      tries.push([parts.slice(1).join(' - '), parts[0]]);   /* ARTIS - JUDUL */
+      tries.push([parts[0], parts.slice(1).join(' - ')]);   /* JUDUL - ARTIS */
+    }
+    tries.push([raw, ups]);
+    tries.push([cleanTrackName(s.title), ups]);
+    for (const [t, a] of tries) {
+      if (!t) continue;
+      const r = await fetch('/api/music/lyrics?title=' + encodeURIComponent(t) + '&artist=' + encodeURIComponent(a));
+      if (!r.ok) continue;
+      const d = await r.json();
+      if (!d.ok) continue;
+      npLyric = d.synced ? parseLRC(d.synced) : String(d.lyrics).split('\n').filter(Boolean).map((x, i) => [i * 4000, x]);
+      renderNpLyrics();
+      return;
+    }
+  }catch(_e){}
+}
+function renderNpLyrics(){
+  const box = $('npLyricScroll');
+  box.innerHTML = npLyric.map((l) => '<div class="np-lyline">' + (escapeHtml(l[1]) || '&nbsp;') + '</div>').join('');
+  box.style.transform = 'translateY(0px)';
+  npLyEls = [...box.children];
+  npLyActive = -1;
+}
+function npUpdLyric(){
+  if (!npLyEls.length) return;
+  const ms = mAudio.currentTime * 1000;
+  let i = -1;
+  for (let k = 0; k < npLyric.length; k++) { if (npLyric[k][0] <= ms) i = k; else break; }
+  if (i === npLyActive) return;
+  if (npLyEls[npLyActive]) npLyEls[npLyActive].classList.remove('active');
+  npLyActive = i;
+  const el = npLyEls[i];
+  if (el) {
+    el.classList.add('active');
+    $('npLyricScroll').style.transform = 'translateY(' + ($('npLyricBox').clientHeight / 2 - (el.offsetTop + el.offsetHeight / 2)) + 'px)';
+  }
+}
+function syncNpLike(){
+  const s = mQueue[mIndex];
+  const on = s ? isFav(s.id) : false;
+  $('npLike').textContent = on ? '❤️' : '🤍';
+  $('npLike').classList.toggle('liked', on);
+  $('npLike2').textContent = on ? '❤️' : '🤍';
+  $('npLike2').classList.toggle('on', on);
+}
+
+/* ── putar lagu ── */
+async function playSong(list, i, openCard){
   mQueue = list; mIndex = i;
   const s = list[i];
   if (!s) return;
   $('nowBar').classList.add('show');
+  $('nowThumb').src = s.thumb || '';
   $('nowTitle').textContent = s.title || '-';
   $('nowArtist').textContent = s.artist || '-';
-  $('nowThumb').src = s.thumb || '';
   $('nowPlay').textContent = '⏳';
+  $('npCover').src = s.thumb || '';
+  $('npTitle').textContent = s.title || '-';
+  $('npArtist').textContent = s.artist || '-';
+  $('npTCur').textContent = '0:00';
+  $('npTDur').textContent = fmtDur(s.duration);
+  $('npProgBar').style.width = '0%';
+  $('npProgDot').style.left = '0%';
+  applyNpBg('#3b2a6b');
+  syncNpLike();
+  loadLyrics(s);
+  if (openCard) $('npOv').classList.add('show');
   try{
     const r = await fetch('/api/music/stream?id=' + encodeURIComponent(s.id));
     const d = await r.json();
     if (!d.ok) throw new Error(d.error || 'gagal stream');
     mAudio.src = d.url;
+    mAudio.loop = npLoopOn;
     await mAudio.play();
     $('nowPlay').textContent = '⏸';
-    musicPost({ action:'play', song: s }).then(() => musicLoadData()).catch(()=>{});
-    renderMusicPage();
+    $('npPlay').textContent = '⏸';
+    $('npCoverBox').classList.add('playing');
+    $('npDl').href = d.url;
+    if (d.duration) $('npTDur').textContent = fmtDur(d.duration);
+    musicPost({ action:'play', song: s }).then(() => musicLoadData()).catch(() => {});
+    dominantColor(s.thumb).then(applyNpBg);
   }catch(e){
     $('nowPlay').textContent = '▶';
     alert('gagal putar: ' + e.message);
   }
 }
-$('nowPlay').addEventListener('click', () => {
-  if (mAudio.paused) { mAudio.play(); $('nowPlay').textContent = '⏸'; }
-  else { mAudio.pause(); $('nowPlay').textContent = '▶'; }
-});
-$('nowNext').addEventListener('click', () => { if (mIndex < mQueue.length - 1) playSong(mQueue, mIndex + 1); });
-$('nowPrev').addEventListener('click', () => { if (mIndex > 0) playSong(mQueue, mIndex - 1); });
-mAudio.addEventListener('timeupdate', () => {
-  if (mAudio.duration) $('nowProg').style.width = (mAudio.currentTime / mAudio.duration) * 100 + '%';
-});
-mAudio.addEventListener('ended', () => { if (mIndex < mQueue.length - 1) playSong(mQueue, mIndex + 1); });
-$('nowLyrics').addEventListener('click', async () => {
+function npTogglePlay(){
+  if (mAudio.paused) { mAudio.play(); $('nowPlay').textContent = '⏸'; $('npPlay').textContent = '⏸'; $('npCoverBox').classList.add('playing'); }
+  else { mAudio.pause(); $('nowPlay').textContent = '▶'; $('npPlay').textContent = '▶'; $('npCoverBox').classList.remove('playing'); }
+}
+$('nowPlay').addEventListener('click', npTogglePlay);
+$('npPlay').addEventListener('click', npTogglePlay);
+$('nowNext').addEventListener('click', () => { if (mIndex < mQueue.length - 1) playSong(mQueue, mIndex + 1, $('npOv').classList.contains('show')); });
+$('nowPrev').addEventListener('click', () => { if (mIndex > 0) playSong(mQueue, mIndex - 1, $('npOv').classList.contains('show')); });
+$('npLoop').addEventListener('click', () => { npLoopOn = !npLoopOn; mAudio.loop = npLoopOn; $('npLoop').classList.toggle('on', npLoopOn); });
+$('npBack10').addEventListener('click', () => { mAudio.currentTime = Math.max(0, mAudio.currentTime - 10); });
+$('npFwd10').addEventListener('click', () => { mAudio.currentTime = Math.min(mAudio.duration || 0, mAudio.currentTime + 10); });
+$('npClose').addEventListener('click', () => $('npOv').classList.remove('show'));
+$('nbOpen').addEventListener('click', () => $('npOv').classList.add('show'));
+async function npFavToggle(){
   const s = mQueue[mIndex];
   if (!s) return;
-  let box = document.getElementById('lyricsBox');
-  if (!box) {
-    box = document.createElement('div');
-    box.id = 'lyricsBox'; box.className = 'lyricsbox';
-    document.querySelector('.app').appendChild(box);
-  }
-  if (box.style.display === 'block') { box.style.display = 'none'; return; }
-  box.style.display = 'block';
-  box.textContent = '⏳ nyari lirik...';
-  try{
-    const art = (s.artist || '').replace(/ - Topic$/i, '');
-    const r = await fetch('/api/music/lyrics?title=' + encodeURIComponent(s.title) + '&artist=' + encodeURIComponent(art));
-    const d = await r.json();
-    box.textContent = d.ok ? d.lyrics : 'lirik gak ketemu 😔';
-  }catch(e){ box.textContent = 'gagal: ' + e.message; }
+  await musicPost({ action:'fav', song: s });
+  await musicLoadData();
+  syncNpLike();
+  renderMusicPage();
+}
+$('npLike').addEventListener('click', npFavToggle);
+$('npLike2').addEventListener('click', npFavToggle);
+$('npProgArea').addEventListener('pointerdown', (e) => {
+  if (!mAudio.duration) return;
+  const r = $('npProgArea').getBoundingClientRect();
+  const p = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width));
+  mAudio.currentTime = p * mAudio.duration;
+});
+mAudio.addEventListener('timeupdate', () => {
+  if (!mAudio.duration) return;
+  const p = (mAudio.currentTime / mAudio.duration) * 100;
+  $('npProgBar').style.width = p + '%';
+  $('npProgDot').style.left = p + '%';
+  $('npTCur').textContent = fmtDur(mAudio.currentTime);
+  $('nowProg').style.width = p + '%';
+  npUpdLyric();
+});
+mAudio.addEventListener('ended', () => {
+  if (mIndex < mQueue.length - 1) playSong(mQueue, mIndex + 1, $('npOv').classList.contains('show'));
 });
 
 /* ─────────── BOOT ─────────── */
