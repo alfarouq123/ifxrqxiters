@@ -13,7 +13,7 @@ module.exports = {
   },
   run: async ({ text }) => {
     if (!text.trim()) {
-      const e = new Error('kata kunci kosong, contoh: /carifitur foto');
+      const e = new Error('kata kunci kosong, contoh: @carifitur foto');
       e.status = 400;
       throw e;
     }
@@ -31,7 +31,7 @@ module.exports = {
     }
     let txt = `🔎 Ditemukan ${found.length} plugin untuk "${text.trim()}":\n\n`;
     for (const p of found) {
-      txt += `${p.emoji} */${p.name}* — ${p.description}\n`;
+      txt += `${p.emoji} *@${p.name}* — ${p.description}\n`;
     }
     return { type: 'text', text: txt };
   },

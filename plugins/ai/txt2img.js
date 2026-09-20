@@ -12,11 +12,16 @@ module.exports = {
   },
   run: async ({ text }) => {
     if (!text.trim()) { const e = new Error('deskripsi gambar kosong'); e.status = 400; throw e; }
-    const result = await Txt2Img2(text.trim());
-    if (!result.status || !result.url) {
-      throw new Error(result.error || 'gagal generate gambar, coba prompt lain');
+    let url = null;
+    try {
+      const result = await Txt2Img2(text.trim());
+      if (result.status && result.url) url = result.url;
+    } catch (_e) { /* fallback di bawah */ }
+    if (!url) {
+      // fallback: pollinations image (terbukti stabil)
+      url = `https://image.pollinations.ai/prompt/${encodeURIComponent(text.trim())}?width=768&height=768&nologo=true`;
     }
-    const { buffer, mime } = await getImage(result.url, { timeoutMs: 60000 });
+    const { buffer, mime } = await getImage(url, { timeoutMs: 90000 });
     return { type: 'image', buffer, mime, caption: `prompt: ${text.trim()}` };
   },
 };

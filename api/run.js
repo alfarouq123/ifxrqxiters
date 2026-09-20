@@ -56,35 +56,31 @@ module.exports = async (req, res) => {
 
     /* ── hasil buffer (image/audio/file) ── */
     if (result.buffer) {
-      let buf = Buffer.isBuffer(result.buffer) ? result.buffer : Buffer.from(result.buffer);
-      let mime = result.mime || 'application/octet-stream';
+      const buf = Buffer.isBuffer(result.buffer) ? result.buffer : Buffer.from(result.buffer);
+      const mime = result.mime || 'application/octet-stream';
 
-      /* gambar kegedean (mis. fakeff 8mb) → re-encode JPEG biar muat response serverless */
-      if (buf.length > MAX_OUT && mime.startsWith('image/')) {
+      /* file gede → upload ke host file sementara, balikin URL langsung.
+         gak ada kompresi — kualitas asli. (response serverless ke-limit 4.5mb,
+         lewat URL file gede sampe ±128mb tetep bisa dikirim) */
+      const MAX_INLINE = 3.5 * 1024 * 1024;
+      if (buf.length > MAX_INLINE) {
         try {
-          const { loadImage, createCanvas } = require('@napi-rs/canvas');
-          const toJpeg = async (img, maxW) => {
-            const scale = img.width > maxW ? maxW / img.width : 1;
-            const c = createCanvas(Math.max(1, Math.round(img.width * scale)), Math.max(1, Math.round(img.height * scale)));
-            c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-            return c.toBuffer('image/jpeg');
-          };
-          const img = await loadImage(buf);
-          let jb = await toJpeg(img, img.width);
-          if (jb.length > MAX_OUT) jb = await toJpeg(img, 1280);
-          if (jb.length > MAX_OUT) jb = await toJpeg(img, 900);
-          if (jb.length <= MAX_OUT) {
-            buf = jb;
-            mime = 'image/jpeg';
-          }
-        } catch (_e) { /* re-encode gagal → jatuh ke error size di bawah */ }
+          const { uploadToUguu } = require('../plugins/ai-core/edit');
+          const ext = (mime.split('/')[1] || 'bin').split('+')[0];
+          const url = await uploadToUguu(buf, result.filename || `ifxrq-${Date.now()}.${ext}`, mime);
+          return res.status(200).json({
+            type: result.type,
+            url,
+            mime,
+            filename: result.filename || null,
+            caption: result.caption || null,
+            big: true,
+          });
+        } catch (e) {
+          return res.status(502).json({ error: `file ${Math.round(buf.length / 1024 / 1024)}mb gagal di-upload ke host sementara (${e.message}). max ±128mb` });
+        }
       }
 
-      if (buf.length > MAX_OUT) {
-        return res.status(413).json({
-          error: `hasilnya ${Math.round(buf.length / 1024 / 1024)}mb — kegedean buat dikirim via serverless. coba input yang lebih kecil`,
-        });
-      }
       return res.status(200).json({
         type: result.type,
         mime,

@@ -20,13 +20,13 @@ module.exports = {
     for (const cat of manifest.categories) {
       txt += `╭─「 ${cat.emoji} ${cat.label.toUpperCase()} 」\n`;
       for (const p of cat.plugins) {
-        txt += `│ • /${p.name}${p.alias.length ? ` (${p.alias.map((a) => '/' + a).join(', ')})` : ''}\n`;
+        txt += `│ • @${p.name}${p.alias.length ? ` (${p.alias.map((a) => '@' + a).join(', ')})` : ''}\n`;
         if (p.description) txt += `│   ${p.description}\n`;
       }
       txt += `╰────────────────\n\n`;
     }
 
-    txt += `Cara pakai: ketik \`/namaplugin argumen\` di chat, atau buka panel Plugins buat browse & isi form-nya.`;
+    txt += `Cara pakai: ketik \`@namaplugin argumen\` di chat, atau pencet ⚙️ di kanan atas buat browse semua plugin.`;
     return { type: 'text', text: txt };
   },
 };

@@ -206,11 +206,16 @@
   .iconbtn:hover{ color:var(--lime); border-color:var(--lime); }
   .iconbtn.active{ color:var(--lime); border-color:var(--lime); transform:rotate(45deg); }
   .input-wrap{ flex:1; position:relative; }
-  textarea{
-    width:100%; resize:none; background:var(--bg); border:1px solid var(--line); border-radius:12px; padding:10px 12px;
-    color:var(--text); font-family:'Inter', sans-serif; font-size:14px; max-height:110px; line-height:1.4;
+  .input-edit{
+    width:100%; background:var(--bg); border:1px solid var(--line); border-radius:12px; padding:10px 12px;
+    color:var(--text); font-family:'Inter', sans-serif; font-size:14px; line-height:1.4;
+    min-height:42px; max-height:110px; overflow-y:auto; overflow-wrap:break-word; white-space:pre-wrap;
+    outline:none; caret-color:#c084fc; -webkit-user-modify:read-write-plaintext-only;
   }
-  textarea:focus{ outline:none; border-color:var(--lime); }
+  .input-edit:focus{ border-color:#c084fc; }
+  .input-edit:empty::before{ content:attr(data-placeholder); color:#868c96; pointer-events:none; }
+  .input-edit::-webkit-scrollbar{ width:6px; }
+  .input-edit::-webkit-scrollbar-thumb{ background:var(--line); border-radius:3px; }
   .send{
     width:42px; height:42px; border-radius:12px; border:none; background:var(--lime); color:#0c0e12;
     display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; transition:.15s;
@@ -280,17 +285,6 @@
     font-family:'Inter', sans-serif; font-size:14px; line-height:1.4;
     pointer-events:none; white-space:pre; z-index:5;
   }
-  /* mirror — render teks di belakang textarea biar @plugin UNGU PAS NGETIK */
-  .input-mirror{
-    position:absolute; left:0; top:0; right:0; z-index:1;
-    background:var(--bg); border:1px solid transparent; border-radius:12px;
-    padding:10px 12px; margin:0;
-    color:var(--text); font-family:'Inter', sans-serif; font-size:14px; line-height:1.4;
-    white-space:pre-wrap; overflow-wrap:break-word; overflow:hidden;
-    pointer-events:none;
-  }
-  #input{ position:relative; z-index:2; background:transparent; color:transparent; caret-color:#c084fc; }
-  #input::selection{ background:rgba(192,132,252,.35); }
 
   /* tombol sesi baru di hud */
   #newChatBtn{
@@ -407,7 +401,7 @@
     <div class="plus-menu" id="plusMenu"></div>
 
     <div class="input-wrap">
-      <textarea id="input" placeholder="ketik sesuatu ke ifxrq... (@search buat nyari di internet)" rows="1"></textarea>
+      <div id="input" class="input-edit" contenteditable="true" data-placeholder="ketik sesuatu ke ifxrq... (@search buat nyari di internet)"></div>
       <div class="mention-dropdown" id="mentionDropdown"></div>
     </div>
 
@@ -504,7 +498,96 @@ let history = [];      // {role: 'user'|'model', parts:[...]}
 let attachments = [];  // {name, mimeType, data(base64), previewUrl}
 
 const chatEl          = document.getElementById('chat');
-const inputEl          = document.getElementById('input');
+const editEl          = document.getElementById('input');   // contenteditable
+
+/* ═══ adapter contenteditable → API ala textarea (biar kode lama tetap jalan) ═══ */
+function editText(){
+  let out = '';
+  (function walk(n){
+    for(const c of n.childNodes){
+      if(c.nodeType === 3) out += c.nodeValue;
+      else if(c.tagName === 'BR') out += '\n';
+      else walk(c);
+    }
+  })(editEl);
+  return out.replace(/\u00A0/g, ' ');
+}
+function getCaretOffset(){
+  const sel = window.getSelection();
+  if(!sel || !sel.rangeCount) return editText().length;
+  const range = sel.getRangeAt(0);
+  if(!editEl.contains(range.startContainer)) return editText().length;
+  const pre = range.cloneRange();
+  pre.selectNodeContents(editEl);
+  pre.setEnd(range.startContainer, range.startOffset);
+  return pre.toString().replace(/\u00A0/g,' ').length;
+}
+function setCaretOffset(offset){
+  const sel = window.getSelection();
+  const range = document.createRange();
+  let remaining = offset, node = null, npos = 0;
+  const walker = document.createTreeWalker(editEl, NodeFilter.SHOW_TEXT);
+  while(walker.nextNode()){
+    const len = walker.currentNode.nodeValue.length;
+    if(remaining <= len){ node = walker.currentNode; npos = remaining; break; }
+    remaining -= len;
+  }
+  sel.removeAllRanges();
+  if(node){ range.setStart(node, npos); range.collapse(true); }
+  else { range.selectNodeContents(editEl); range.collapse(false); }
+  sel.addRange(range);
+}
+function wrapMentions(root){
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  const nodes = [];
+  while(walker.nextNode()) nodes.push(walker.currentNode);
+  for(const node of nodes){
+    const t = node.nodeValue;
+    if(!/@[\w-]+/.test(t)) continue;
+    if(node.parentElement && node.parentElement.closest('.plugin-mention')) continue;
+    const frag = document.createDocumentFragment();
+    let last = 0;
+    t.replace(/@([\w-]+)/g, (m, _g, off) => {
+      if(off > last) frag.appendChild(document.createTextNode(t.slice(last, off)));
+      const span = document.createElement('span');
+      span.className = 'plugin-mention';
+      span.textContent = m;
+      frag.appendChild(span);
+      last = off + m.length;
+      return m;
+    });
+    if(last < t.length) frag.appendChild(document.createTextNode(t.slice(last)));
+    node.parentNode.replaceChild(frag, node);
+  }
+}
+function renderEditHighlight(){
+  const text = editText();
+  const caret = getCaretOffset();
+  editEl.textContent = text;          // reset polos (pre-wrap bikin \n ke-render)
+  wrapMentions(editEl);               // @plugin → span ungu
+  setCaretOffset(caret);              // caret balik ke posisi persis
+}
+const inputEl = {
+  get value(){ return editText(); },
+  set value(v){ editEl.textContent = v; wrapMentions(editEl); },
+  get selectionStart(){ return getCaretOffset(); },
+  set selectionStart(v){ setCaretOffset(v); },
+  get selectionEnd(){ return getCaretOffset(); },
+  focus(){ editEl.focus(); },
+  blur(){ editEl.blur(); },
+  setSelectionRange(a){ setCaretOffset(a); },
+  get style(){ return editEl.style; },
+  get scrollHeight(){ return editEl.scrollHeight; },
+  get offsetHeight(){ return editEl.offsetHeight; },
+  get scrollTop(){ return editEl.scrollTop; },
+  set scrollTop(v){ editEl.scrollTop = v; },
+  addEventListener(...a){ editEl.addEventListener(...a); },
+  removeEventListener(...a){ editEl.removeEventListener(...a); },
+  dispatchEvent(ev){ editEl.dispatchEvent(ev); return true; },
+  getAttribute(a){ return editEl.getAttribute(a); },
+  setAttribute(a,v){ editEl.setAttribute(a,v); },
+  removeAttribute(a){ editEl.removeAttribute(a); },
+};
 const sendBtn          = document.getElementById('sendBtn');
 const hudSession        = document.getElementById('hudSession');
 const hudCount          = document.getElementById('hudCount');
@@ -873,8 +956,7 @@ function setActiveMention(idx){
 }
 
 inputEl.addEventListener('input', ()=>{
-  inputEl.style.height = 'auto';
-  inputEl.style.height = Math.min(inputEl.scrollHeight, 110) + 'px';
+  renderEditHighlight();
 
   const caretPos = inputEl.selectionStart;
   const beforeCaret = inputEl.value.slice(0, caretPos);
@@ -898,19 +980,6 @@ ghostEl.textContent = '';
 document.querySelector('.input-wrap').appendChild(ghostEl);
 const ghostMeasure = document.createElement('canvas').getContext('2d');
 
-/* mirror: teks lu ke-render di belakang textarea, @plugin langsung ungu pas ngetik */
-const mirrorEl = document.createElement('div');
-mirrorEl.id = 'inputMirror';
-mirrorEl.className = 'input-mirror';
-document.querySelector('.input-wrap').insertBefore(mirrorEl, inputEl);
-
-function updateMirror(){
-  const t = inputEl.value;
-  mirrorEl.innerHTML = escapeHtml(t + ' ').replace(/@([\w-]+)/g, '<span class="plugin-mention">@$1</span>');
-  mirrorEl.style.height = (inputEl.offsetHeight || 0) + 'px';
-  mirrorEl.scrollTop = inputEl.scrollTop;
-}
-inputEl.addEventListener('scroll', ()=>{ mirrorEl.scrollTop = inputEl.scrollTop; });
 
 function argHintFor(cmd){
   const p = PLUGIN_MAP.get(cmd);
@@ -923,7 +992,6 @@ function argHintFor(cmd){
 }
 
 function updateGhost(){
-  updateMirror();
   ghostEl.textContent = '';
   const m = inputEl.value.match(/^@([\w-]+)(\s*)$/);
   if(!m) return;
@@ -1095,7 +1163,6 @@ async function runEditPlugin(originalText, imageUrl, prompt){
   history.push({ role:'user', parts:[{ text: originalText }] });
 
   inputEl.value = ''; updateGhost();
-  inputEl.style.height = 'auto';
   sendBtn.disabled = true;
   hudCount.textContent = history.filter(h => h.role === 'user').length;
   showTyping();
@@ -1186,7 +1253,6 @@ async function runGenericPlugin(originalText, cmd, argText){
   addBubble('user', originalText, false);
   history.push({ role:'user', parts:[{ text: originalText }] });
   inputEl.value = ''; updateGhost();
-  inputEl.style.height = 'auto';
   sendBtn.disabled = true;
   hudCount.textContent = history.filter(h=>h.role==='user').length;
   showTyping();
@@ -1226,8 +1292,9 @@ async function runGenericPlugin(originalText, cmd, argText){
       const b = document.createElement('div'); b.className='bubble';
       const badge = document.createElement('div'); badge.className='search-badge'; badge.textContent = `⚙️ @${cmd}`; b.appendChild(badge);
       const el = document.createElement('img');
-      el.src = `data:${data.mime};base64,${data.base64}`;
+      el.src = data.url || `data:${data.mime};base64,${data.base64}`;
       el.style.maxWidth = '100%'; el.style.borderRadius = '10px'; el.style.display = 'block';
+      if(data.url){ el.style.cursor = 'zoom-in'; el.onclick = ()=> window.open(data.url, '_blank'); }
       b.appendChild(el);
       if(data.caption){ const c = renderMarkdown(data.caption); b.appendChild(c); }
       row.appendChild(b); chatEl.appendChild(row); chatEl.scrollTop = chatEl.scrollHeight;
@@ -1240,7 +1307,7 @@ async function runGenericPlugin(originalText, cmd, argText){
       const b = document.createElement('div'); b.className='bubble';
       const badge = document.createElement('div'); badge.className='search-badge'; badge.textContent = `🎧 @${cmd}`; b.appendChild(badge);
       const au = document.createElement('audio');
-      au.controls = true; au.src = `data:${data.mime};base64,${data.base64}`;
+      au.controls = true; au.src = data.url || `data:${data.mime};base64,${data.base64}`;
       au.style.width = '100%';
       b.appendChild(au);
       row.appendChild(b); chatEl.appendChild(row); chatEl.scrollTop = chatEl.scrollHeight;
@@ -1253,11 +1320,19 @@ async function runGenericPlugin(originalText, cmd, argText){
       const b = document.createElement('div'); b.className='bubble';
       const badge = document.createElement('div'); badge.className='search-badge'; badge.textContent = `📦 @${cmd}`; b.appendChild(badge);
       const a = document.createElement('a');
-      a.href = `data:${data.mime};base64,${data.base64}`;
-      a.download = data.filename || (`${cmd}-hasil`);
       a.textContent = `⬇️ ${data.filename || 'unduh hasil'}`;
-      a.style.color = 'var(--lime)';
-      b.appendChild(a);
+      a.style.color = '#c084fc'; a.style.fontWeight = '700';
+      if(data.url){
+        a.href = data.url; a.target = '_blank'; a.rel = 'noopener';
+        const note = document.createElement('div');
+        note.className = 'source-host';
+        note.textContent = 'file gede — kebuka di tab baru, tinggal save';
+        b.appendChild(a); b.appendChild(note);
+      } else {
+        a.href = `data:${data.mime};base64,${data.base64}`;
+        a.download = data.filename || (`${cmd}-hasil`);
+        b.appendChild(a);
+      }
       row.appendChild(b); chatEl.appendChild(row); chatEl.scrollTop = chatEl.scrollHeight;
       history.push({ role:'model', parts:[{ text: `[file hasil @${cmd}]` }] });
 
@@ -1280,7 +1355,6 @@ async function runSearchPlugin(originalText, query){
   addBubble('user', originalText, false);
   history.push({ role:'user', parts:[{ text: originalText }] });
   inputEl.value = ''; updateGhost();
-  inputEl.style.height = 'auto';
   sendBtn.disabled = true;
   hudCount.textContent = history.filter(h=>h.role==='user').length;
   showTyping();
@@ -1314,7 +1388,6 @@ async function runRingkasPlugin(originalText, query){
   addBubble('user', originalText, false);
   history.push({ role:'user', parts:[{ text: originalText }] });
   inputEl.value = ''; updateGhost();
-  inputEl.style.height = 'auto';
   sendBtn.disabled = true;
   hudCount.textContent = history.filter(h=>h.role==='user').length;
   showTyping();
@@ -1441,7 +1514,6 @@ async function sendMessage(){
 
   history.push({ role:'user', parts });
   inputEl.value = ''; updateGhost();
-  inputEl.style.height = 'auto';
   attachments = [];
   renderAttachStrip();
   sendBtn.disabled = true;
@@ -1500,10 +1572,21 @@ inputEl.addEventListener('keydown', (e)=>{
     }
     if(e.key === 'Escape'){ e.preventDefault(); mentionDropdown.classList.remove('show'); return; }
   }
+  if(e.key === 'Enter' && e.shiftKey){
+    e.preventDefault();
+    document.execCommand('insertText', false, '\n');
+    return;
+  }
   if(e.key === 'Enter' && !e.shiftKey){
     e.preventDefault();
     sendMessage();
   }
+});
+// paste selalu plain text (jangan sampai HTML aneh masuk chat input)
+inputEl.addEventListener('paste', (e)=>{
+  e.preventDefault();
+  const t = (e.clipboardData || window.clipboardData).getData('text/plain');
+  document.execCommand('insertText', false, t);
 });
 
 // ============================================================
