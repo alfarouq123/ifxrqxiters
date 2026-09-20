@@ -1,8 +1,7 @@
 {
   "functions": {
     "api/*.js": {
-      "maxDuration": 60,
-      "includeFiles": ["plugins/**/*", "lib/**/*"]
+      "maxDuration": 60
     }
   }
 }
