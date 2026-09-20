@@ -131,7 +131,7 @@
   .bubble ul, .bubble ol{ margin:0 0 8px 18px; }
   .bubble a{ color:#5da9ff; text-decoration:none; }
   .bubble a:hover{ text-decoration:underline; }
-  .plugin-mention{ color:var(--magenta); font-weight:700; }
+  .plugin-mention{ color:#c084fc; font-weight:700; background:rgba(192,132,252,.14); padding:0 4px; border-radius:5px; }
   .bubble code{
     background:#0f1116; border:1px solid var(--line); border-radius:4px;
     padding:1px 5px; font-family:'JetBrains Mono', monospace; font-size:12.5px; color:var(--lime);
@@ -255,15 +255,31 @@
     display:none;
     z-index:20;
     box-shadow:0 12px 30px -10px rgba(0,0,0,0.6);
+    max-height:min(300px, 42vh);
+    overflow-y:auto;
+    overscroll-behavior:contain;
   }
   .mention-dropdown.show{ display:block; }
+  .mention-dropdown::-webkit-scrollbar{ width:6px; }
+  .mention-dropdown::-webkit-scrollbar-track{ background:transparent; }
+  .mention-dropdown::-webkit-scrollbar-thumb{ background:var(--line); border-radius:3px; }
+  .mention-dropdown::-webkit-scrollbar-thumb:hover{ background:var(--muted); }
   .mention-item{
     display:flex; align-items:center; gap:8px;
     padding:8px 10px; border-radius:8px; cursor:pointer;
   }
-  .mention-item:hover{ background:var(--bg); }
+  .mention-item:hover, .mention-item.active{ background:var(--bg); }
+  .mention-item.active{ outline:1px solid rgba(192,132,252,.45); }
   .mention-item b{ color:var(--lime); font-family:'JetBrains Mono', monospace; font-size:12.5px; }
   .mention-item span{ font-size:11px; color:var(--muted); }
+
+  /* ghost hint <link> abu-abu di dalem input */
+  .input-ghost{
+    position:absolute; left:12px; top:9px;
+    color:#868c96; opacity:.9;
+    font-family:'Inter', sans-serif; font-size:14px; line-height:1.4;
+    pointer-events:none; white-space:pre; z-index:5;
+  }
 
   /* ===== SOURCE VIEWER OVERLAY ===== */
   .overlay{ position:absolute; inset:0; background:rgba(0,0,0,0.6); display:none; align-items:center; justify-content:center; padding:0; z-index:30; }
@@ -577,6 +593,7 @@ function addBubble(role, content, isMarkdown){
     b.appendChild(renderMarkdown(content));
   } else {
     b.textContent = content;
+    highlightMentions(b);   // @plugin di pesan user juga di-highlight ungu
   }
   row.appendChild(b);
   chatEl.appendChild(row);
@@ -808,7 +825,10 @@ function insertMention(cmd){
   inputEl.dispatchEvent(new Event('input'));
 }
 
+let mentionIndex = -1;
+
 function renderMentionDropdown(filtered){
+  mentionIndex = -1;
   mentionDropdown.innerHTML = filtered.map(p =>
     `<div class="mention-item" data-cmd="${p.cmd}">${p.icon}<div><b>@${p.cmd}</b><br><span>${p.desc}</span></div></div>`
   ).join('');
@@ -821,6 +841,17 @@ function renderMentionDropdown(filtered){
   mentionDropdown.classList.add('show');
 }
 
+function mentionItems(){
+  return [...mentionDropdown.querySelectorAll('.mention-item')];
+}
+function setActiveMention(idx){
+  const items = mentionItems();
+  if(!items.length) return;
+  mentionIndex = (idx + items.length) % items.length;
+  items.forEach((el,i)=> el.classList.toggle('active', i === mentionIndex));
+  if (items[mentionIndex].scrollIntoView) items[mentionIndex].scrollIntoView({ block:'nearest' });
+}
+
 inputEl.addEventListener('input', ()=>{
   inputEl.style.height = 'auto';
   inputEl.style.height = Math.min(inputEl.scrollHeight, 110) + 'px';
@@ -831,10 +862,46 @@ inputEl.addEventListener('input', ()=>{
   if(match){
     const q = match[1].toLowerCase();
     const filtered = PLUGINS.filter(p => p.cmd.startsWith(q));
-    if(filtered.length){ renderMentionDropdown(filtered); return; }
+    if(filtered.length){ renderMentionDropdown(filtered); updateGhost(); return; }
   }
   mentionDropdown.classList.remove('show');
+  updateGhost();
 });
+
+// ============================================================
+// GHOST HINT — ketik @plugin → muncul hint abu-abu, contoh: <link>
+// ============================================================
+const ghostEl = document.createElement('div');
+ghostEl.id = 'inputGhost';
+ghostEl.className = 'input-ghost';
+ghostEl.textContent = '';
+document.querySelector('.input-wrap').appendChild(ghostEl);
+const ghostMeasure = document.createElement('canvas').getContext('2d');
+
+function argHintFor(cmd){
+  const p = PLUGIN_MAP.get(cmd);
+  if(!p) return null;
+  if(p.inputType === 'none') return null;
+  if(p.inputType === 'image') return '🖼️ klik + buat attach gambar';
+  const m = (p.usage || '').match(/<([^>]+)>/);
+  const base = m ? '<' + m[1] + '>' : '<teks>';
+  return p.inputType === 'text+image' ? base + ' + 🖼️ (opsional)' : base;
+}
+
+function updateGhost(){
+  ghostEl.textContent = '';
+  const m = inputEl.value.match(/^@([\w-]+)(\s*)$/);
+  if(!m) return;
+  const hint = argHintFor(m[1].toLowerCase());
+  if(!hint) return;
+  try{
+    const cs = getComputedStyle(inputEl);
+    ghostMeasure.font = cs.fontStyle + ' ' + cs.fontWeight + ' ' + cs.fontSize + ' ' + cs.fontFamily;
+    ghostEl.style.transform = 'translateX(' + Math.ceil(ghostMeasure.measureText(inputEl.value).width) + 'px)';
+  }catch(_e){ ghostEl.style.transform = 'none'; }
+  ghostEl.textContent = hint;
+}
+updateGhost();
 
 // ============================================================
 // ⚙️ PANEL PLUGIN (gear) — daftar semua plugin, klik = auto isi @cmd
@@ -992,7 +1059,7 @@ async function runEditPlugin(originalText, imageUrl, prompt){
   addBubble('user', originalText, false);
   history.push({ role:'user', parts:[{ text: originalText }] });
 
-  inputEl.value = '';
+  inputEl.value = ''; updateGhost();
   inputEl.style.height = 'auto';
   sendBtn.disabled = true;
   hudCount.textContent = history.filter(h => h.role === 'user').length;
@@ -1083,7 +1150,7 @@ function parseSearchResponse(json){
 async function runGenericPlugin(originalText, cmd, argText){
   addBubble('user', originalText, false);
   history.push({ role:'user', parts:[{ text: originalText }] });
-  inputEl.value = '';
+  inputEl.value = ''; updateGhost();
   inputEl.style.height = 'auto';
   sendBtn.disabled = true;
   hudCount.textContent = history.filter(h=>h.role==='user').length;
@@ -1177,7 +1244,7 @@ async function runGenericPlugin(originalText, cmd, argText){
 async function runSearchPlugin(originalText, query){
   addBubble('user', originalText, false);
   history.push({ role:'user', parts:[{ text: originalText }] });
-  inputEl.value = '';
+  inputEl.value = ''; updateGhost();
   inputEl.style.height = 'auto';
   sendBtn.disabled = true;
   hudCount.textContent = history.filter(h=>h.role==='user').length;
@@ -1211,7 +1278,7 @@ async function runSearchPlugin(originalText, query){
 async function runRingkasPlugin(originalText, query){
   addBubble('user', originalText, false);
   history.push({ role:'user', parts:[{ text: originalText }] });
-  inputEl.value = '';
+  inputEl.value = ''; updateGhost();
   inputEl.style.height = 'auto';
   sendBtn.disabled = true;
   hudCount.textContent = history.filter(h=>h.role==='user').length;
@@ -1338,7 +1405,7 @@ async function sendMessage(){
   }
 
   history.push({ role:'user', parts });
-  inputEl.value = '';
+  inputEl.value = ''; updateGhost();
   inputEl.style.height = 'auto';
   attachments = [];
   renderAttachStrip();
@@ -1385,7 +1452,20 @@ async function sendMessage(){
 
 sendBtn.addEventListener('click', sendMessage);
 inputEl.addEventListener('keydown', (e)=>{
-  if(e.key === 'Enter' && !e.shiftKey && !mentionDropdown.classList.contains('show')){
+  // dropdown @ kebuka → navigasi keyboard: ↑ ↓ pilih, Enter pakai, Esc tutup
+  if(mentionDropdown.classList.contains('show')){
+    const items = mentionItems();
+    if(e.key === 'ArrowDown'){ e.preventDefault(); setActiveMention(mentionIndex + 1); return; }
+    if(e.key === 'ArrowUp'){ e.preventDefault(); setActiveMention(mentionIndex - 1); return; }
+    if(e.key === 'Enter'){
+      e.preventDefault();
+      const pick = mentionIndex >= 0 ? items[mentionIndex] : items[0];
+      if(pick){ pick.click(); }
+      return;
+    }
+    if(e.key === 'Escape'){ e.preventDefault(); mentionDropdown.classList.remove('show'); return; }
+  }
+  if(e.key === 'Enter' && !e.shiftKey){
     e.preventDefault();
     sendMessage();
   }
