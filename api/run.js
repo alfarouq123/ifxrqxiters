@@ -44,7 +44,7 @@ module.exports = async (req, res) => {
         return res.status(400).json({ error: `teksnya kosong. format: ${cfg.usage || '@' + cfg.name + ' <teks>'} — contoh: ${cfg.example || ''}` });
       }
     }
-    if ((inputType === 'image' || inputType === 'text+image') && !imageBuffer) {
+    if (inputType === 'image' && !imageBuffer) {
       return res.status(400).json({ error: `plugin ini butuh gambar — attach/pilih foto dulu. format: ${cfg.usage || '@' + cfg.name}` });
     }
 
