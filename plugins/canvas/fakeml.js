@@ -24,7 +24,7 @@ module.exports = {
       const url = (await up.text()).trim();
       if (url.startsWith('http')) avatarUrl = url;
     }
-    const url = `https://api.nexray.web.id/maker/fakelobyml?avatar=${encodeURIComponent(avatarUrl)}&name=${encodeURIComponent(text.trim())}`;
+    const url = `https://api.nexray.eu.cc/maker/fakelobyml?avatar=${encodeURIComponent(avatarUrl)}&nickname=${encodeURIComponent(text.trim())}`;
     const { buffer, mime } = await getImage(url);
     return { type: 'image', buffer, mime };
   },

@@ -56,7 +56,30 @@ module.exports = async (req, res) => {
 
     /* ── hasil buffer (image/audio/file) ── */
     if (result.buffer) {
-      const buf = Buffer.isBuffer(result.buffer) ? result.buffer : Buffer.from(result.buffer);
+      let buf = Buffer.isBuffer(result.buffer) ? result.buffer : Buffer.from(result.buffer);
+      let mime = result.mime || 'application/octet-stream';
+
+      /* gambar kegedean (mis. fakeff 8mb) → re-encode JPEG biar muat response serverless */
+      if (buf.length > MAX_OUT && mime.startsWith('image/')) {
+        try {
+          const { loadImage, createCanvas } = require('@napi-rs/canvas');
+          const toJpeg = async (img, maxW) => {
+            const scale = img.width > maxW ? maxW / img.width : 1;
+            const c = createCanvas(Math.max(1, Math.round(img.width * scale)), Math.max(1, Math.round(img.height * scale)));
+            c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+            return c.toBuffer('image/jpeg');
+          };
+          const img = await loadImage(buf);
+          let jb = await toJpeg(img, img.width);
+          if (jb.length > MAX_OUT) jb = await toJpeg(img, 1280);
+          if (jb.length > MAX_OUT) jb = await toJpeg(img, 900);
+          if (jb.length <= MAX_OUT) {
+            buf = jb;
+            mime = 'image/jpeg';
+          }
+        } catch (_e) { /* re-encode gagal → jatuh ke error size di bawah */ }
+      }
+
       if (buf.length > MAX_OUT) {
         return res.status(413).json({
           error: `hasilnya ${Math.round(buf.length / 1024 / 1024)}mb — kegedean buat dikirim via serverless. coba input yang lebih kecil`,
@@ -64,7 +87,7 @@ module.exports = async (req, res) => {
       }
       return res.status(200).json({
         type: result.type,
-        mime: result.mime || 'application/octet-stream',
+        mime,
         filename: result.filename || null,
         caption: result.caption || null,
         base64: buf.toString('base64'),

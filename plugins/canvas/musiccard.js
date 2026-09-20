@@ -12,7 +12,7 @@ module.exports = {
   run: async ({ text }) => {
     const [judul, artis, cover] = text.split('|').map((s) => (s || '').trim());
     if (!judul) { const e = new Error('format: /musiccard <judul>|<artis>|<url cover>'); e.status = 400; throw e; }
-    const url = `https://api.nexray.eu.cc/canvas/musiccard?judul=${encodeURIComponent(judul)}&artist=${encodeURIComponent(artis || 'Unknown')}&image=${encodeURIComponent(cover || '')}`;
+    const url = `https://api.nexray.eu.cc/canvas/musiccard?judul=${encodeURIComponent(judul)}&nama=${encodeURIComponent(artis || 'Unknown')}&image_url=${encodeURIComponent(cover || '')}`;
     const { buffer, mime } = await getImage(url);
     return { type: 'image', buffer, mime };
   },

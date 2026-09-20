@@ -1,11 +1,12 @@
 // plugins/canvas/brat.js
-// Generator gambar gaya "brat" (background polos minimalis + teks kecil rata kiri, sedikit blur).
-// Dirender 100% lokal pakai @napi-rs/canvas, gak manggil API luar & gak pakai aset gambar
-// berhak cipta apapun — cuma warna solid + teks, jadi aman dipakai bebas.
+// Port PERSIS dari src/lib/ourin-brat.js punya bot WA (IFxrqBotz):
+//   512×512, maxFontSize 130 turun -5, lineHeightMult 1.1, area teks 450×450
+//   centered (256,256), emoji dihitung 1.15× fontSize, trailing space dibuang.
+// Dirender 100% lokal pakai @napi-rs/canvas — gak manggil API luar.
 const { createCanvas } = require('@napi-rs/canvas');
 
 const VARIANTS = {
-  default: '#8ACE00', // hijau khas
+  default: '#8ACE00',
   green: '#8ACE00',
   white: '#FFFFFF',
   black: '#000000',
@@ -13,65 +14,91 @@ const VARIANTS = {
   blue: '#A9C9F5',
 };
 
-function wrapText(ctx, text, maxWidth) {
-  const words = text.split(/\s+/);
-  const lines = [];
-  let line = '';
-  for (const word of words) {
-    const test = line ? line + ' ' + word : word;
-    if (ctx.measureText(test).width > maxWidth && line) {
-      lines.push(line);
-      line = word;
-    } else {
-      line = test;
+const EMOJI_RE = /(\p{Extended_Pictographic}|\p{Emoji_Presentation}|\uFE0F|\u200D)/u;
+
+/* tokenize — persis ourin-brat: pecah per kata, emoji jadi token sendiri, width emoji = 1.15× fontSize */
+function tokenize(text) {
+  const raw = String(text).split(/\s+/).filter(Boolean);
+  const tokens = [];
+  for (const word of raw) {
+    const parts = word.split(/(\p{Extended_Pictographic}+|\p{Emoji_Presentation}+)/u).filter(Boolean);
+    for (const part of parts) {
+      if (EMOJI_RE.test(part)) {
+        for (const ch of part.match(/\p{Extended_Pictographic}|\p{Emoji_Presentation}/gu) || []) {
+          tokens.push({ text: ch, emoji: true });
+        }
+      } else {
+        tokens.push({ text: part, emoji: false });
+      }
     }
   }
-  if (line) lines.push(line);
+  return tokens;
+}
+
+/* buildLines — greedy fill maxWidth, trailing space dibuang */
+function buildLines(ctx, tokens, fontSize, maxWidth) {
+  const lines = [];
+  let line = '';
+  let lineW = 0;
+  for (const tok of tokens) {
+    const tokW = tok.emoji ? fontSize * 1.15 : ctx.measureText(tok.text).width;
+    const spaceW = line ? ctx.measureText(' ').width : 0;
+    if (line && lineW + spaceW + tokW > maxWidth) {
+      lines.push(line.replace(/\s+$/, ''));
+      line = tok.text;
+      lineW = tokW;
+    } else {
+      line += (line ? ' ' : '') + tok.text;
+      lineW += spaceW + tokW;
+    }
+  }
+  if (line.trim()) lines.push(line.replace(/\s+$/, ''));
   return lines;
 }
 
-function renderBrat(text, variantKey) {
-  const size = 800;
-  const bg = VARIANTS[variantKey] || VARIANTS.default;
-  const isDark = bg === '#000000';
-  const textColor = isDark ? '#FFFFFF' : '#111111';
-
-  const canvas = createCanvas(size, size);
+function drawBrat({ text, bgColor, width = 512, height = 512, maxWidth = 450, maxHeight = 450,
+                    centerX = 256, centerY = 256, maxFontSize = 130, fontDecrement = 5,
+                    minFontSize = 20, lineHeightMult = 1.1, textColor = '#111111', rotationAngle = 0 }) {
+  const canvas = createCanvas(width, height);
   const ctx = canvas.getContext('2d');
 
-  ctx.fillStyle = bg;
-  ctx.fillRect(0, 0, size, size);
+  ctx.fillStyle = bgColor;
+  ctx.fillRect(0, 0, width, height);
 
-  // sedikit noise/blur look ala cover brat (pakai filter blur ringan di layer teks)
-  ctx.filter = 'blur(0.6px)';
+  const tokens = tokenize(text);
+
+  /* cari fontSize yang muat: semua baris ≤ maxWidth & total tinggi ≤ maxHeight */
+  let fontSize = maxFontSize;
+  let lines = [];
+  for (;;) {
+    ctx.font = `bold ${fontSize}px Arial, sans-serif`;
+    lines = buildLines(ctx, tokens, fontSize, maxWidth);
+    const totalH = lines.length * fontSize * lineHeightMult;
+    const widest = lines.reduce((w, l) => Math.max(w, ctx.measureText(l).width), 0);
+    if ((totalH <= maxHeight && widest <= maxWidth) || fontSize <= minFontSize) break;
+    fontSize -= fontDecrement;
+  }
+
+  const lineHeight = fontSize * lineHeightMult;
+  const totalH = lines.length * lineHeight;
+
+  ctx.save();
+  if (rotationAngle) {
+    ctx.translate(centerX, centerY);
+    ctx.rotate(rotationAngle);
+    ctx.translate(-centerX, -centerY);
+  }
   ctx.fillStyle = textColor;
   ctx.textBaseline = 'middle';
   ctx.textAlign = 'left';
 
-  let fontSize = Math.floor(size / Math.max(4, Math.sqrt(text.length) * 1.8));
-  fontSize = Math.max(36, Math.min(fontSize, 110));
-  ctx.font = `${fontSize}px Arial`;
-
-  const padding = 56;
-  const maxWidth = size - padding * 2;
-  let lines = wrapText(ctx, text.toLowerCase(), maxWidth);
-
-  // kalo kepanjangan & lines kebanyakan, kecilin font lagi
-  while (lines.length * (fontSize * 1.05) > size - padding * 2 && fontSize > 20) {
-    fontSize -= 4;
-    ctx.font = `${fontSize}px Arial`;
-    lines = wrapText(ctx, text.toLowerCase(), maxWidth);
-  }
-
-  const lineHeight = fontSize * 1.05;
-  const totalHeight = lines.length * lineHeight;
-  let y = (size - totalHeight) / 2 + lineHeight / 2;
-
+  let y = centerY - totalH / 2 + lineHeight / 2;
   for (const line of lines) {
-    ctx.fillText(line, padding, y);
+    const lw = ctx.measureText(line).width;
+    ctx.fillText(line, centerX - lw / 2, y);
     y += lineHeight;
   }
-  ctx.filter = 'none';
+  ctx.restore();
 
   return canvas.toBuffer('image/png');
 }
@@ -97,12 +124,13 @@ module.exports = {
     const lastWord = words[words.length - 1].toLowerCase();
     let variantKey = 'default';
     let content = text.trim();
-    if (VARIANTS[lastWord]) {
+    if (VARIANTS[lastWord] && words.length > 1) {
       variantKey = lastWord;
-      content = words.slice(0, -1).join(' ') || lastWord;
+      content = words.slice(0, -1).join(' ');
     }
-
-    const buffer = renderBrat(content, variantKey);
-    return { type: 'image', buffer, mime: 'image/png', caption: `brat: "${content}"` };
+    const bg = VARIANTS[variantKey] || VARIANTS.default;
+    const textColor = bg === '#000000' ? '#FFFFFF' : '#111111';
+    const buffer = drawBrat({ text: content.toLowerCase(), bgColor: bg, textColor });
+    return { type: 'image', buffer, mime: 'image/png', caption: `brat: "${content}" (${variantKey})` };
   },
 };
