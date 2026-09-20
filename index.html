@@ -292,6 +292,14 @@
   #input{ position:relative; z-index:2; background:transparent; color:transparent; caret-color:#c084fc; }
   #input::selection{ background:rgba(192,132,252,.35); }
 
+  /* tombol sesi baru di hud */
+  #newChatBtn{
+    margin-left:auto; background:none; border:1px solid var(--line); color:var(--muted);
+    font-family:'JetBrains Mono', monospace; font-size:10px; padding:3px 9px; border-radius:7px;
+    cursor:pointer; transition:.15s;
+  }
+  #newChatBtn:hover{ color:#ff5c5c; border-color:#ff5c5c; }
+
   /* ===== SOURCE VIEWER OVERLAY ===== */
   .overlay{ position:absolute; inset:0; background:rgba(0,0,0,0.6); display:none; align-items:center; justify-content:center; padding:0; z-index:30; }
   .overlay.show{ display:flex; }
@@ -386,6 +394,7 @@
   <div class="hud">
     <div>sesi: <b id="hudSession">----</b></div>
     <div>pesan: <b id="hudCount">0</b></div>
+    <button id="newChatBtn" title="mulai sesi baru (hapus semua riwayat)">🗑️ sesi baru</button>
   </div>
 
   <div class="chat" id="chat"></div>
@@ -1497,8 +1506,70 @@ inputEl.addEventListener('keydown', (e)=>{
   }
 });
 
-// pesan pembuka
-addBubble('bot', 'yo, gw ifxrq 🗿 pencet ⚙️ di kanan atas buat liat semua plugin & fitur (60+), atau ketik @ buat autocomplete command. mau nyari sesuatu di internet? ketik @search, atau edit foto pakai @edit url gambar promptnya', false);
+// ============================================================
+// 💾 CHAT PERSIST — obrolan + konteks AI disimpen, refresh gak ilang
+// ============================================================
+const CHAT_KEY = 'ifxrq_chat_v1';
+const HIST_KEY = 'ifxrq_history_v1';
+let saveTimer = null;
+
+function saveChat(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(()=>{
+    try{
+      let html = chatEl.innerHTML;
+      if(html.length > 2200000){
+        // kegedean (banyak gambar) → simpen bubble terakhir aja yang muat
+        const kids = [...chatEl.children];
+        let acc = '';
+        for(let i = kids.length - 1; i >= 0; i--){
+          const h = kids[i].outerHTML;
+          if(acc.length + h.length > 2200000) break;
+          acc = h + acc;
+        }
+        html = acc;
+      }
+      localStorage.setItem(CHAT_KEY, html);
+      let h = history;
+      let hist = JSON.stringify(h);
+      while(hist.length > 900000 && h.length > 2){
+        h = h.slice(-Math.max(2, Math.floor(h.length / 2)));
+        hist = JSON.stringify(h);
+      }
+      localStorage.setItem(HIST_KEY, hist);
+    }catch(_e){ /* storage penuh — biarin, chat tetep jalan */ }
+  }, 300);
+}
+new MutationObserver(saveChat).observe(chatEl, { childList: true });
+
+document.getElementById('newChatBtn').addEventListener('click', ()=>{
+  history = [];
+  attachments = [];
+  renderAttachStrip();
+  try{ localStorage.removeItem(CHAT_KEY); localStorage.removeItem(HIST_KEY); }catch(_e){}
+  chatEl.innerHTML = '';
+  hudCount.textContent = '0';
+  hudSession.textContent = Math.random().toString(16).slice(2,8);
+  addBubble('bot', 'sesi baru dimulai 🗿 tanya apa hari ini?', false);
+});
+
+// pesan pembuka / restore sesi lama
+(function bootChat(){
+  let saved = null;
+  try{ saved = localStorage.getItem(CHAT_KEY); }catch(_e){}
+  if(saved && saved.trim().length > 20){
+    chatEl.innerHTML = saved;
+    chatEl.scrollTop = chatEl.scrollHeight;
+    try{
+      const h = JSON.parse(localStorage.getItem(HIST_KEY) || '[]');
+      if(Array.isArray(h) && h.length) history = h;
+    }catch(_e){}
+    hudCount.textContent = history.filter(x => x.role === 'user').length;
+    addSystemLine('[system] sesi sebelumnya dipulihkan — gw masih inget obrolan kita 😼', false);
+  }else{
+    addBubble('bot', 'yo, gw ifxrq 🗿 pencet ⚙️ di kanan atas buat liat semua plugin & fitur (60+), atau ketik @ buat autocomplete command. mau nyari sesuatu di internet? ketik @search, atau edit foto pakai @edit url gambar promptnya', false);
+  }
+})();
 </script>
 </body>
 </html>
