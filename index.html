@@ -459,6 +459,16 @@
   .gbtn.warn{ color:#ff5c5c; }
   .gform{ display:flex; gap:8px; margin-top:14px; }
 
+
+  /* ═══ ARCADE PLAYER (iframe fullscreen) ═══ */
+  .arcade-overlay{ position:fixed; inset:0; z-index:150; background:#0c0e12; display:none; flex-direction:column; }
+  .arcade-overlay.show{ display:flex; }
+  .arcade-head{ display:flex; align-items:center; gap:10px; padding:10px 14px; border-bottom:1px solid rgba(192,132,252,.3); background:var(--panel); }
+  .arcade-head b{ flex:1; font-size:14px; color:#c084fc; }
+  .arcade-close{ background:var(--panel-2); border:1px solid var(--line); color:#ff5c5c; border-radius:9px; padding:6px 12px; cursor:pointer; font-size:12px; font-weight:700; }
+  .arcade-frame{ flex:1; border:none; width:100%; background:#0c0e12; }
+  .gsection-title{ font-size:11px; font-weight:800; letter-spacing:1.5px; text-transform:uppercase; color:#c084fc; margin:18px 0 10px; font-family:'JetBrains Mono',monospace; }
+
   /* ═══════════ MUSIC PLAYER (spotify-style) ═══════════ */
   .mtabs{ display:flex; gap:6px; margin-bottom:12px; overflow-x:auto; scrollbar-width:none; }
   .mtabs::-webkit-scrollbar{ display:none; }
@@ -575,6 +585,16 @@
       </div>
     </div>
     <div class="viewpage" id="musicPage"></div>
+  </div>
+
+  <!-- 🕹️ ARCADE PLAYER -->
+  <div class="arcade-overlay" id="arcadeOverlay">
+    <div class="arcade-head">
+      <button class="arcade-close" id="arcadeBack">← keluar</button>
+      <b id="arcadeTitle">arcade</b>
+      <button class="arcade-close" id="arcadeReload" style="color:#c084fc;">↻ ulang</button>
+    </div>
+    <iframe class="arcade-frame" id="arcadeFrame" sandbox="allow-scripts allow-pointer-lock"></iframe>
   </div>
 
   <!-- ⚙️ PANEL PLUGIN -->
@@ -1864,7 +1884,7 @@ document.getElementById('newChatBtn').addEventListener('click', ()=>{
 /* ═══════════════════════════════════════════════════════════════
    APP SHELL v2 — auth gate + drawer + sesi + games + music player
    ═══════════════════════════════════════════════════════════════ */
-const GOOGLE_CLIENT_ID = ''; /* ← ISI punya lu (Google Cloud Console → OAuth client ID, authorized origin: https://ifxrqxiters.my.id) */
+const GOOGLE_CLIENT_ID = '156494960890-n3jrfdnqde1ng193sblmdlaona8e6dtg.apps.googleusercontent.com'; /* ← ISI punya lu (Google Cloud Console → OAuth client ID, authorized origin: https://ifxrqxiters.my.id) */
 const AUTH_TOKEN_KEY = 'ifxrq_token';
 
 const $ = (id) => document.getElementById(id);
@@ -2121,21 +2141,57 @@ addBubble = function(role, content, isMarkdown){
 
 /* ─────────── GAMES ─────────── */
 let gTimer = null;
+let arcadeList = [];
 async function renderGamesGrid(){
   $('gamesPage').dataset.loaded = '1';
   $('gamesPage').innerHTML = '<div style="text-align:center;color:var(--muted);padding:30px;font-family:JetBrains Mono,monospace;font-size:12px;">⏳ load games...</div>';
   try{
-    const r = await fetch('/api/games');
-    const d = await r.json();
-    $('gamesPage').innerHTML = `<div class="ggrid">${d.games.map((g) => `
-      <div class="gcard" data-g="${g.key}"><div class="ge">${g.emoji}</div><b>${g.title}</b><span>${g.desc}</span></div>`).join('')}</div>`;
-    $('gamesPage').querySelectorAll('.gcard').forEach((el) => {
+    const [rq, ra] = await Promise.all([fetch('/api/games'), fetch('/api/arcade')]);
+    const dq = await rq.json();
+    const da = await ra.json().catch(() => ({ games: [] }));
+    arcadeList = da.games || [];
+    $('gamesPage').innerHTML = `
+      <div class="gsection-title">🕹️ arcade — main langsung (${arcadeList.length})</div>
+      <div class="ggrid">${arcadeList.map((g) => `
+        <div class="gcard arc" data-a="${g.key}"><div class="ge">${g.emoji}</div><b>${g.name}</b><span>${g.desc}</span></div>`).join('')}</div>
+      <div class="gsection-title">🎯 tebak-tebakan (${dq.games.length})</div>
+      <div class="ggrid">${dq.games.map((g) => `
+        <div class="gcard" data-g="${g.key}"><div class="ge">${g.emoji}</div><b>${g.title}</b><span>${g.desc}</span></div>`).join('')}</div>`;
+    $('gamesPage').querySelectorAll('.gcard[data-g]').forEach((el) => {
       el.addEventListener('click', () => startGame(el.dataset.g));
+    });
+    $('gamesPage').querySelectorAll('.gcard[data-a]').forEach((el) => {
+      el.addEventListener('click', () => openArcade(el.dataset.a));
     });
   }catch(e){
     $('gamesPage').innerHTML = '<div style="text-align:center;color:#ff5c5c;padding:30px;">gagal load games: ' + e.message + '</div>';
   }
 }
+async function openArcade(key){
+  const meta = arcadeList.find((g) => g.key === key);
+  $('arcadeTitle').textContent = (meta ? meta.emoji + ' ' + meta.name : key);
+  $('arcadeOverlay').classList.add('show');
+  $('arcadeFrame').srcdoc = '<!DOCTYPE html><html><body style="background:#0c0e12;color:#868c96;font-family:monospace;display:flex;align-items:center;justify-content:center;height:100vh;margin:0">⏳ load game...</body></html>';
+  try{
+    const name = (curUser && curUser.name ? curUser.name : 'Player');
+    const r = await fetch('/api/arcade?game=' + encodeURIComponent(key) + '&name=' + encodeURIComponent(name));
+    const d = await r.json();
+    if (!d.ok) throw new Error(d.error?.message || d.error || 'gagal load');
+    $('arcadeFrame').srcdoc = d.html;
+  }catch(e){
+    $('arcadeFrame').srcdoc = '<!DOCTYPE html><html><body style="background:#0c0e12;color:#ff5c5c;font-family:monospace;display:flex;align-items:center;justify-content:center;height:100vh;margin:0">❌ ' + e.message + '</body></html>';
+  }
+}
+$('arcadeBack').addEventListener('click', () => {
+  $('arcadeOverlay').classList.remove('show');
+  $('arcadeFrame').srcdoc = 'about:blank';
+});
+$('arcadeReload').addEventListener('click', () => {
+  const t = $('arcadeTitle').textContent;
+  const m = t.match(/\s(.+)$/);
+  const key = arcadeList.find((g) => g.name === (m ? m[1] : ''));
+  if (key) openArcade(key.key);
+});
 async function gamePost(body){
   const r = await fetch('/api/games', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
   return await r.json();

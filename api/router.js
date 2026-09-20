@@ -2,6 +2,7 @@
 // (Vercel hobby dibatasi 12 function — makanya semua route digabung ke sini,
 //  URL /api/chat, /api/run, dst tetap sama lewat rewrites di vercel.json)
 const ROUTES = {
+  '/api/arcade': require('../lib/routes/arcade'),
   '/api/auth': require('../lib/routes/auth'),
   '/api/berfikir': require('../lib/routes/berfikir'),
   '/api/chat': require('../lib/routes/chat'),
