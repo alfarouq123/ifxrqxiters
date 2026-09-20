@@ -280,6 +280,17 @@
     font-family:'Inter', sans-serif; font-size:14px; line-height:1.4;
     pointer-events:none; white-space:pre; z-index:5;
   }
+  /* mirror — render teks di belakang textarea biar @plugin UNGU PAS NGETIK */
+  .input-mirror{
+    position:absolute; left:0; top:0; right:0; z-index:1;
+    background:var(--bg); border:1px solid transparent; border-radius:12px;
+    padding:10px 12px; margin:0;
+    color:var(--text); font-family:'Inter', sans-serif; font-size:14px; line-height:1.4;
+    white-space:pre-wrap; overflow-wrap:break-word; overflow:hidden;
+    pointer-events:none;
+  }
+  #input{ position:relative; z-index:2; background:transparent; color:transparent; caret-color:#c084fc; }
+  #input::selection{ background:rgba(192,132,252,.35); }
 
   /* ===== SOURCE VIEWER OVERLAY ===== */
   .overlay{ position:absolute; inset:0; background:rgba(0,0,0,0.6); display:none; align-items:center; justify-content:center; padding:0; z-index:30; }
@@ -878,6 +889,20 @@ ghostEl.textContent = '';
 document.querySelector('.input-wrap').appendChild(ghostEl);
 const ghostMeasure = document.createElement('canvas').getContext('2d');
 
+/* mirror: teks lu ke-render di belakang textarea, @plugin langsung ungu pas ngetik */
+const mirrorEl = document.createElement('div');
+mirrorEl.id = 'inputMirror';
+mirrorEl.className = 'input-mirror';
+document.querySelector('.input-wrap').insertBefore(mirrorEl, inputEl);
+
+function updateMirror(){
+  const t = inputEl.value;
+  mirrorEl.innerHTML = escapeHtml(t + ' ').replace(/@([\w-]+)/g, '<span class="plugin-mention">@$1</span>');
+  mirrorEl.style.height = (inputEl.offsetHeight || 0) + 'px';
+  mirrorEl.scrollTop = inputEl.scrollTop;
+}
+inputEl.addEventListener('scroll', ()=>{ mirrorEl.scrollTop = inputEl.scrollTop; });
+
 function argHintFor(cmd){
   const p = PLUGIN_MAP.get(cmd);
   if(!p) return null;
@@ -889,6 +914,7 @@ function argHintFor(cmd){
 }
 
 function updateGhost(){
+  updateMirror();
   ghostEl.textContent = '';
   const m = inputEl.value.match(/^@([\w-]+)(\s*)$/);
   if(!m) return;
