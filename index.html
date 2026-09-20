@@ -280,7 +280,7 @@
 
   /* ghost hint <link> abu-abu di dalem input */
   .input-ghost{
-    position:absolute; left:12px; top:9px;
+    position:absolute; left:12px; top:9px; max-width:calc(100% - 24px); overflow:hidden; text-overflow:ellipsis;
     color:#868c96; opacity:.9;
     font-family:'Inter', sans-serif; font-size:14px; line-height:1.4;
     pointer-events:none; white-space:pre; z-index:5;
@@ -370,13 +370,139 @@
   .plug-item p{ margin:4px 0 0; font-size:11.5px; color:var(--muted); line-height:1.45; }
   .plug-item .plug-usage{ margin-top:5px; font-size:10px; color:var(--magenta); font-family:'JetBrains Mono',monospace; opacity:.85; }
   .plug-empty{ text-align:center; color:var(--muted); font-size:12px; padding:30px 0; font-family:'JetBrains Mono',monospace; }
+
+  /* ═══════════ AUTH GATE (login) ═══════════ */
+  .gate{ position:fixed; inset:0; z-index:200; display:flex; align-items:center; justify-content:center;
+    background:radial-gradient(1200px 600px at 20% -10%, #3b1d6e 0%, transparent 60%),
+               radial-gradient(900px 500px at 110% 110%, #5b21b6 0%, transparent 55%), #0c0e12;
+    padding:16px; overflow-y:auto; }
+  .gate.hidden{ display:none; }
+  .gate-card{ width:min(400px,100%); background:var(--panel); border:1px solid rgba(192,132,252,.25); border-radius:18px; padding:22px; }
+  .gate-logo{ font-size:26px; font-weight:800; font-family:'Chakra Petch',sans-serif; color:#c084fc; text-align:center; }
+  .gate-sub{ font-size:11px; color:var(--muted); text-align:center; margin:6px 0 18px; font-family:'JetBrains Mono',monospace; }
+  .gate-btn{ width:100%; padding:11px; border-radius:12px; border:1px solid rgba(192,132,252,.35);
+    background:linear-gradient(135deg,#7c3aed,#a855f7); color:#fff; font-weight:700; font-size:14px; cursor:pointer; margin-top:10px; }
+  .gate-btn:hover{ filter:brightness(1.12); }
+  .gate-btn.ghost{ background:transparent; border:1px solid var(--line); color:var(--text); font-weight:600; }
+  .gate-input{ width:100%; background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:10px 12px;
+    color:var(--text); font-size:14px; margin-top:8px; outline:none; font-family:'Inter',sans-serif; }
+  .gate-input:focus{ border-color:#c084fc; }
+  .gate-err{ color:#ff5c5c; font-size:11px; margin-top:8px; min-height:14px; font-family:'JetBrains Mono',monospace; }
+  .gate-code{ font-size:22px; letter-spacing:6px; font-family:'JetBrains Mono',monospace; color:#c084fc;
+    text-align:center; background:rgba(192,132,252,.08); border:1px dashed rgba(192,132,252,.4); border-radius:10px; padding:10px; margin-top:10px; }
+  .gate-divider{ display:flex; align-items:center; gap:10px; margin:14px 0 4px; color:var(--muted); font-size:10px; font-family:'JetBrains Mono',monospace; }
+  .gate-divider::before,.gate-divider::after{ content:''; flex:1; height:1px; background:var(--line); }
+  .gate-tabs{ display:flex; gap:6px; margin-bottom:6px; }
+  .gate-tab{ flex:1; text-align:center; padding:8px; border-radius:10px; font-size:12px; font-weight:700; cursor:pointer;
+    background:var(--panel-2); color:var(--muted); border:1px solid var(--line); }
+  .gate-tab.on{ background:rgba(192,132,252,.15); color:#c084fc; border-color:rgba(192,132,252,.4); }
+
+  /* ═══════════ HAMBURGER + DRAWER ═══════════ */
+  .burgerbtn{ background:var(--panel-2); border:1px solid var(--line); color:var(--text); border-radius:10px;
+    width:36px; height:36px; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:3px; flex-shrink:0; margin-right:10px; }
+  .burgerbtn span{ display:block; width:16px; height:2px; background:var(--text); border-radius:2px; }
+  .drawer-bg{ position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:90; display:none; }
+  .drawer-bg.show{ display:block; }
+  .drawer{ position:fixed; top:0; left:0; bottom:0; width:min(300px,85vw); background:var(--panel); z-index:95;
+    border-right:1px solid var(--line); transform:translateX(-105%); transition:transform .25s cubic-bezier(.2,.9,.3,1);
+    display:flex; flex-direction:column; }
+  .drawer.show{ transform:translateX(0); }
+  .drawer-user{ display:flex; align-items:center; gap:10px; padding:16px 14px; border-bottom:1px solid var(--line); background:linear-gradient(135deg,rgba(124,58,237,.25),transparent); }
+  .drawer-av{ width:42px; height:42px; border-radius:50%; background:linear-gradient(135deg,#7c3aed,#a855f7); display:flex; align-items:center; justify-content:center; font-weight:800; color:#fff; overflow:hidden; font-size:16px; flex-shrink:0; }
+  .drawer-av img{ width:100%; height:100%; object-fit:cover; }
+  .drawer-name{ font-size:14px; font-weight:700; }
+  .drawer-mail{ font-size:10px; color:var(--muted); font-family:'JetBrains Mono',monospace; }
+  .drawer-logout{ margin-left:auto; background:none; border:1px solid var(--line); color:#ff5c5c; border-radius:8px; padding:5px 8px; font-size:10px; cursor:pointer; font-family:'JetBrains Mono',monospace; }
+  .drawer-section{ padding:10px 14px 4px; font-size:9.5px; font-weight:800; letter-spacing:1.5px; color:var(--muted); text-transform:uppercase; font-family:'JetBrains Mono',monospace; }
+  .drawer-nav{ display:flex; align-items:center; gap:10px; padding:10px 14px; cursor:pointer; font-size:13px; font-weight:600; border-left:3px solid transparent; }
+  .drawer-nav:hover{ background:var(--panel-2); }
+  .drawer-nav.on{ border-left-color:#c084fc; background:rgba(192,132,252,.08); color:#c084fc; }
+  .drawer-sess{ display:flex; align-items:center; gap:8px; padding:9px 14px; cursor:pointer; font-size:12px; }
+  .drawer-sess:hover{ background:var(--panel-2); }
+  .drawer-sess.on{ background:rgba(192,132,252,.1); border-left:3px solid #c084fc; }
+  .drawer-sess .st{ flex:1; min-width:0; }
+  .drawer-sess .st b{ display:block; font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .drawer-sess .st span{ font-size:9.5px; color:var(--muted); font-family:'JetBrains Mono',monospace; }
+  .drawer-sess .del{ background:none; border:none; color:var(--muted); cursor:pointer; font-size:13px; padding:2px 4px; }
+  .drawer-sess .del:hover{ color:#ff5c5c; }
+  .drawer-new{ margin:6px 14px; padding:9px; border-radius:10px; border:1px dashed rgba(192,132,252,.4);
+    background:none; color:#c084fc; font-size:12px; font-weight:700; cursor:pointer; width:calc(100% - 28px); }
+
+  /* ═══════════ VIEWS (chat / games / music) ═══════════ */
+  .view{ display:none; flex-direction:column; flex:1; min-height:0; }
+  .view.on{ display:flex; }
+  .viewpage{ flex:1; overflow-y:auto; padding:16px 14px 90px; }
+  .viewpage::-webkit-scrollbar{ width:6px; }
+  .viewpage::-webkit-scrollbar-thumb{ background:var(--line); border-radius:3px; }
+
+  /* ═══════════ GAMES UI ═══════════ */
+  .ggrid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px; }
+  .gcard{ background:var(--panel-2); border:1px solid var(--line); border-radius:14px; padding:14px 12px; cursor:pointer; text-align:center; transition:.15s; }
+  .gcard:hover{ border-color:#c084fc; transform:translateY(-2px); }
+  .gcard .ge{ font-size:26px; }
+  .gcard b{ display:block; font-size:12.5px; margin-top:6px; }
+  .gcard span{ display:block; font-size:10px; color:var(--muted); margin-top:2px; }
+  .gplay{ max-width:520px; margin:0 auto; }
+  .gq{ background:var(--panel-2); border:1px solid rgba(192,132,252,.3); border-radius:16px; padding:18px; }
+  .gq img{ max-width:100%; border-radius:10px; margin:10px 0; display:block; }
+  .gq .soal{ font-size:15px; line-height:1.5; }
+  .gbar{ height:4px; background:var(--line); border-radius:2px; margin-top:14px; overflow:hidden; }
+  .gbar i{ display:block; height:100%; background:linear-gradient(90deg,#a855f7,#c084fc); border-radius:2px; transition:width 1s linear; }
+  .gres{ margin-top:12px; padding:10px 12px; border-radius:10px; font-size:13px; font-family:'JetBrains Mono',monospace; }
+  .gres.ok{ background:rgba(125,216,125,.12); color:#7dd87d; border:1px solid rgba(125,216,125,.35); }
+  .gres.no{ background:rgba(255,95,122,.1); color:#ff5f7a; border:1px solid rgba(255,95,122,.3); }
+  .gres.close{ background:rgba(255,209,102,.1); color:#ffd166; border:1px solid rgba(255,209,102,.3); }
+  .gres .ans{ font-size:15px; font-weight:800; }
+  .gbtns{ display:flex; gap:8px; margin-top:12px; }
+  .gbtn{ flex:1; padding:10px; border-radius:10px; background:var(--panel-2); border:1px solid var(--line); color:var(--text); font-size:12px; font-weight:700; cursor:pointer; font-family:'JetBrains Mono',monospace; }
+  .gbtn:hover{ border-color:#c084fc; }
+  .gbtn.warn{ color:#ff5c5c; }
+  .gform{ display:flex; gap:8px; margin-top:14px; }
+
+  /* ═══════════ MUSIC PLAYER (spotify-style) ═══════════ */
+  .mtabs{ display:flex; gap:6px; margin-bottom:12px; overflow-x:auto; scrollbar-width:none; }
+  .mtabs::-webkit-scrollbar{ display:none; }
+  .mtab{ padding:7px 14px; border-radius:20px; background:var(--panel-2); border:1px solid var(--line); color:var(--muted); font-size:12px; font-weight:700; cursor:pointer; white-space:nowrap; }
+  .mtab.on{ background:#c084fc; color:#160f24; border-color:#c084fc; }
+  .msearch{ display:flex; gap:8px; margin-bottom:14px; }
+  .msearch input{ flex:1; background:var(--panel-2); border:1px solid var(--line); border-radius:12px; padding:10px 14px; color:var(--text); font-size:13px; outline:none; }
+  .msearch input:focus{ border-color:#c084fc; }
+  .msearch button{ padding:0 16px; border-radius:12px; border:none; background:linear-gradient(135deg,#7c3aed,#a855f7); color:#fff; font-weight:700; cursor:pointer; }
+  .mrow{ display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:12px; cursor:pointer; }
+  .mrow:hover{ background:var(--panel-2); }
+  .mrow.playing{ background:rgba(192,132,252,.12); }
+  .mrow img{ width:46px; height:46px; border-radius:8px; object-fit:cover; flex-shrink:0; }
+  .mrow .mi{ flex:1; min-width:0; }
+  .mrow .mi b{ display:block; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .mrow .mi span{ font-size:10.5px; color:var(--muted); }
+  .mrow .ma{ display:flex; gap:4px; flex-shrink:0; }
+  .mrow .ma button{ background:none; border:none; cursor:pointer; font-size:15px; padding:4px; }
+  .msection{ font-size:11px; font-weight:800; letter-spacing:1.5px; text-transform:uppercase; color:#c084fc; margin:16px 0 8px; font-family:'JetBrains Mono',monospace; }
+  .nowbar{ position:fixed; left:0; right:0; bottom:0; z-index:60; background:rgba(20,23,29,.97); border-top:1px solid rgba(192,132,252,.3);
+    padding:8px 14px; display:none; align-items:center; gap:12px; backdrop-filter:blur(8px); }
+  .nowbar.show{ display:flex; }
+  .nowbar img{ width:44px; height:44px; border-radius:8px; object-fit:cover; }
+  .nowbar .ni{ flex:1; min-width:0; }
+  .nowbar .ni b{ display:block; font-size:12.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .nowbar .ni span{ font-size:10px; color:var(--muted); font-family:'JetBrains Mono',monospace; }
+  .nowbar button{ background:var(--panel-2); border:1px solid var(--line); color:#fff; width:36px; height:36px; border-radius:50%; cursor:pointer; font-size:14px; }
+  .nowbar button.main{ background:linear-gradient(135deg,#7c3aed,#a855f7); border:none; width:44px; height:44px; font-size:16px; }
+  .nprog{ position:absolute; top:0; left:0; height:3px; background:linear-gradient(90deg,#a855f7,#c084fc); width:0%; }
+  .lyricsbox{ margin-top:12px; background:var(--panel-2); border:1px solid var(--line); border-radius:12px; padding:14px;
+    font-size:12.5px; line-height:1.7; max-height:260px; overflow-y:auto; white-space:pre-wrap; color:var(--text); }
+  .plitem{ display:flex; align-items:center; gap:8px; padding:10px 12px; background:var(--panel-2); border:1px solid var(--line); border-radius:12px; margin-bottom:8px; cursor:pointer; }
+  .plitem b{ flex:1; font-size:13px; }
+  .plitem span{ font-size:10px; color:var(--muted); font-family:'JetBrains Mono',monospace; }
 </style>
 </head>
 <body>
 
 <div class="app">
 
+  <!-- ═══ VIEW: AI CHAT ═══ -->
+  <div class="view on" id="viewChat">
   <div class="head">
+    <button class="burgerbtn" id="burgerBtn" title="menu"><span></span><span></span><span></span></button>
     <div class="avatar">IF<div class="dot"></div></div>
     <div class="head-info">
       <div class="head-name">ifxrq <span class="head-tag">ONLINE</span></div>
@@ -423,6 +549,33 @@
       <div class="viewer-note">nampilin sumber tanpa keluar dari ifxrqxiters.my.id — kalo halamannya nolak ditampilin (blokir iframe), pake tombol ↗ buat buka di tab baru.</div>
     </div>
   </div>
+  </div><!-- /viewChat -->
+
+  <!-- ═══ VIEW: GAMES ═══ -->
+  <div class="view" id="viewGames">
+    <div class="head">
+      <button class="burgerbtn" id="burgerBtn2"><span></span><span></span><span></span></button>
+      <div class="avatar">🎮<div class="dot"></div></div>
+      <div class="head-info">
+        <div class="head-name">games <span class="head-tag">22 GAME</span></div>
+        <div class="head-sub">tebak-tebakan port dari IFxrqBotz</div>
+      </div>
+    </div>
+    <div class="viewpage" id="gamesPage"></div>
+  </div>
+
+  <!-- ═══ VIEW: MUSIC ═══ -->
+  <div class="view" id="viewMusic">
+    <div class="head">
+      <button class="burgerbtn" id="burgerBtn3"><span></span><span></span><span></span></button>
+      <div class="avatar">🎵<div class="dot"></div></div>
+      <div class="head-info">
+        <div class="head-name">music <span class="head-tag">PLAYER</span></div>
+        <div class="head-sub">cari · favorit · playlist · top lagu</div>
+      </div>
+    </div>
+    <div class="viewpage" id="musicPage"></div>
+  </div>
 
   <!-- ⚙️ PANEL PLUGIN -->
   <div class="plug-overlay" id="plugOverlay">
@@ -440,6 +593,56 @@
     </div>
   </div>
 
+</div>
+
+
+<!-- ═══ DRAWER NAVIGASI ═══ -->
+<div class="drawer-bg" id="drawerBg"></div>
+<div class="drawer" id="navDrawer">
+  <div class="drawer-user">
+    <div class="drawer-av" id="drawerAv">?</div>
+    <div style="min-width:0;flex:1;">
+      <div class="drawer-name" id="drawerName">-</div>
+      <div class="drawer-mail" id="drawerMail">-</div>
+    </div>
+    <button class="drawer-logout" id="logoutBtn">logout</button>
+  </div>
+  <div class="drawer-section">navigasi</div>
+  <div class="drawer-nav on" data-view="viewChat">💬 AI Chat</div>
+  <div class="drawer-nav" data-view="viewGames">🎮 Games</div>
+  <div class="drawer-nav" data-view="viewMusic">🎵 Music Player</div>
+  <div class="drawer-section">sesi chat</div>
+  <div id="sessList"></div>
+  <button class="drawer-new" id="newSessBtn">＋ sesi baru</button>
+</div>
+
+<!-- ═══ NOW PLAYING (music) ═══ -->
+<div class="nowbar" id="nowBar">
+  <div class="nprog" id="nowProg"></div>
+  <img id="nowThumb" src="" alt="">
+  <div class="ni"><b id="nowTitle">-</b><span id="nowArtist">-</span></div>
+  <button id="nowPrev">⏮</button>
+  <button class="main" id="nowPlay">▶</button>
+  <button id="nowNext">⏭</button>
+  <button id="nowLyrics" title="lirik">📄</button>
+</div>
+<audio id="mAudio" preload="none"></audio>
+
+<!-- ═══ AUTH GATE ═══ -->
+<div class="gate" id="authGate">
+  <div class="gate-card">
+    <div class="gate-logo">IFXRQ</div>
+    <div class="gate-sub">login dulu buat masuk · ifxrqxiters.my.id</div>
+    <div id="gBtnWrap" style="display:flex;justify-content:center;margin-bottom:4px;"></div>
+    <div id="gHint" style="display:none;font-size:10px;color:var(--muted);text-align:center;margin:6px 0;font-family:'JetBrains Mono',monospace;">google login: isi GOOGLE_CLIENT_ID di index.html</div>
+    <div class="gate-divider">atau pakai email</div>
+    <div class="gate-tabs">
+      <div class="gate-tab on" id="tabLogin">Login</div>
+      <div class="gate-tab" id="tabDaftar">Daftar</div>
+    </div>
+    <div id="gateForm"></div>
+    <div class="gate-err" id="gateErr"></div>
+  </div>
 </div>
 
 <script>
@@ -998,10 +1201,11 @@ function updateGhost(){
   const hint = argHintFor(m[1].toLowerCase());
   if(!hint) return;
   try{
-    const cs = getComputedStyle(inputEl);
+    const cs = getComputedStyle(editEl);
     ghostMeasure.font = cs.fontStyle + ' ' + cs.fontWeight + ' ' + cs.fontSize + ' ' + cs.fontFamily;
-    ghostEl.style.transform = 'translateX(' + Math.ceil(ghostMeasure.measureText(inputEl.value).width) + 'px)';
-  }catch(_e){ ghostEl.style.transform = 'none'; }
+    const w = Math.ceil(ghostMeasure.measureText(inputEl.value).width) + 10; /* jarak dari command */
+    ghostEl.style.transform = 'translateX(' + w + 'px)';
+  }catch(_e){ ghostEl.style.transform = 'translateX(0px)'; }
   ghostEl.textContent = hint;
 }
 updateGhost();
@@ -1592,15 +1796,19 @@ inputEl.addEventListener('paste', (e)=>{
 // ============================================================
 // 💾 CHAT PERSIST — obrolan + konteks AI disimpen, refresh gak ilang
 // ============================================================
-const CHAT_KEY = 'ifxrq_chat_v1';
-const HIST_KEY = 'ifxrq_history_v1';
+const sessId = () => localStorage.getItem('ifxrq_cur_sess') || 's1';
+const CHAT_KEY = () => 'ifxrq_chat_' + sessId();
+const HIST_KEY = () => 'ifxrq_history_' + sessId();
 let saveTimer = null;
 
 function saveChat(){
   clearTimeout(saveTimer);
   saveTimer = setTimeout(()=>{
     try{
-      let html = chatEl.innerHTML;
+      /* clone + buang typing indicator biang kerok "muter-muter abis refresh" */
+      const clone = chatEl.cloneNode(true);
+      const tr = clone.querySelector('#typingRow'); if(tr) tr.remove();
+      let html = clone.innerHTML;
       if(html.length > 2200000){
         // kegedean (banyak gambar) → simpen bubble terakhir aja yang muat
         const kids = [...chatEl.children];
@@ -1612,14 +1820,14 @@ function saveChat(){
         }
         html = acc;
       }
-      localStorage.setItem(CHAT_KEY, html);
+      localStorage.setItem(CHAT_KEY(), html);
       let h = history;
       let hist = JSON.stringify(h);
       while(hist.length > 900000 && h.length > 2){
         h = h.slice(-Math.max(2, Math.floor(h.length / 2)));
         hist = JSON.stringify(h);
       }
-      localStorage.setItem(HIST_KEY, hist);
+      localStorage.setItem(HIST_KEY(), hist);
     }catch(_e){ /* storage penuh — biarin, chat tetep jalan */ }
   }, 300);
 }
@@ -1629,7 +1837,7 @@ document.getElementById('newChatBtn').addEventListener('click', ()=>{
   history = [];
   attachments = [];
   renderAttachStrip();
-  try{ localStorage.removeItem(CHAT_KEY); localStorage.removeItem(HIST_KEY); }catch(_e){}
+  try{ localStorage.removeItem(CHAT_KEY()); localStorage.removeItem(HIST_KEY()); }catch(_e){}
   chatEl.innerHTML = '';
   hudCount.textContent = '0';
   hudSession.textContent = Math.random().toString(16).slice(2,8);
@@ -1639,20 +1847,597 @@ document.getElementById('newChatBtn').addEventListener('click', ()=>{
 // pesan pembuka / restore sesi lama
 (function bootChat(){
   let saved = null;
-  try{ saved = localStorage.getItem(CHAT_KEY); }catch(_e){}
+  try{ saved = localStorage.getItem(CHAT_KEY()); }catch(_e){}
   if(saved && saved.trim().length > 20){
     chatEl.innerHTML = saved;
     chatEl.scrollTop = chatEl.scrollHeight;
     try{
-      const h = JSON.parse(localStorage.getItem(HIST_KEY) || '[]');
+      const h = JSON.parse(localStorage.getItem(HIST_KEY()) || '[]');
       if(Array.isArray(h) && h.length) history = h;
     }catch(_e){}
     hudCount.textContent = history.filter(x => x.role === 'user').length;
-    addSystemLine('[system] sesi sebelumnya dipulihkan — gw masih inget obrolan kita 😼', false);
   }else{
     addBubble('bot', 'yo, gw ifxrq 🗿 pencet ⚙️ di kanan atas buat liat semua plugin & fitur (60+), atau ketik @ buat autocomplete command. mau nyari sesuatu di internet? ketik @search, atau edit foto pakai @edit url gambar promptnya', false);
   }
 })();
+
+/* ═══════════════════════════════════════════════════════════════
+   APP SHELL v2 — auth gate + drawer + sesi + games + music player
+   ═══════════════════════════════════════════════════════════════ */
+const GOOGLE_CLIENT_ID = ''; /* ← ISI punya lu (Google Cloud Console → OAuth client ID, authorized origin: https://ifxrqxiters.my.id) */
+const AUTH_TOKEN_KEY = 'ifxrq_token';
+
+const $ = (id) => document.getElementById(id);
+const gateErr = (m) => { $('gateErr').textContent = m || ''; };
+
+/* ─────────── AUTH GATE ─────────── */
+let gateMode = 'login';
+let gatePending = null; /* {userId} buat verify */
+
+function gateShow(mode){
+  gateMode = mode || 'login';
+  $('tabLogin').classList.toggle('on', gateMode === 'login');
+  $('tabDaftar').classList.toggle('on', gateMode === 'daftar');
+  $('tabLogin').onclick = () => gateShow('login');
+  $('tabDaftar').onclick = () => gateShow('daftar');
+  const f = $('gateForm');
+  if (gateMode === 'login') {
+    f.innerHTML = `
+      <input class="gate-input" id="gEmail" type="email" placeholder="email" autocomplete="username">
+      <input class="gate-input" id="gPass" type="password" placeholder="password" autocomplete="current-password">
+      <button class="gate-btn" id="gGo">Masuk →</button>`;
+    $('gGo').onclick = doLogin;
+    f.querySelector('#gPass').addEventListener('keydown', (e) => { if (e.key === 'Enter') doLogin(); });
+  } else if (gateMode === 'daftar') {
+    f.innerHTML = `
+      <input class="gate-input" id="gName" placeholder="nama panggilan" maxlength="30">
+      <input class="gate-input" id="gEmail" type="email" placeholder="email">
+      <input class="gate-input" id="gPass" type="password" placeholder="password (min 6)">
+      <button class="gate-btn" id="gGo">Daftar →</button>`;
+    $('gGo').onclick = doRegister;
+  } else if (gateMode === 'verify') {
+    f.innerHTML = `
+      <div style="font-size:11px;color:var(--muted);margin-top:6px;">masukin 6 digit kode verifikasi yang dikirim ke email lu:</div>
+      <div class="gate-code" id="gKodeShow">••••••</div>
+      <input class="gate-input" id="gKode" placeholder="123456" maxlength="6" inputmode="numeric" style="text-align:center;letter-spacing:6px;font-family:'JetBrains Mono',monospace;">
+      <button class="gate-btn" id="gGo">Verifikasi →</button>
+      <button class="gate-btn ghost" id="gBack">← ganti email</button>`;
+    $('gGo').onclick = doVerify;
+    $('gBack').onclick = () => { gatePending = null; gateShow('daftar'); };
+  }
+  gateErr('');
+}
+async function authPost(body){
+  const r = await fetch('/api/auth', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(d?.error?.message || d?.error || 'gagal');
+  return d;
+}
+async function doLogin(){
+  gateErr('⏳ cek akun...');
+  try{
+    const d = await authPost({ action:'login', email: $('gEmail').value.trim(), password: $('gPass').value });
+    localStorage.setItem(AUTH_TOKEN_KEY, d.token);
+    enterApp(d.user);
+  }catch(e){
+    if (e.message.includes('belum diverifikasi')) { gatePending = null; gateShow('login'); }
+    gateErr('❌ ' + e.message);
+  }
+}
+async function doRegister(){
+  gateErr('⏳ daftar...');
+  try{
+    const d = await authPost({ action:'register', name: $('gName').value.trim(), email: $('gEmail').value.trim(), password: $('gPass').value });
+    gatePending = { userId: d.userId };
+    gateShow('verify');
+    $('gKodeShow').textContent = d.kode; /* tampil di layar (serverless gak punya SMTP) */
+    gateErr('');
+  }catch(e){ gateErr('❌ ' + e.message); }
+}
+async function doVerify(){
+  gateErr('⏳ verifikasi...');
+  try{
+    const d = await authPost({ action:'verify', userId: gatePending.userId, code: $('gKode').value.trim() });
+    localStorage.setItem(AUTH_TOKEN_KEY, d.token);
+    enterApp(d.user);
+  }catch(e){ gateErr('❌ ' + e.message); }
+}
+/* google login (GIS — account picker bawaan google) */
+function initGoogle(){
+  if (!GOOGLE_CLIENT_ID) { $('gHint').style.display = 'block'; return; }
+  const s = document.createElement('script');
+  s.src = 'https://accounts.google.com/gsi/client';
+  s.async = true;
+  s.onload = () => {
+    window.google.accounts.id.initialize({
+      client_id: GOOGLE_CLIENT_ID,
+      callback: async (resp) => {
+        gateErr('⏳ login google...');
+        try{
+          const d = await authPost({ action:'google', credential: resp.credential });
+          localStorage.setItem(AUTH_TOKEN_KEY, d.token);
+          enterApp(d.user);
+        }catch(e){ gateErr('❌ ' + e.message); }
+      },
+    });
+    window.google.accounts.id.renderButton($('gBtnWrap'), { theme:'filled_black', size:'large', shape:'pill', text:'continue_with' });
+  };
+  document.head.appendChild(s);
+}
+async function enterApp(user){
+  $('authGate').classList.add('hidden');
+  if (user) curUser = user;
+  renderDrawerUser();
+  renderSessions();
+  musicLoadData();
+}
+function logout(){
+  localStorage.removeItem(AUTH_TOKEN_KEY);
+  curUser = null;
+  $('navDrawer').classList.remove('show');
+  $('drawerBg').classList.remove('show');
+  $('authGate').classList.remove('hidden');
+  gateShow('login');
+  $('mAudio').pause();
+  $('nowBar').classList.remove('show');
+}
+let curUser = null;
+async function authCheck(){
+  const tok = localStorage.getItem(AUTH_TOKEN_KEY);
+  if (!tok) { $('authGate').classList.remove('hidden'); gateShow('login'); initGoogle(); return; }
+  try{
+    const d = await authPost({ action:'me', token: tok });
+    enterApp(d.user);
+  }catch(e){
+    localStorage.removeItem(AUTH_TOKEN_KEY);
+    $('authGate').classList.remove('hidden');
+    gateShow('login');
+    initGoogle();
+  }
+}
+$('logoutBtn').addEventListener('click', logout);
+
+/* ─────────── DRAWER + VIEWS ─────────── */
+function openDrawer(){ $('navDrawer').classList.add('show'); $('drawerBg').classList.add('show'); renderSessions(); }
+function closeDrawer(){ $('navDrawer').classList.remove('show'); $('drawerBg').classList.remove('show'); }
+$('burgerBtn').addEventListener('click', openDrawer);
+$('burgerBtn2').addEventListener('click', openDrawer);
+$('burgerBtn3').addEventListener('click', openDrawer);
+$('drawerBg').addEventListener('click', closeDrawer);
+document.querySelectorAll('.drawer-nav').forEach((el) => {
+  el.addEventListener('click', () => {
+    document.querySelectorAll('.drawer-nav').forEach((x) => x.classList.remove('on'));
+    el.classList.add('on');
+    switchView(el.dataset.view);
+    closeDrawer();
+  });
+});
+function switchView(id){
+  document.querySelectorAll('.view').forEach((v) => v.classList.remove('on'));
+  $(id).classList.add('on');
+  if (id === 'viewGames' && !$('gamesPage').dataset.loaded) renderGamesGrid();
+  if (id === 'viewMusic') musicView();
+}
+function renderDrawerUser(){
+  const u = curUser;
+  $('drawerName').textContent = u ? u.name : '-';
+  $('drawerMail').textContent = u ? (u.email || 'akun google') : '-';
+  const av = $('drawerAv');
+  if (u && u.picture) av.innerHTML = '<img src="' + u.picture + '" referrerpolicy="no-referrer">';
+  else av.textContent = u ? (u.name || '?').slice(0,1).toUpperCase() : '?';
+}
+
+/* ─────────── SESI CHAT ─────────── */
+function sessAll(){ try { return JSON.parse(localStorage.getItem('ifxrq_sessions') || '[]'); } catch { return []; } }
+function sessSave(list){ localStorage.setItem('ifxrq_sessions', JSON.stringify(list)); }
+function ensureSess(){
+  let list = sessAll();
+  if (!list.length) {
+    list = [{ id: 's' + Date.now().toString(36), title: 'chat baru', ts: Date.now() }];
+    sessSave(list);
+  }
+  if (!localStorage.getItem('ifxrq_cur_sess')) localStorage.setItem('ifxrq_cur_sess', list[0].id);
+  return list;
+}
+function renderSessions(){
+  const list = ensureSess();
+  const cur = sessId();
+  $('sessList').innerHTML = list.map((s) => `
+    <div class="drawer-sess ${s.id === cur ? 'on' : ''}" data-sid="${s.id}">
+      <div class="st"><b>${escapeHtml(s.title || 'chat')}</b><span>${new Date(s.ts).toLocaleDateString('id-ID')} · ${s.id === cur ? 'aktif' : 'klik buat buka'}</span></div>
+      <button class="del" data-del="${s.id}" title="hapus sesi">✕</button>
+    </div>`).join('');
+  $('sessList').querySelectorAll('.drawer-sess').forEach((el) => {
+    el.addEventListener('click', (e) => {
+      if (e.target.dataset.del) return;
+      switchSession(el.dataset.sid);
+      closeDrawer();
+    });
+  });
+  $('sessList').querySelectorAll('.del').forEach((el) => {
+    el.addEventListener('click', (e) => {
+      e.stopPropagation();
+      deleteSession(el.dataset.del);
+    });
+  });
+}
+function switchSession(sid){
+  saveChatNow();
+  localStorage.setItem('ifxrq_cur_sess', sid);
+  bootSession();
+  renderSessions();
+}
+function deleteSession(sid){
+  let list = sessAll().filter((s) => s.id !== sid);
+  try { localStorage.removeItem('ifxrq_chat_' + sid); localStorage.removeItem('ifxrq_history_' + sid); } catch(_e){}
+  if (!list.length) list = [{ id: 's' + Date.now().toString(36), title: 'chat baru', ts: Date.now() }];
+  sessSave(list);
+  if (sessId() === sid) localStorage.setItem('ifxrq_cur_sess', list[0].id);
+  bootSession();
+  renderSessions();
+}
+$('newSessBtn').addEventListener('click', () => {
+  saveChatNow();
+  const list = sessAll();
+  list.unshift({ id: 's' + Date.now().toString(36), title: 'chat baru', ts: Date.now() });
+  sessSave(list);
+  localStorage.setItem('ifxrq_cur_sess', list[0].id);
+  bootSession();
+  renderSessions();
+  switchView('viewChat');
+  closeDrawer();
+});
+function saveChatNow(){ try { clearTimeout(saveTimer); saveTimer = null; saveChat(); } catch(_e){} }
+function bootSession(){
+  const saved = localStorage.getItem(CHAT_KEY());
+  if (saved && saved.trim().length > 20) {
+    chatEl.innerHTML = saved;
+    chatEl.scrollTop = chatEl.scrollHeight;
+    try { const h = JSON.parse(localStorage.getItem(HIST_KEY()) || '[]'); if (Array.isArray(h) && h.length) history = h; } catch(_e){}
+    hudCount.textContent = history.filter((x) => x.role === 'user').length;
+  } else {
+    chatEl.innerHTML = '';
+    history = [];
+    hudCount.textContent = '0';
+    addBubble('bot', 'sesi baru dimulai 🗿 tanya apa hari ini?', false);
+  }
+  hudSession.textContent = sessId().slice(-6);
+  renderSessions();
+}
+/* judul sesi otomatis = pesan user pertama */
+const _origAddBubbleUser = addBubble;
+addBubble = function(role, content, isMarkdown){
+  if (role === 'user' && content && typeof content === 'string') {
+    const list = sessAll();
+    const cur = list.find((s) => s.id === sessId());
+    if (cur && (cur.title === 'chat baru' || !cur.title)) {
+      cur.title = content.replace(/^@\S+\s*/, '').slice(0, 28) || 'chat';
+      sessSave(list);
+      renderSessions();
+    }
+  }
+  return _origAddBubbleUser(role, content, isMarkdown);
+};
+
+/* ─────────── GAMES ─────────── */
+let gTimer = null;
+async function renderGamesGrid(){
+  $('gamesPage').dataset.loaded = '1';
+  $('gamesPage').innerHTML = '<div style="text-align:center;color:var(--muted);padding:30px;font-family:JetBrains Mono,monospace;font-size:12px;">⏳ load games...</div>';
+  try{
+    const r = await fetch('/api/games');
+    const d = await r.json();
+    $('gamesPage').innerHTML = `<div class="ggrid">${d.games.map((g) => `
+      <div class="gcard" data-g="${g.key}"><div class="ge">${g.emoji}</div><b>${g.title}</b><span>${g.desc}</span></div>`).join('')}</div>`;
+    $('gamesPage').querySelectorAll('.gcard').forEach((el) => {
+      el.addEventListener('click', () => startGame(el.dataset.g));
+    });
+  }catch(e){
+    $('gamesPage').innerHTML = '<div style="text-align:center;color:#ff5c5c;padding:30px;">gagal load games: ' + e.message + '</div>';
+  }
+}
+async function gamePost(body){
+  const r = await fetch('/api/games', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+  return await r.json();
+}
+async function startGame(key){
+  clearInterval(gTimer);
+  const page = $('gamesPage');
+  page.innerHTML = '<div style="text-align:center;color:var(--muted);padding:30px;font-family:JetBrains Mono,monospace;">⏳ ambil soal...</div>';
+  const d = await gamePost({ action:'start', game:key });
+  if (!d.ok) { page.innerHTML = '<div style="color:#ff5c5c;text-align:center;padding:20px;">' + (d.error?.message || d.error) + '</div>'; return; }
+  renderQuestion(d);
+}
+function renderQuestion(d){
+  const q = d.question;
+  const page = $('gamesPage');
+  let secLeft = Math.round((d.timeout || 60000) / 1000);
+  page.innerHTML = `
+    <div class="gplay">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <button class="gbtn" style="flex:0 0 auto;padding:6px 12px;" id="gBack">← semua game</button>
+        <b style="font-size:13px;color:#c084fc;">${q.emoji} ${q.title}</b>
+      </div>
+      <div class="gq">
+        ${q.img ? '<img src="' + q.img + '" alt="soal" referrerpolicy="no-referrer">' : ''}
+        <div class="soal">${escapeHtml(q.soal || '')}</div>
+        ${q.deskripsi ? '<div style="font-size:11px;color:var(--muted);margin-top:6px;">' + escapeHtml(q.deskripsi) + '</div>' : ''}
+        ${q.tipe ? '<div style="font-size:10px;color:#c084fc;margin-top:6px;font-family:JetBrains Mono,monospace;">tipe: ' + escapeHtml(q.tipe) + '</div>' : ''}
+        ${q.total ? '<div style="font-size:11px;color:var(--muted);margin-top:6px;">🎯 temukan <b style="color:#c084fc">' + q.total + '</b> jawaban populer</div>' : ''}
+        <div id="gFamList"></div>
+        <div class="gbar"><i id="gBar" style="width:100%"></i></div>
+        <div style="text-align:right;font-size:10px;color:var(--muted);margin-top:4px;font-family:JetBrains Mono,monospace;"><span id="gTime">${secLeft}</span>dtk</div>
+        <div id="gRes"></div>
+        <div class="gform">
+          <input class="gate-input" id="gAns" placeholder="${q.family || q.total ? 'jawaban...' : 'jawaban lu...'}" style="margin-top:0;" autocomplete="off">
+          <button class="gate-btn" id="gSend" style="margin-top:0;width:80px;flex:0 0 auto;">Kirim</button>
+        </div>
+        <div class="gbtns">
+          <button class="gbtn" id="gHint">💡 hint</button>
+          <button class="gbtn warn" id="gNyerah">🏳️ nyerah</button>
+          <button class="gbtn" id="gNext" style="display:none;">▶ soal berikutnya</button>
+        </div>
+      </div>
+    </div>`;
+  const state = { token: d.token, family: !!(q.total) };
+  clearInterval(gTimer);
+  gTimer = setInterval(() => {
+    secLeft--;
+    const bar = $('gBar'), tm = $('gTime');
+    if (bar) bar.style.width = Math.max(0, (secLeft / Math.round((d.timeout||60000)/1000)) * 100) + '%';
+    if (tm) tm.textContent = Math.max(0, secLeft);
+    if (secLeft <= 0) { clearInterval(gTimer); gameEnd(state, '⏰ waktu habis!', false); }
+  }, 1000);
+  $('gBack').onclick = renderGamesGrid;
+  const send = () => gameAnswer(state);
+  $('gSend').onclick = send;
+  $('gAns').addEventListener('keydown', (e) => { if (e.key === 'Enter') send(); });
+  $('gAns').focus();
+  $('gHint').onclick = async () => {
+    const h = await gamePost({ action:'hint', token: state.token });
+    $('gRes').innerHTML = '<div class="gres close">💡 ' + escapeHtml(h.hint || '-') + '</div>';
+  };
+  $('gNyerah').onclick = () => gameEnd(state, '🏳️ nyerah', true);
+  if (state.family) renderFamList(state, []);
+}
+function renderFamList(state, found){
+  const q = window.__gq;
+  $('gFamList').innerHTML = (found || []).map((f) => '<div style="margin-top:8px;padding:6px 10px;background:rgba(125,216,125,.12);border:1px solid rgba(125,216,125,.3);border-radius:8px;font-size:12px;">✅ ' + escapeHtml(f) + '</div>').join('');
+}
+async function gameAnswer(state){
+  const ans = $('gAns').value.trim();
+  if (!ans) return;
+  $('gAns').value = '';
+  const d = await gamePost({ action:'answer', token: state.token, answer: ans });
+  if (d.error) { $('gRes').innerHTML = '<div class="gres no">' + escapeHtml(d.error.message || d.error) + '</div>'; return; }
+  if (state.family || d.family) {
+    state.token = d.token || state.token;
+    if (d.correct) {
+      renderFamList(state, d.found);
+      $('gRes').innerHTML = '<div class="gres ok">✅ BENAR! (' + d.found.length + '/' + d.total + ')</div>';
+      if (d.selesai) { clearInterval(gTimer); gameWin('💯 SEMUA JAWABAN KETEMU! LEGEND!', d.answers); }
+    } else {
+      $('gRes').innerHTML = '<div class="gres ' + (d.close ? 'close' : 'no') + '">' + (d.close ? '🔥 dikit lagi!' : '❌ belum, coba lagi') + '</div>';
+    }
+    return;
+  }
+  if (d.correct) { clearInterval(gTimer); gameWin('🎉 BENAR! jawabannya: ' + d.answer, null, d.deskripsi); }
+  else {
+    state.token = d.token || state.token;
+    $('gRes').innerHTML = '<div class="gres ' + (d.close ? 'close' : 'no') + '">' + (d.close ? '🔥 dikit lagi!' : '❌ salah') + (d.hint ? ' — hint: <b>' + escapeHtml(d.hint) + '</b>' : '') + '</div>';
+  }
+}
+async function gameEnd(state, msg, showAnswer){
+  clearInterval(gTimer);
+  const d = await gamePost({ action:'surrender', token: state.token });
+  const answers = d.answers || [d.answer];
+  $('gRes').innerHTML = '<div class="gres no">' + msg + (showAnswer ? '<br>jawaban' + (answers.length > 1 ? 'nya:' : 'nya:') + ' <span class="ans">' + escapeHtml(answers.join(', ')) + '</span>' + (d.found && d.found.length ? '<br>yang lu temuin: ' + d.found.length + '/' + d.answers.length : '') : '') + '</div>';
+  $('gNext').style.display = 'block';
+  $('gNext').onclick = () => startGame(window.__gcur || 'tebakkata');
+  $('gAns').disabled = true; $('gSend').disabled = true;
+}
+function gameWin(msg, answers, deskripsi){
+  $('gRes').innerHTML = '<div class="gres ok">' + msg + (deskripsi ? '<br><span style="font-size:11px;opacity:.8;">' + escapeHtml(deskripsi) + '</span>' : '') + '</div>';
+  $('gNext').style.display = 'block';
+  $('gNext').onclick = () => startGame(window.__gcur || 'tebakkata');
+  $('gAns').disabled = true; $('gSend').disabled = true;
+}
+const _origStartGame = startGame;
+startGame = function(key){ window.__gcur = key; _origStartGame(key); };
+
+/* ─────────── MUSIC PLAYER ─────────── */
+const mAudio = $('mAudio');
+let mQueue = [], mIndex = -1, mTab = 'cari', mSearchResults = [], mMusicData = { favorites: [], playlists: {}, top: [] };
+const mToken = () => localStorage.getItem(AUTH_TOKEN_KEY) || '';
+
+function fmtDur(s){ s = Number(s) || 0; return Math.floor(s/60) + ':' + String(Math.floor(s%60)).padStart(2,'0'); }
+
+async function musicPost(body){
+  const r = await fetch('/api/music', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ ...body, token: mToken() }) });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(d?.error?.message || d?.error || 'gagal');
+  return d;
+}
+async function musicLoadData(){
+  try { mMusicData = await musicPost({ action:'data' }); } catch(_e){}
+}
+function musicView(){
+  renderMusicPage();
+}
+function renderMusicPage(){
+  const page = $('musicPage');
+  const tabs = [['cari','🔍 Cari'],['favorit','❤️ Favorit'],['playlist','📂 Playlist'],['top','🔥 Top Lagu']];
+  let body = '';
+  if (mTab === 'cari') {
+    body = `<div class="msearch">
+        <input id="mQ" placeholder="cari judul lagu / artis..." value="${escapeHtml(window.__mq || '')}">
+        <button id="mGo">Cari</button>
+      </div><div id="mList">${mSearchResults.length ? '' : '<div style="color:var(--muted);text-align:center;padding:30px;font-size:12px;">ketik judul lagu buat mulai 🔍</div>'}</div>`;
+  } else if (mTab === 'favorit') {
+    body = `<div class="msection">❤️ lagu favorit (${mMusicData.favorites.length})</div>
+      <div id="mList">${mMusicData.favorites.length ? '' : '<div style="color:var(--muted);text-align:center;padding:30px;font-size:12px;">belum ada favorit — tap ❤️ di lagu</div>'}</div>`;
+  } else if (mTab === 'playlist') {
+    const pls = Object.entries(mMusicData.playlists || {});
+    body = `<div class="msection">📂 playlist lu (${pls.length})</div>
+      <button class="gbtn" id="mNewPl" style="width:100%;margin-bottom:10px;">＋ bikin playlist</button>
+      <div id="mPls">${pls.length ? pls.map(([n, s]) => `
+        <div class="plitem" data-pl="${escapeHtml(n)}"><b>📂 ${escapeHtml(n)}</b><span>${s.length} lagu</span></div>`).join('') : '<div style="color:var(--muted);text-align:center;padding:20px;font-size:12px;">belum ada playlist</div>'}</div><div id="mList"></div>`;
+  } else {
+    body = `<div class="msection">🔥 paling sering diputar lu</div>
+      <div id="mList">${(mMusicData.top || []).length ? '' : '<div style="color:var(--muted);text-align:center;padding:30px;font-size:12px;">belum ada yang diputar — mulai dulu 🎵</div>'}</div>`;
+  }
+  page.innerHTML = `<div class="mtabs">${tabs.map(([k, l]) => `<div class="mtab ${mTab === k ? 'on' : ''}" data-t="${k}">${l}</div>`).join('')}</div>${body}`;
+  page.querySelectorAll('.mtab').forEach((el) => el.addEventListener('click', () => { mTab = el.dataset.t; renderMusicPage(); }));
+  if (mTab === 'cari') {
+    $('mGo').onclick = musicSearch;
+    $('mQ').addEventListener('keydown', (e) => { if (e.key === 'Enter') musicSearch(); });
+    renderSongList('mList', mSearchResults);
+  } else if (mTab === 'favorit') renderSongList('mList', mMusicData.favorites);
+  else if (mTab === 'top') renderSongList('mList', (mMusicData.top || []));
+  else {
+    if ($('mNewPl')) $('mNewPl').onclick = async () => {
+      const n = prompt('nama playlist:'); if (!n) return;
+      await musicPost({ action:'playlist-create', name: n.trim() });
+      await musicLoadData(); renderMusicPage();
+    };
+    page.querySelectorAll('.plitem').forEach((el) => el.addEventListener('click', () => openPlaylist(el.dataset.pl)));
+  }
+}
+async function musicSearch(){
+  const q = $('mQ').value.trim();
+  if (!q) return;
+  window.__mq = q;
+  $('mList').innerHTML = '<div style="color:var(--muted);text-align:center;padding:20px;font-family:JetBrains Mono,monospace;font-size:11px;">⏳ nyari...</div>';
+  try{
+    const r = await fetch('/api/music/search?q=' + encodeURIComponent(q));
+    const d = await r.json();
+    mSearchResults = d.items || [];
+    renderSongList('mList', mSearchResults);
+  }catch(e){ $('mList').innerHTML = '<div style="color:#ff5c5c;text-align:center;padding:20px;">' + e.message + '</div>'; }
+}
+function songRow(s, opts = {}){
+  const fav = (mMusicData.favorites || []).some((f) => f.id === s.id);
+  const playing = mIndex >= 0 && mQueue[mIndex] && mQueue[mIndex].id === s.id;
+  return `<div class="mrow ${playing ? 'playing' : ''}" data-id="${s.id}">
+    <img src="${s.thumb || ''}" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.visibility='hidden'">
+    <div class="mi"><b>${escapeHtml(s.title || '-')}</b><span>${escapeHtml(s.artist || '-')} · ${fmtDur(s.duration)}</span></div>
+    <div class="ma">
+      ${opts.noFav ? '' : `<button data-fav="${s.id}" title="favorit">${fav ? '❤️' : '🤍'}</button>`}
+      <button data-pl="${s.id}" title="tambah ke playlist">＋</button>
+      <button data-play="${s.id}" title="putar">${playing ? '🔊' : '▶'}</button>
+    </div></div>`;
+}
+function renderSongList(elId, list, opts = {}){
+  const el = $(elId);
+  if (!el) return;
+  if (!list || !list.length) { if (elId === 'mList') el.innerHTML = '<div style="color:var(--muted);text-align:center;padding:20px;font-size:12px;">kosong</div>'; return; }
+  el.innerHTML = list.map((s) => songRow(s, opts)).join('');
+  el.querySelectorAll('[data-play]').forEach((b) => b.addEventListener('click', () => {
+    const i = list.findIndex((x) => x.id === b.dataset.play);
+    playSong(list, i);
+  }));
+  el.querySelectorAll('[data-fav]').forEach((b) => b.addEventListener('click', async (e) => {
+    e.stopPropagation();
+    const s = list.find((x) => x.id === b.dataset.fav);
+    const d = await musicPost({ action:'fav', song: s });
+    await musicLoadData();
+    renderMusicPage();
+  }));
+  el.querySelectorAll('[data-pl]').forEach((b) => b.addEventListener('click', async (e) => {
+    e.stopPropagation();
+    const s = list.find((x) => x.id === b.dataset.pl);
+    const pls = Object.keys(mMusicData.playlists || {});
+    if (!pls.length) {
+      const n = prompt('belum ada playlist — nama playlist baru:'); if (!n) return;
+      await musicPost({ action:'playlist-create', name: n.trim() });
+      await musicPost({ action:'playlist-add', name: n.trim(), song: s });
+    } else {
+      const n = prompt('tambah ke playlist (nama persis):\n' + pls.join('\n'));
+      if (!n) return;
+      try { await musicPost({ action:'playlist-add', name: n.trim(), song: s }); } catch(err){ alert(err.message); return; }
+    }
+    await musicLoadData();
+    alert('✅ ditambahin ke playlist');
+  }));
+  el.querySelectorAll('.mrow').forEach((r) => r.addEventListener('click', (e) => {
+    if (e.target.closest('button')) return;
+    const i = list.findIndex((x) => x.id === r.dataset.id);
+    playSong(list, i);
+  }));
+}
+function openPlaylist(name){
+  const songs = mMusicData.playlists[name] || [];
+  mTab = 'playlist';
+  renderMusicPage();
+  const host = $('mList');
+  host.innerHTML = `<div class="msection">📂 ${escapeHtml(name)} (${songs.length}) <button data-delpl style="float:right;background:none;border:1px solid #ff5c5c;color:#ff5c5c;border-radius:6px;font-size:9px;padding:2px 6px;cursor:pointer;">hapus playlist</button></div>`;
+  renderSongList('mList', songs, {});
+  const del = host.querySelector('[data-delpl]');
+  if (del) del.onclick = async () => {
+    if (!confirm('hapus playlist "' + name + '"?')) return;
+    await musicPost({ action:'playlist-delete', name });
+    await musicLoadData();
+    renderMusicPage();
+  };
+}
+async function playSong(list, i){
+  mQueue = list; mIndex = i;
+  const s = list[i];
+  if (!s) return;
+  $('nowBar').classList.add('show');
+  $('nowTitle').textContent = s.title || '-';
+  $('nowArtist').textContent = s.artist || '-';
+  $('nowThumb').src = s.thumb || '';
+  $('nowPlay').textContent = '⏳';
+  try{
+    const r = await fetch('/api/music/stream?id=' + encodeURIComponent(s.id));
+    const d = await r.json();
+    if (!d.ok) throw new Error(d.error || 'gagal stream');
+    mAudio.src = d.url;
+    await mAudio.play();
+    $('nowPlay').textContent = '⏸';
+    musicPost({ action:'play', song: s }).then(() => musicLoadData()).catch(()=>{});
+    renderMusicPage();
+  }catch(e){
+    $('nowPlay').textContent = '▶';
+    alert('gagal putar: ' + e.message);
+  }
+}
+$('nowPlay').addEventListener('click', () => {
+  if (mAudio.paused) { mAudio.play(); $('nowPlay').textContent = '⏸'; }
+  else { mAudio.pause(); $('nowPlay').textContent = '▶'; }
+});
+$('nowNext').addEventListener('click', () => { if (mIndex < mQueue.length - 1) playSong(mQueue, mIndex + 1); });
+$('nowPrev').addEventListener('click', () => { if (mIndex > 0) playSong(mQueue, mIndex - 1); });
+mAudio.addEventListener('timeupdate', () => {
+  if (mAudio.duration) $('nowProg').style.width = (mAudio.currentTime / mAudio.duration) * 100 + '%';
+});
+mAudio.addEventListener('ended', () => { if (mIndex < mQueue.length - 1) playSong(mQueue, mIndex + 1); });
+$('nowLyrics').addEventListener('click', async () => {
+  const s = mQueue[mIndex];
+  if (!s) return;
+  let box = document.getElementById('lyricsBox');
+  if (!box) {
+    box = document.createElement('div');
+    box.id = 'lyricsBox'; box.className = 'lyricsbox';
+    document.querySelector('.app').appendChild(box);
+  }
+  if (box.style.display === 'block') { box.style.display = 'none'; return; }
+  box.style.display = 'block';
+  box.textContent = '⏳ nyari lirik...';
+  try{
+    const art = (s.artist || '').replace(/ - Topic$/i, '');
+    const r = await fetch('/api/music/lyrics?title=' + encodeURIComponent(s.title) + '&artist=' + encodeURIComponent(art));
+    const d = await r.json();
+    box.textContent = d.ok ? d.lyrics : 'lirik gak ketemu 😔';
+  }catch(e){ box.textContent = 'gagal: ' + e.message; }
+});
+
+/* ─────────── BOOT ─────────── */
+ensureSess();
+renderSessions();
+authCheck();
+
 </script>
 </body>
 </html>

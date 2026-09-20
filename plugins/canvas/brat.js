@@ -1,8 +1,9 @@
 // plugins/canvas/brat.js
-// Port PERSIS dari src/lib/ourin-brat.js punya bot WA (IFxrqBotz):
-//   512×512, maxFontSize 130 turun -5, lineHeightMult 1.1, area teks 450×450
-//   centered (256,256), emoji dihitung 1.15× fontSize, trailing space dibuang.
-// Dirender 100% lokal pakai @napi-rs/canvas — gak manggil API luar.
+// PORT PERSIS 100% dari src/lib/ourin-brat.js + bratgreen.js punya bot WA:
+// token emoji/text/space, buildLines per-line width (trailing space dipuang),
+// font "bold Npx sans-serif", loop decrement cuma cek totalH,
+// render translate(cx,cy) + center per-line by -line.width/2,
+// param bratgreen: 512×512, area 450×450, center 256, maxFont 130, dec 5, lh 1.1, #000.
 const { createCanvas } = require('@napi-rs/canvas');
 
 const VARIANTS = {
@@ -14,99 +15,133 @@ const VARIANTS = {
   blue: '#A9C9F5',
 };
 
-const EMOJI_RE = /(\p{Extended_Pictographic}|\p{Emoji_Presentation}|\uFE0F|\u200D)/u;
+function getTokenWidth(ctx, token, fontSize) {
+  if (token.type === 'space') return ctx.measureText(' ').width;
+  if (token.type === 'emoji') return fontSize * 1.15;
+  return ctx.measureText(token.value || '').width;
+}
 
-/* tokenize — persis ourin-brat: pecah per kata, emoji jadi token sendiri, width emoji = 1.15× fontSize */
-function tokenize(text) {
-  const raw = String(text).split(/\s+/).filter(Boolean);
-  const tokens = [];
-  for (const word of raw) {
-    const parts = word.split(/(\p{Extended_Pictographic}+|\p{Emoji_Presentation}+)/u).filter(Boolean);
-    for (const part of parts) {
-      if (EMOJI_RE.test(part)) {
-        for (const ch of part.match(/\p{Extended_Pictographic}|\p{Emoji_Presentation}/gu) || []) {
-          tokens.push({ text: ch, emoji: true });
-        }
-      } else {
-        tokens.push({ text: part, emoji: false });
+function buildLines(ctx, tokens, fontSize, maxW) {
+  ctx.font = `bold ${fontSize}px sans-serif`;
+  const lines = [];
+  let line = [];
+  let lineW = 0;
+  for (const token of tokens) {
+    const w = getTokenWidth(ctx, token, fontSize);
+    if (token.type === 'space') {
+      if (line.length > 0) { line.push({ ...token, w }); lineW += w; }
+      continue;
+    }
+    if (line.length > 0 && lineW + w > maxW) {
+      while (line.length > 0 && line[line.length - 1].type === 'space') {
+        lineW -= line[line.length - 1].w;
+        line.pop();
       }
+      lines.push({ items: line, width: lineW });
+      line = [{ ...token, w }];
+      lineW = w;
+    } else {
+      line.push({ ...token, w });
+      lineW += w;
+    }
+  }
+  if (line.length > 0) {
+    while (line.length > 0 && line[line.length - 1].type === 'space') {
+      lineW -= line[line.length - 1].w;
+      line.pop();
+    }
+    lines.push({ items: line, width: lineW });
+  }
+  return lines;
+}
+
+function tokenize(text) {
+  const emojiRegex = /\p{Emoji_Presentation}|\p{Extended_Pictographic}/gu;
+  const raw = [];
+  let lastIndex = 0;
+  let match;
+  while ((match = emojiRegex.exec(text)) !== null) {
+    if (match.index > lastIndex) raw.push({ type: 'text', value: text.slice(lastIndex, match.index) });
+    raw.push({ type: 'emoji', value: match[0] });
+    lastIndex = match.index + match[0].length;
+  }
+  if (lastIndex < text.length) raw.push({ type: 'text', value: text.slice(lastIndex) });
+  const tokens = [];
+  for (const seg of raw) {
+    if (seg.type === 'emoji') {
+      if (tokens.length > 0) tokens.push({ type: 'space' });
+      tokens.push({ type: 'emoji', value: seg.value });
+    } else {
+      const words = seg.value.split(/\s+/).filter((w) => w.length > 0);
+      words.forEach((w) => {
+        if (tokens.length > 0) tokens.push({ type: 'space' });
+        tokens.push({ type: 'text', value: w });
+      });
     }
   }
   return tokens;
 }
 
-/* buildLines — greedy fill maxWidth, trailing space dibuang */
-function buildLines(ctx, tokens, fontSize, maxWidth) {
-  const lines = [];
-  let line = '';
-  let lineW = 0;
-  for (const tok of tokens) {
-    const tokW = tok.emoji ? fontSize * 1.15 : ctx.measureText(tok.text).width;
-    const spaceW = line ? ctx.measureText(' ').width : 0;
-    if (line && lineW + spaceW + tokW > maxWidth) {
-      lines.push(line.replace(/\s+$/, ''));
-      line = tok.text;
-      lineW = tokW;
-    } else {
-      line += (line ? ' ' : '') + tok.text;
-      lineW += spaceW + tokW;
-    }
-  }
-  if (line.trim()) lines.push(line.replace(/\s+$/, ''));
-  return lines;
-}
-
-function drawBrat({ text, bgColor, width = 512, height = 512, maxWidth = 450, maxHeight = 450,
-                    centerX = 256, centerY = 256, maxFontSize = 130, fontDecrement = 5,
-                    minFontSize = 20, lineHeightMult = 1.1, textColor = '#111111', rotationAngle = 0 }) {
+function drawBrat({
+  text, bgColor,
+  width = 512, height = 512,
+  centerX, centerY,
+  maxWidth, maxHeight,
+  rotationAngle = 0,
+  maxFontSize = 130, minFontSize = 10, fontDecrement = 2,
+  lineHeightMult = 1.2, textColor = '#000000',
+  align = 'center', textBaseline = 'middle',
+}) {
   const canvas = createCanvas(width, height);
   const ctx = canvas.getContext('2d');
-
   ctx.fillStyle = bgColor;
   ctx.fillRect(0, 0, width, height);
 
   const tokens = tokenize(text);
-
-  /* cari fontSize yang muat: semua baris ≤ maxWidth & total tinggi ≤ maxHeight */
   let fontSize = maxFontSize;
-  let lines = [];
-  for (;;) {
-    ctx.font = `bold ${fontSize}px Arial, sans-serif`;
+  let lines = buildLines(ctx, tokens, fontSize, maxWidth);
+
+  while (fontSize > minFontSize) {
     lines = buildLines(ctx, tokens, fontSize, maxWidth);
     const totalH = lines.length * fontSize * lineHeightMult;
-    const widest = lines.reduce((w, l) => Math.max(w, ctx.measureText(l).width), 0);
-    if ((totalH <= maxHeight && widest <= maxWidth) || fontSize <= minFontSize) break;
+    if (totalH <= maxHeight) break;
     fontSize -= fontDecrement;
   }
 
   const lineHeight = fontSize * lineHeightMult;
-  const totalH = lines.length * lineHeight;
+  const totalHeight = lines.length * lineHeight;
+  const cx = typeof centerX === 'function' ? centerX(width, height) : (centerX || width / 2);
+  const cy = typeof centerY === 'function' ? centerY(width, height) : (centerY || height / 2);
 
   ctx.save();
-  if (rotationAngle) {
-    ctx.translate(centerX, centerY);
-    ctx.rotate(rotationAngle);
-    ctx.translate(-centerX, -centerY);
-  }
+  ctx.translate(cx, cy);
+  ctx.rotate(rotationAngle);
   ctx.fillStyle = textColor;
-  ctx.textBaseline = 'middle';
-  ctx.textAlign = 'left';
+  ctx.textBaseline = textBaseline;
 
-  let y = centerY - totalH / 2 + lineHeight / 2;
-  for (const line of lines) {
-    const lw = ctx.measureText(line).width;
-    ctx.fillText(line, centerX - lw / 2, y);
-    y += lineHeight;
+  const startY = -(totalHeight / 2) + lineHeight / 2;
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const y = startY + i * lineHeight;
+    ctx.font = `bold ${fontSize}px sans-serif`;
+    let currentX = align === 'center' ? -line.width / 2 : -(maxWidth / 2);
+    for (const token of line.items) {
+      if (token.type === 'text') {
+        ctx.fillText(token.value, currentX, y);
+        currentX += token.w;
+      } else if (token.type === 'space') {
+        currentX += token.w;
+      }
+    }
   }
   ctx.restore();
-
   return canvas.toBuffer('image/png');
 }
 
 module.exports = {
   config: {
     name: 'brat',
-    alias: ['bratimg', 'brattext', 'bratgreen'],
+    alias: ['bratimg', 'brattext', 'bratgreen', 'brat2'],
     category: 'canvas',
     description: 'Bikin gambar gaya "brat" (background polos + teks kecil) dari teks kamu, dikirim sebagai foto',
     usage: '@brat <teks> [warna: green/white/black/pink/blue]',
@@ -129,8 +164,14 @@ module.exports = {
       content = words.slice(0, -1).join(' ');
     }
     const bg = VARIANTS[variantKey] || VARIANTS.default;
-    const textColor = bg === '#000000' ? '#FFFFFF' : '#111111';
-    const buffer = drawBrat({ text: content.toLowerCase(), bgColor: bg, textColor });
+    const textColor = bg === '#000000' ? '#FFFFFF' : '#000000';
+    const buffer = drawBrat({
+      text: content, bgColor: bg,
+      width: 512, height: 512, maxWidth: 450, maxHeight: 450,
+      centerX: 256, centerY: 256,
+      maxFontSize: 130, fontDecrement: 5, lineHeightMult: 1.1,
+      textColor,
+    });
     return { type: 'image', buffer, mime: 'image/png', caption: `brat: "${content}" (${variantKey})` };
   },
 };
