@@ -1,4 +1,4 @@
-const { runChat } = require('../plugins/chat');
+const { runChat } = require('../plugins/ai-core/chat');
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');

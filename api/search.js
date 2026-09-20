@@ -1,4 +1,4 @@
-const { runSearch } = require('../plugins/search');
+const { runSearch } = require('../plugins/ai-core/search');
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');

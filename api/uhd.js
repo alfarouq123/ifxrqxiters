@@ -1,4 +1,4 @@
-const { runUhd } = require('../plugins/uhd');
+const { runUhd } = require('../plugins/ai-core/uhd');
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');

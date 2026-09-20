@@ -1,4 +1,4 @@
-const { runBerfikir } = require('../plugins/berfikir');
+const { runBerfikir } = require('../plugins/ai-core/berfikir');
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');

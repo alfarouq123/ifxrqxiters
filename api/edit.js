@@ -1,4 +1,4 @@
-const { runEdit } = require('../plugins/edit');
+const { runEdit } = require('../plugins/ai-core/edit');
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
