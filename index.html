@@ -505,6 +505,28 @@
   .sp-newpl{ background:#181818; color:#fff; border:1px dashed #535353; border-radius:8px; padding:12px; width:100%; font-weight:700; font-size:13px; cursor:pointer; margin:6px 0 14px; }
   .sp-newpl:hover{ background:#282828; }
 
+  /* genre browse cards (spotify-style tiles) */
+  .sp-genres{ display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:12px; }
+  .sp-genre{ position:relative; aspect-ratio:1; border-radius:10px; padding:14px; cursor:pointer; overflow:hidden;
+    display:flex; align-items:flex-end; transition:transform .15s; }
+  .sp-genre:hover{ transform:scale(1.03); }
+  .sp-genre b{ color:#fff; font-size:17px; font-weight:800; letter-spacing:-.3px; text-shadow:0 2px 8px rgba(0,0,0,.4); position:relative; z-index:2; }
+  .sp-genre svg{ position:absolute; right:-8px; bottom:-6px; width:64px; height:64px; transform:rotate(-12deg); opacity:.9; }
+  .sp-quick{ display:flex; gap:10px; overflow-x:auto; scrollbar-width:none; padding-bottom:4px; }
+  .sp-quick::-webkit-scrollbar{ display:none; }
+  .sp-quickcard{ flex:0 0 auto; width:150px; display:flex; align-items:center; gap:0; background:#ffffff12; border-radius:6px; overflow:hidden; cursor:pointer; }
+  .sp-quickcard img{ width:64px; height:64px; object-fit:cover; }
+  .sp-quickcard span{ padding:0 12px 0 10px; color:#fff; font-size:13px; font-weight:700; line-height:1.3; }
+  /* equalizer bar (playing indicator) */
+  .eq{ display:inline-flex; gap:2px; align-items:flex-end; height:13px; width:14px; }
+  .eq i{ flex:1; background:#1ed760; border-radius:1px; animation:eqb 0.9s ease infinite; }
+  .eq i:nth-child(2){ animation-delay:.22s; }
+  .eq i:nth-child(3){ animation-delay:.44s; }
+  @keyframes eqb{ 0%,100%{ height:3px; } 50%{ height:13px; } }
+  /* svg icon buttons */
+  .nb-mid button svg, .np-cbtn svg, .np-playbtn svg, .np-close svg{ display:block; }
+  .sp-search svg{ display:block; }
+
   /* ═══ mini now-bar (spotify) ═══ */
   .nowbar{ position:fixed; left:0; right:0; bottom:0; z-index:60; background:#181818; border-top:1px solid #000;
     height:70px; padding:0 12px; display:none; align-items:center; gap:12px; }
@@ -707,9 +729,9 @@
     <div style="min-width:0"><b id="nowTitle">-</b><span id="nowArtist">-</span></div>
   </div>
   <div class="nb-mid">
-    <button id="nowPrev">⏮</button>
-    <button class="main" id="nowPlay">▶</button>
-    <button id="nowNext">⏭</button>
+    <button id="nowPrev"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></button>
+    <button class="main" id="nowPlay"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button>
+    <button id="nowNext"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg></button>
   </div>
 </div>
 
@@ -717,7 +739,7 @@
 <div class="npov" id="npOv">
   <div class="np-wrap">
     <div class="np-card" id="npCard">
-      <button class="np-close" id="npClose">✕</button>
+      <button class="np-close" id="npClose"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></button>
       <div class="np-kicker">▶ IFXRQ MUSIC</div>
       <div class="np-coverbox" id="npCoverBox"><img id="npCover" src="" alt="cover"></div>
       <div class="np-inforow">
@@ -725,7 +747,7 @@
           <div class="np-title" id="npTitle">-</div>
           <div class="np-artist" id="npArtist">-</div>
         </div>
-        <button class="np-like" id="npLike">🤍</button>
+        <button class="np-like" id="npLike"><svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></button>
       </div>
       <div class="np-lyricarea" id="npLyricBox"><div class="np-lyricscroll" id="npLyricScroll"></div></div>
       <div class="np-progarea" id="npProgArea">
@@ -733,13 +755,13 @@
         <div class="np-times"><span id="npTCur">0:00</span><span id="npTDur">0:00</span></div>
       </div>
       <div class="np-ctrls">
-        <button class="np-cbtn" id="npLoop" title="ulangi">🔁</button>
-        <button class="np-cbtn" id="npBack10" title="-10s">⏪</button>
-        <button class="np-playbtn" id="npPlay">▶</button>
-        <button class="np-cbtn" id="npFwd10" title="+10s">⏩</button>
-        <button class="np-cbtn" id="npLike2">🤍</button>
+        <button class="np-cbtn" id="npLoop" title="ulangi"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/></svg></button>
+        <button class="np-cbtn" id="npBack10" title="-10 detik"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></button>
+        <button class="np-playbtn" id="npPlay"><svg id="npIcPlay" viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg><svg id="npIcPause" viewBox="0 0 24 24" width="24" height="24" fill="currentColor" style="display:none"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg></button>
+        <button class="np-cbtn" id="npFwd10" title="+10 detik"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg></button>
+        <button class="np-cbtn" id="npLike2"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></button>
       </div>
-      <a class="np-dl" id="npDl" href="#" target="_blank" rel="noopener">⬇️ Unduh lagu full (MP3)</a>
+      <a class="np-dl" id="npDl" href="#" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" style="vertical-align:-2px;margin-right:5px"><path d="M12 16l6-6h-4V4h-4v6H6l6 6zm-7 2h14v2H5v-2z"/></svg>Unduh lagu full (MP3)</a>
     </div>
   </div>
 </div>
@@ -2134,6 +2156,9 @@ function switchView(id){
   $(id).classList.add('on');
   if (id === 'viewGames' && !$('gamesPage').dataset.loaded) renderGamesGrid();
   if (id === 'viewMusic') musicView();
+  /* mini player jangan ganggu view lain (input chat dll) */
+  if (id !== 'viewMusic') $('nowBar').classList.remove('show');
+  else if (typeof mIndex !== 'undefined' && mIndex >= 0) $('nowBar').classList.add('show');
 }
 function renderDrawerUser(){
   const u = curUser;
@@ -2423,25 +2448,57 @@ function greetTxt(){ const h = new Date().getHours();
 
 function renderMusicPage(){
   const page = $('musicPage');
-  const tabs = [['cari','Cari'],['favorit','Favorit'],['playlist','Playlist'],['top','Top Lagu']];
+  const tabs = [['beranda','Beranda'],['favorit','Favorit'],['playlist','Playlist'],['top','Top Lagu']];
+  const SEARCH_SVG = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.7.7l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0A4.5 4.5 0 1 1 14 9.5 4.5 4.5 0 0 1 9.5 14z"/></svg>';
+  const GENRES = [
+    ['Pop', '#e81148', 'top hits pop indonesia'],
+    ['Rock', '#e91429', 'lagu rock indonesia terbaik'],
+    ['Hip-Hop', '#ba5d07', 'lagu hip hop indonesia'],
+    ['K-Pop', '#148a08', 'kpop hits terpopuler'],
+    ['Dangdut', '#8d67ab', 'dangdut koplo hits'],
+    ['Anime', '#1e3264', 'anime opening hits'],
+    ['Indie', '#b02897', 'lagu indie indonesia'],
+    ['Jazz', '#503750', 'jazz santai playlist'],
+    ['Lo-fi', '#dc148c', 'lofi chill beats'],
+    ['Religi', '#0d73a4', 'lagu religi islami'],
+  ];
   page.innerHTML = `
     <div class="sp-head">
       <div class="sp-greet">${greetTxt()}</div>
-      <div class="sp-search"><span class="sp-ico">🔍</span><input id="mQ" placeholder="Apa yang mau kamu putar?" value="${escapeHtml(window.__mq || '')}" autocomplete="off"></div>
+      <div class="sp-search"><span class="sp-ico">${SEARCH_SVG}</span><input id="mQ" placeholder="Apa yang mau kamu putar?" value="${escapeHtml(window.__mq || '')}" autocomplete="off"></div>
       <div class="sp-chips">${tabs.map(([k, l]) => `<div class="sp-chip ${mTab === k ? 'on' : ''}" data-t="${k}">${l}</div>`).join('')}</div>
     </div>
     <div id="mBody"></div>`;
   page.querySelectorAll('.sp-chip').forEach((el) => el.addEventListener('click', () => { mTab = el.dataset.t; renderMusicPage(); }));
-  if (mTab === 'cari') {
-    if (mSearchResults.length) renderSongList(mSearchResults);
-    else $('mBody').innerHTML = '<div class="sp-empty">ketik judul lagu di atas buat mulai mencari 🎧</div>';
+  if (mTab === 'beranda' || mTab === 'cari') {
+    mTab = 'beranda';
+    if (mSearchResults.length) { renderSongList(mSearchResults); }
+    else {
+      const top = mMusicData.top || [];
+      let out = '';
+      if (top.length) {
+        out += '<div class="sp-sec">Sedang tren — top lagu semua user</div><div class="sp-quick">' +
+          top.map((s, i) => `<div class="sp-quickcard" data-top="${i}"><img src="${s.thumb || ''}" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.visibility='hidden'"><span>${escapeHtml(s.title)}</span></div>`).join('') + '</div>';
+      }
+      out += '<div class="sp-sec">Jelajahi genre</div><div class="sp-genres">' +
+        GENRES.map(([n, c, q]) => `<div class="sp-genre" data-q="${escapeHtml(q)}" style="background:linear-gradient(149deg,${c} 0%,${c}cc 60%,#00000090 110%)"><b>${n}</b><svg viewBox="0 0 80 80" fill="rgba(255,255,255,.28)"><path d="M64 8H32L8 32v32l24-24V8z"/><circle cx="56" cy="56" r="16" opacity=".7"/></svg></div>`).join('') + '</div>';
+      $('mBody').innerHTML = out;
+      $('mBody').querySelectorAll('.sp-genre').forEach((el) => el.addEventListener('click', () => {
+        window.__mq = el.dataset.q;
+        $('mQ').value = el.dataset.q;
+        musicSearch();
+      }));
+      $('mBody').querySelectorAll('.sp-quickcard').forEach((el) => el.addEventListener('click', () => {
+        playSong(mMusicData.top, +el.dataset.top, true);
+      }));
+    }
     $('mQ').addEventListener('keydown', (e) => { if (e.key === 'Enter') musicSearch(); });
   } else if (mTab === 'favorit') {
-    if (!(mMusicData.favorites || []).length) $('mBody').innerHTML = '<div class="sp-empty">belum ada lagu favorit — tap 🤍 di lagunya</div>';
+    if (!(mMusicData.favorites || []).length) $('mBody').innerHTML = '<div class="sp-empty">belum ada lagu favorit — tap ikon hati di lagunya</div>';
     else renderSongList(mMusicData.favorites);
   } else if (mTab === 'top') {
-    if (!(mMusicData.top || []).length) $('mBody').innerHTML = '<div class="sp-empty">belum ada yang diputar — top lagu dari <b>semua user</b> bakal muncul di sini 🔥</div>';
-    else { $('mBody').innerHTML = '<div class="sp-sec">🔥 Top lagu — terpopuler di kalangan semua user</div>'; renderSongList(mMusicData.top, true); }
+    if (!(mMusicData.top || []).length) $('mBody').innerHTML = '<div class="sp-empty">belum ada yang diputar — top lagu dari <b>semua user</b> bakal muncul di sini</div>';
+    else { $('mBody').innerHTML = '<div class="sp-sec">Top lagu — terpopuler di kalangan semua user</div>'; renderSongList(mMusicData.top, true); }
   } else {
     renderPlaylistTab();
   }
@@ -2455,7 +2512,7 @@ async function musicSearch(){
     const r = await fetch('/api/music/search?q=' + encodeURIComponent(q));
     const d = await r.json();
     mSearchResults = d.items || [];
-    if (mTab === 'cari') { if (!mSearchResults.length) $('mBody').innerHTML = '<div class="sp-empty">gak ketemu 😔 coba kata kunci lain</div>'; else renderSongList(mSearchResults); }
+    if (mTab === 'beranda' || mTab === 'cari') { if (!mSearchResults.length) $('mBody').innerHTML = '<div class="sp-empty">gak ketemu — coba kata kunci lain</div>'; else renderSongList(mSearchResults); }
   }catch(e){ $('mBody').innerHTML = '<div class="sp-empty">' + e.message + '</div>'; }
 }
 function isFav(id){ return (mMusicData.favorites || []).some((f) => f.id === id); }
@@ -2464,11 +2521,11 @@ function renderSongList(list, numbered){
   const isPlaying = (id) => mIndex >= 0 && mQueue[mIndex] && mQueue[mIndex].id === id;
   const rows = list.map((s, i) => `
     <div class="sp-row ${isPlaying(s.id) ? 'playing' : ''}" data-i="${i}">
-      <div class="sp-idx">${isPlaying(s.id) ? '▶' : (numbered ? i + 1 : '♪')}</div>
+      <div class="sp-idx">${isPlaying(s.id) ? '<span class="eq"><i></i><i></i><i></i></span>' : (numbered ? i + 1 : '·')}</div>
       <img class="sp-cov" src="${s.thumb || ''}" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.visibility='hidden'">
-      <div style="min-width:0"><div class="sp-t">${escapeHtml(s.title || '-')}</div><div class="sp-a">${escapeHtml(s.artist || '-')}</div></div>
+      <div style="min-width:0"><div class="sp-t">${escapeHtml(s.title || '-')}</div><div class="sp-a">${escapeHtml(s.artist || '-')}${s.album ? ' · ' + escapeHtml(s.album) : ''}</div></div>
       <div class="sp-side">
-        <button class="sp-fav ${isFav(s.id) ? 'on' : ''}" data-fav="${i}">${isFav(s.id) ? '❤️' : '🤍'}</button>
+        <button class="sp-fav ${isFav(s.id) ? 'on' : ''}" data-fav="${i}"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></button>
         <span class="sp-dur">${fmtDur(s.duration)}</span>
       </div>
     </div>`).join('');
@@ -2477,7 +2534,7 @@ function renderSongList(list, numbered){
   body.appendChild(div);
   div.querySelectorAll('.sp-row').forEach((el) => el.addEventListener('click', (e) => {
     if (e.target.closest('.sp-fav')) return;
-    playSong(list, +el.dataset.i, true); /* pencet lagu → masuk kartuMusik */
+    playSong(list, +el.dataset.i, true);
   }));
   div.querySelectorAll('.sp-fav').forEach((b) => b.addEventListener('click', async (e) => {
     e.stopPropagation();
@@ -2494,7 +2551,7 @@ function renderPlaylistTab(){
   body.innerHTML = `<button class="sp-newpl" id="mNewPl">＋ Buat playlist</button>` +
     (pls.length ? `<div class="sp-plgrid">${pls.map(([n, s]) => `
       <div class="sp-card" data-pl="${escapeHtml(n)}">
-        <div class="sp-cardcov">${s[0] && s[0].thumb ? `<img src="${s[0].thumb}" loading="lazy">` : '📂'}</div>
+        <div class="sp-cardcov">${s[0] && s[0].thumb ? `<img src="${s[0].thumb}" loading="lazy">` : '<svg viewBox="0 0 24 24" width="34" height="34" fill="#b3b3b3"><path d="M21 6h-8.59l-2-2H3a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2zm0 16H3V8h7.59l2 2H21v12z"/></svg>'}</div>
         <div class="sp-cardt">${escapeHtml(n)}</div>
         <div class="sp-cardd">${s.length} lagu</div>
       </div>`).join('')}</div>`
@@ -2511,7 +2568,7 @@ function openPlaylist(name){
   renderMusicPage();
   const body = $('mBody');
   body.insertAdjacentHTML('afterbegin',
-    `<div class="sp-sec" style="display:flex;align-items:center;gap:10px">📂 ${escapeHtml(name)}
+    `<div class="sp-sec" style="display:flex;align-items:center;gap:10px">${escapeHtml(name)}
       <button data-delpl style="margin-left:auto;background:none;border:1px solid #ff5c5c;color:#ff5c5c;border-radius:6px;font-size:10px;padding:3px 8px;cursor:pointer;">hapus</button></div>`);
   if (!songs.length) body.insertAdjacentHTML('beforeend', '<div class="sp-empty">playlist kosong</div>');
   else renderSongList(songs);
@@ -2530,27 +2587,37 @@ function darken(hex, f){
   return '#' + [r, g, b].map((v) => v.toString(16).padStart(2, '0')).join('');
 }
 function dominantColor(url){
+  /* persis warnaDominan() play.js: gambar 240x240 → crop tengah 60% (buang padding
+     item thumbnail) → sampling 3x3 → pilih pixel paling vivid.
+     stats-dominant naif = #080808 gara-gara padding — itu biang kerok kartu item. */
   return new Promise((res) => {
     try{
       const img = new Image();
       img.crossOrigin = 'anonymous';
       img.onload = () => {
         try{
-          const c = document.createElement('canvas'); c.width = c.height = 24;
-          const x = c.getContext('2d'); x.drawImage(img, 0, 0, 24, 24);
-          const d = x.getImageData(0, 0, 24, 24).data;
-          let r = 0, g = 0, b = 0, n = 0;
-          for (let i = 0; i < d.length; i += 4) {
-            const mx = Math.max(d[i], d[i+1], d[i+2]), mn = Math.min(d[i], d[i+1], d[i+2]);
-            if (mx - mn > 28 && mx > 60) { r += d[i]; g += d[i+1]; b += d[i+2]; n++; }
+          const c = document.createElement('canvas'); c.width = 240; c.height = 240;
+          const x = c.getContext('2d');
+          x.drawImage(img, 0, 0, 240, 240);
+          let best = null, bestSkor = -1;
+          for (let i = 0; i < 3; i++) {
+            for (let j = 0; j < 3; j++) {
+              const px = x.getImageData(48 + j * 48 + 24, 48 + i * 48 + 24, 1, 1).data;
+              const r = px[0], g = px[1], b = px[2];
+              const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
+              const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+              if (lum < 35 || lum > 235) continue;
+              const sat = mx === 0 ? 0 : (mx - mn) / mx;
+              const skor = sat * 2 + (lum / 255) * 0.5 + 0.2;
+              if (skor > bestSkor) { bestSkor = skor; best = [r, g, b]; }
+            }
           }
-          if (!n) return res('#3b2a6b');
-          res('#' + [r, g, b].map((v) => Math.round(v / n).toString(16).padStart(2, '0')).join(''));
-        }catch(e){ res('#3b2a6b'); }
+          res(best ? '#' + best.map((v) => Math.min(255, Math.round(v)).toString(16).padStart(2, '0')).join('') : '#171030');
+        }catch(e){ res('#171030'); }
       };
-      img.onerror = () => res('#3b2a6b');
+      img.onerror = () => res('#171030');
       img.src = url;
-    }catch(e){ res('#3b2a6b'); }
+    }catch(e){ res('#171030'); }
   });
 }
 function applyNpBg(hex){
@@ -2579,22 +2646,16 @@ function cleanTrackName(s){
     .replace(/\s{2,}/g, ' ').replace(/^[-\s]+|[-\s]+$/g, '').trim();
 }
 async function loadLyrics(s){
+  /* metadata udah bersih dari spotify (spotsaver) — tinggal album+durasi
+     biar match-nya presisi (persis play.js). fallback: kombinasi tanpa album. */
   npLyric = []; npLyEls = []; npLyActive = -1; renderNpLyrics();
   try{
-    const raw = cleanTrackName(s.title);
-    const parts = raw.split(' - ').map((x) => x.trim()).filter(Boolean);
-    const ups = (s.artist || '').replace(/ - Topic$/i, '');
-    /* judul YT sering "JUDUL - ARTIS ..." / "ARTIS - JUDUL ..." — coba beberapa kombinasi */
-    const tries = [];
-    if (parts.length > 1) {
-      tries.push([parts.slice(1).join(' - '), parts[0]]);   /* ARTIS - JUDUL */
-      tries.push([parts[0], parts.slice(1).join(' - ')]);   /* JUDUL - ARTIS */
-    }
-    tries.push([raw, ups]);
-    tries.push([cleanTrackName(s.title), ups]);
-    for (const [t, a] of tries) {
-      if (!t) continue;
-      const r = await fetch('/api/music/lyrics?title=' + encodeURIComponent(t) + '&artist=' + encodeURIComponent(a));
+    const tries = [
+      ['title=' + encodeURIComponent(s.title) + '&artist=' + encodeURIComponent(s.artist || '') + (s.album ? '&album=' + encodeURIComponent(s.album) : '') + (s.duration ? '&dur=' + s.duration : '')],
+      ['title=' + encodeURIComponent(cleanTrackName(s.title)) + '&artist=' + encodeURIComponent((s.artist || '').replace(/ - Topic$/i, ''))],
+    ];
+    for (const qs of tries) {
+      const r = await fetch('/api/music/lyrics?' + qs[0]);
       if (!r.ok) continue;
       const d = await r.json();
       if (!d.ok) continue;
@@ -2628,13 +2689,20 @@ function npUpdLyric(){
 function syncNpLike(){
   const s = mQueue[mIndex];
   const on = s ? isFav(s.id) : false;
-  $('npLike').textContent = on ? '❤️' : '🤍';
   $('npLike').classList.toggle('liked', on);
-  $('npLike2').textContent = on ? '❤️' : '🤍';
   $('npLike2').classList.toggle('on', on);
 }
-
 /* ── putar lagu ── */
+const SVG_PLAY = '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
+const SVG_PAUSE = '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
+function setPlayIcons(state){
+  /* state: 'loading' | 'play' | 'pause' */
+  const np = $('npPlay'), nb = $('nowPlay');
+  if (state === 'pause') { $('npIcPlay').style.display = 'none'; $('npIcPause').style.display = 'block'; nb.innerHTML = SVG_PAUSE; }
+  else { $('npIcPlay').style.display = 'block'; $('npIcPause').style.display = 'none'; nb.innerHTML = SVG_PLAY; }
+  np.style.opacity = state === 'loading' ? '.4' : '1';
+  nb.style.opacity = state === 'loading' ? '.4' : '1';
+}
 async function playSong(list, i, openCard){
   mQueue = list; mIndex = i;
   const s = list[i];
@@ -2643,40 +2711,40 @@ async function playSong(list, i, openCard){
   $('nowThumb').src = s.thumb || '';
   $('nowTitle').textContent = s.title || '-';
   $('nowArtist').textContent = s.artist || '-';
-  $('nowPlay').textContent = '⏳';
   $('npCover').src = s.thumb || '';
   $('npTitle').textContent = s.title || '-';
-  $('npArtist').textContent = s.artist || '-';
+  $('npArtist').textContent = (s.artist || '-') + (s.album ? ' · ' + s.album : '');
   $('npTCur').textContent = '0:00';
   $('npTDur').textContent = fmtDur(s.duration);
   $('npProgBar').style.width = '0%';
   $('npProgDot').style.left = '0%';
-  applyNpBg('#3b2a6b');
+  applyNpBg('#171030');
   syncNpLike();
   loadLyrics(s);
   if (openCard) $('npOv').classList.add('show');
+  setPlayIcons('loading');
   try{
-    const r = await fetch('/api/music/stream?id=' + encodeURIComponent(s.id));
+    /* audio: auto-match judul+artis+durasi spotify → YT → mp3 (persis play.js) */
+    const r = await fetch('/api/music/stream?title=' + encodeURIComponent(s.title) + '&artist=' + encodeURIComponent(s.artist || '') + '&dur=' + (s.duration || 0));
     const d = await r.json();
     if (!d.ok) throw new Error(d.error || 'gagal stream');
     mAudio.src = d.url;
     mAudio.loop = npLoopOn;
     await mAudio.play();
-    $('nowPlay').textContent = '⏸';
-    $('npPlay').textContent = '⏸';
+    setPlayIcons('pause');
     $('npCoverBox').classList.add('playing');
     $('npDl').href = d.url;
     if (d.duration) $('npTDur').textContent = fmtDur(d.duration);
     musicPost({ action:'play', song: s }).then(() => musicLoadData()).catch(() => {});
     dominantColor(s.thumb).then(applyNpBg);
   }catch(e){
-    $('nowPlay').textContent = '▶';
+    setPlayIcons('play');
     alert('gagal putar: ' + e.message);
   }
 }
 function npTogglePlay(){
-  if (mAudio.paused) { mAudio.play(); $('nowPlay').textContent = '⏸'; $('npPlay').textContent = '⏸'; $('npCoverBox').classList.add('playing'); }
-  else { mAudio.pause(); $('nowPlay').textContent = '▶'; $('npPlay').textContent = '▶'; $('npCoverBox').classList.remove('playing'); }
+  if (mAudio.paused) { mAudio.play(); setPlayIcons('pause'); $('npCoverBox').classList.add('playing'); }
+  else { mAudio.pause(); setPlayIcons('play'); $('npCoverBox').classList.remove('playing'); }
 }
 $('nowPlay').addEventListener('click', npTogglePlay);
 $('npPlay').addEventListener('click', npTogglePlay);
