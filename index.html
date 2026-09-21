@@ -997,7 +997,7 @@ const mentionDropdown   = document.getElementById('mentionDropdown');
 hudSession.textContent = Math.random().toString(16).slice(2,8);
 setInterval(()=>{ pingLine.textContent = `watskin jr. · ping ${18 + Math.floor(Math.random()*20)}ms`; }, 4000);
 
-marked.setOptions({ gfm: true, breaks: true });
+try { if (window.marked) marked.setOptions({ gfm: true, breaks: true }); } catch(_e) {}
 
 function escapeHtml(str){
   const d = document.createElement('div');
@@ -1049,14 +1049,14 @@ function highlightMentions(root){
 
 function renderMarkdown(raw){
   const source = normalizeText(raw).replace(/^\uFEFF/, '');
-  const dirty = marked.parse(source);
-  const clean = DOMPurify.sanitize(dirty, { ADD_ATTR: ['target'] });
+  const dirty = window.marked ? marked.parse(source) : String(source).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+  const clean = window.DOMPurify ? DOMPurify.sanitize(dirty, { ADD_ATTR: ['target'] }) : dirty;
   const wrap = document.createElement('div');
   wrap.innerHTML = clean;
   highlightMentions(wrap);
 
   wrap.querySelectorAll('pre code').forEach(codeEl => {
-    hljs.highlightElement(codeEl);
+    if (window.hljs) hljs.highlightElement(codeEl);
     const lang = (codeEl.className.match(/language-(\w+)/) || [,'text'])[1];
     const pre = codeEl.parentElement;
     const block = document.createElement('div');
@@ -1464,6 +1464,10 @@ function renderPlugList(){
   });
 }
 
+function togglePlugPanel(){
+  if (document.getElementById('plugOverlay').classList.contains('show')) closePlugPanel();
+  else openPlugPanel();
+}
 function openPlugPanel(){
   plugActiveCat = 'all'; plugQuery = ''; plugSearch.value = '';
   renderPlugCats(); renderPlugList();
@@ -1476,9 +1480,7 @@ function closePlugPanel(){
   document.getElementById('gearBtn').classList.remove('active');
 }
 
-document.getElementById('gearBtn').addEventListener('click', ()=>{
-  if(plugOverlay.classList.contains('show')) closePlugPanel(); else openPlugPanel();
-});
+/* gear: cukup inline onclick=togglePlugPanel() */
 document.getElementById('plugClose').addEventListener('click', closePlugPanel);
 plugOverlay.addEventListener('click', (e)=>{ if(e.target === plugOverlay) closePlugPanel(); });
 plugSearch.addEventListener('input', ()=>{ plugQuery = plugSearch.value.trim(); renderPlugList(); });
