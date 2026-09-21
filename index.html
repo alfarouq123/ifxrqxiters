@@ -2935,19 +2935,25 @@ async function studioGenerate(){
       studioSaveGal({ url: src, kind: 'image' });
     } else {
       status.textContent = '⏳ mulai render video (google flow)...';
-      const s = await studioPost({ action: 'veo-start', model: stSel.video, prompt, seconds: stDur, aspect });
-      const t0 = Date.now();
-      for (;;) {
-        await new Promise((r) => setTimeout(r, 6000));
-        const p = await studioPost({ action: 'veo-poll', op: s.op });
-        if (!p.pending) {
-          out.innerHTML = `<video src="${p.url}" controls autoplay loop></video><br><a href="${p.url}" target="_blank" rel="noopener">Unduh video (MP4)</a>`;
-          status.textContent = '✅ selesai (' + Math.round((Date.now() - t0) / 1000) + ' dtk)';
-          studioSaveGal({ url: p.url, kind: 'video' });
-          break;
+      try {
+        const s = await studioPost({ action: 'veo-start', model: stSel.video, prompt, seconds: stDur, aspect });
+        const t0 = Date.now();
+        for (;;) {
+          await new Promise((r) => setTimeout(r, 6000));
+          const p = await studioPost({ action: 'veo-poll', op: s.op });
+          if (!p.pending) {
+            out.innerHTML = `<video src="${p.url}" controls autoplay loop></video><br><a href="${p.url}" target="_blank" rel="noopener">Unduh video (MP4)</a>`;
+            status.textContent = '✅ selesai (' + Math.round((Date.now() - t0) / 1000) + ' dtk) · Veo';
+            studioSaveGal({ url: p.url, kind: 'video' });
+            break;
+          }
+          status.textContent = '⏳ lagi render... ' + Math.round((Date.now() - t0) / 1000) + ' dtk (veo biasanya 1-3 menit)';
+          if (Date.now() - t0 > 6 * 60 * 1000) throw new Error('kelamaan (6 menit) — coba lagi');
         }
-        status.textContent = '⏳ lagi render... ' + Math.round((Date.now() - t0) / 1000) + ' dtk (veo biasanya 1-3 menit)';
-        if (Date.now() - t0 > 6 * 60 * 1000) throw new Error('kelamaan (6 menit) — coba lagi');
+      } catch (e) {
+        /* Veo gak tersedia di key → fallback: video animasi dari keyframe AI (gratis) */
+        status.textContent = '⚠️ ' + e.message.slice(0, 80) + ' — pindah mode animasi...';
+        await studioAnimate(prompt, aspect, stDur);
       }
     }
   } catch (e) {
@@ -2957,6 +2963,73 @@ async function studioGenerate(){
     $('stGo').disabled = false;
   }
 }
+/* ── fallback video gratis: keyframe AI (pollinations) → animasi canvas → webm ── */
+async function studioAnimate(prompt, aspect, seconds){
+  const status = $('stStatus'), out = $('stOut');
+  const W = aspect === '9:16' ? 720 : 1280, H = aspect === '9:16' ? 1280 : 720;
+  const N = Math.max(3, Math.min(6, Math.round(seconds / 1.6)));
+  const shots = ['wide shot', 'medium shot', 'close up', 'dramatic angle', 'action moment', 'final shot'];
+  const frames = [];
+  for (let i = 0; i < N; i++) {
+    status.textContent = '🎨 bikin keyframe ' + (i + 1) + '/' + N + ' (fallback animasi)...';
+    try {
+      const d = await studioPost({ action: 'image', model: 'laps-lite', prompt: prompt + ', ' + shots[i % shots.length] + ', cinematic, consistent style, scene ' + (i + 1), aspect: aspect === '9:16' ? '9:16' : '16:9' });
+      frames.push(d.url || ('data:' + d.mime + ';base64,' + d.base64));
+    } catch(_e) { /* skip frame gagal */ }
+  }
+  if (frames.length < 2) throw new Error('keyframe gagal dibikin — coba lagi');
+  status.textContent = '🎬 gabungin jadi video...';
+  const imgs = await Promise.all(frames.map((src) => new Promise((res) => { const im = new Image(); im.crossOrigin = 'anonymous'; im.onload = () => res(im); im.onerror = () => res(null); im.src = src; })));
+  const c = document.createElement('canvas'); c.width = W; c.height = H;
+  const x = c.getContext('2d');
+  x.fillStyle = '#000'; x.fillRect(0, 0, W, H);
+  out.innerHTML = '';
+  out.appendChild(c);
+  const stream = c.captureStream(30);
+  const rec = new MediaRecorder(stream, { mimeType: MediaRecorder.isTypeSupported('video/webm;codecs=vp9') ? 'video/webm;codecs=vp9' : 'video/webm' });
+  const chunks = [];
+  rec.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
+  const done = new Promise((res2) => { rec.onstop = res2; });
+  rec.start(200);
+  const per = (seconds * 1000) / imgs.length;
+  const t0 = performance.now();
+  await new Promise((anim) => {
+    (function draw() {
+      const t = performance.now() - t0;
+      const idx = Math.min(imgs.length - 1, Math.floor(t / per));
+      const local = (t % per) / per;
+      const im = imgs[idx];
+      x.fillStyle = '#000'; x.fillRect(0, 0, W, H);
+      if (im) {
+        /* ken-burns: zoom 1.0→1.08 + geser halus */
+        const z = 1 + 0.08 * local;
+        const dw = W * z, dh = H * z;
+        const dx = -(dw - W) * (idx % 2 ? local : 1 - local) * 0.5;
+        const dy = -(dh - H) * 0.5;
+        x.drawImage(im, dx, dy, dw, dh);
+      }
+      if (t < seconds * 1000) requestAnimationFrame(draw);
+      else anim();
+    })();
+  });
+  rec.stop();
+  await done;
+  const blob = new Blob(chunks, { type: 'video/webm' });
+  const localUrl = URL.createObjectURL(blob);
+  out.innerHTML = '';
+  /* upload biar galeri permanen */
+  let permUrl = localUrl;
+  status.textContent = '📤 upload video...';
+  try {
+    const b64 = await new Promise((res2) => { const fr = new FileReader(); fr.onload = () => res2(String(fr.result).split(',')[1]); fr.readAsDataURL(blob); });
+    const up = await studioPost({ action: 'upload', base64: b64 });
+    permUrl = up.url;
+  } catch(_e) { status.textContent = '⚠️ upload gagal — video cuma tersimpan di sesi ini'; }
+  out.innerHTML = `<video src="${permUrl}" controls autoplay loop></video><br><a href="${permUrl}" target="_blank" rel="noopener">Unduh video (WEBM)</a>`;
+  status.textContent = '✅ selesai · mode animasi (fallback — Veo gak ada kuota di key, aktifin billing buat quality asli)';
+  if (permUrl.startsWith('http')) studioSaveGal({ url: permUrl, kind: 'video' });
+}
+
 function studioSaveGal(g){
   try {
     const gal = JSON.parse(localStorage.getItem('ifz_studio') || '[]');
