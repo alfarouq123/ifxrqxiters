@@ -14,6 +14,7 @@ const ROUTES = {
   '/api/music': require('../lib/routes/music'),
   '/api/play': require('../lib/routes/play'),
   '/api/run': require('../lib/routes/run'),
+  '/api/studio': require('../lib/routes/studio'),
   '/api/search': require('../lib/routes/search'),
   '/api/uhd': require('../lib/routes/uhd'),
   '/api/upload': require('../lib/routes/upload'),
