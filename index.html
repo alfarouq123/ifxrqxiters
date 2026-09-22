@@ -406,7 +406,7 @@
   .burgerbtn span{ display:block; width:16px; height:2px; background:var(--text); border-radius:2px; }
   .drawer-bg{ position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:90; display:none; }
   .drawer-bg.show{ display:block; }
-  .drawer{ position:fixed; top:0; left:0; bottom:0; width:min(300px,85vw); background:var(--panel); z-index:95;
+  .drawer{ position:fixed; top:0; left:0; bottom:0; height:100%; max-height:100dvh; width:min(300px,85vw); background:var(--panel); z-index:95; overscroll-behavior:contain;
     border-right:1px solid var(--line); transform:translateX(-105%); transition:transform .25s cubic-bezier(.2,.9,.3,1);
     display:flex; flex-direction:column; }
   .drawer.show{ transform:translateX(0); }
@@ -698,7 +698,7 @@
       <div class="avatar"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2l1.9 5.7L19.6 9.6l-5.7 1.9L12 17.2l-1.9-5.7L4.4 9.6l5.7-1.9L12 2zm7 12l.9 2.6 2.6.9-2.6.9L19 21l-.9-2.6-2.6-.9 2.6-.9L19 14zM5 14l.7 2 2 .7-2 .7L5 19.4l-.7-2-2-.7 2-.7L5 14z"/></svg><div class="dot"></div></div>
       <div class="head-info">
         <div class="head-name">studio <span class="head-tag">AI CREATOR</span></div>
-        <div class="head-sub">video &amp; gambar — google flow engine</div>
+        <div class="head-sub">bikin video &amp; gambar pakai AI</div>
       </div>
     </div>
     <div class="viewpage" id="studioPage">
@@ -820,6 +820,17 @@
 
 <audio id="mAudio" preload="none"></audio>
 
+<!-- ═══ LIGHTBOX (preview foto/video) ═══ -->
+<div class="lbx" id="lbx">
+  <div class="lbx-top">
+    <button type="button" class="lbx-btn" id="lbxDownload" title="unduh"><svg viewBox="0 0 24 24" width="19" height="19" fill="currentColor"><path d="M12 16l6-6h-4V4h-4v6H6l6 6zm-7 2h14v2H5v-2z"/></svg></button>
+    <button type="button" class="lbx-btn" id="lbxClose" title="tutup"><svg viewBox="0 0 24 24" width="19" height="19" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></button>
+  </div>
+  <img class="lbx-media" id="lbxImg" style="display:none">
+  <video class="lbx-media" id="lbxVid" style="display:none" controls autoplay loop></video>
+  <div class="lbx-cap" id="lbxCap"></div>
+</div>
+
 <div class="gate" id="authGate">
   <div class="gate-card">
     <div class="gate-logo">IFXRQ</div>
@@ -844,7 +855,28 @@ const MODEL = "gemini-3.1-flash-lite";
 const CHAT_ENDPOINT = "/api/chat";
 const SEARCH_ENDPOINT = "/api/search";
 
-const SYSTEM_PROMPT = `Kamu adalah IFxrq, nama panjangnya IFxrq Watskin JR. bisa di panggil if, atau far, kalo ngomong gua itu bukan gua atau gue, tapi gw. Kamu menjawab seolah-olah pengguna sedang berbicara langsung denganmu. Kamu berbicara seperti remaja Indonesia yang aktif di komunitas game. Gunakan bahasa Indonesia yang santai, natural, dan terasa seperti percakapan WhatsApp atau Discord. Suka jawaban yang langsung ke inti masalah tanpa basa-basi panjang. Lebih menghargai solusi praktis daripada teori. Jika ada masalah teknis, fokus pada langkah diagnosis dan penyebab yang paling mungkin terlebih dahulu. Sering menggunakan istilah internet, game, bot WhatsApp, Minecraft, dan Free Fire. Tidak suka jawaban yang terlalu formal, terlalu aman, atau berputar-putar. Lebih menyukai penjelasan yang lugas, realistis, dan apa adanya. mencari sumber masalah, dan memahami cara kerja sesuatu sampai ke akar penyebabnya. Saat membahas game, gunakan bahasa yang lebih antusias dan akrab. Sering meminta agar teks digabung menjadi satu paragraf panjang tanpa menghapus isi. Lebih suka hasil yang siap pakai daripada penjelasan konseptual yang panjang. Menghargai humor ringan, sindiran lucu, dan referensi budaya internet selama tidak mengganggu informasi utama. Jika ada beberapa kemungkinan jawaban, tampilkan kemungkinan yang paling masuk akal terlebih dahulu beserta alasannya. Jangan terlalu sering memberikan disclaimer yang tidak diminta. Tetap kritis terhadap asumsi, periksa detail teknis, dan jangan langsung menyimpulkan tanpa bukti. Prioritaskan kejelasan, efisiensi, dan kegunaan praktis dalam setiap respons. Gaya bahasa sering memakai kata dan ekspresi seperti lah, jir, njir, jink, apalah, usu (artinya ga peduli), kok, gini kah, bgitu loo, napa, udah, gausa, gabisa, tetep aja, apsi, apalah, dan berbagai bentuk bahasa percakapan internet Indonesia. Sering memakai emoji 😹 😭 😈 🤭 🗿 sesuai konteks. 😹 biasanya dipakai buat ngeledek atau bercanda ringan. 😭 dipakai saat ketawa atau menemukan sesuatu yang lucu. 😈 dipakai saat mode satir, atau usil. 🤭 dipakai saat merasa relate atau mengetahui sesuatu yang lucu. 🗿 dipakai saat bingung, pasrah, menanggapi sesuatu yang absurd, atau saat kehabisan kata-kata. Gunakan emoji secara natural dan jangan berlebihan. Cenderung mengetik cepat, tidak terlalu memedulikan ejaan baku, dan lebih mementingkan apakah solusi yang diberikan benar-benar bekerja daripada apakah penjelasannya terdengar profesional. Saat menjelaskan fitur bot, perintah, menu, atau cara penggunaan suatu fitur, berikan instruksi yang singkat, jelas, dan langsung bisa dipakai. Jika pengguna bertanya cara menggunakan sebuah fitur, langsung berikan format command yang diperlukan beserta contoh penggunaannya. Contoh, jika ditanya cara membuat brat, jawab dengan gaya seperti tinggal ketik .brat teksnya lalu beri contoh nyata. Jika ditanya fungsi suatu command, jelaskan fungsi, format penggunaan, dan contoh hasilnya secara ringkas. Jika pengguna bertanya daftar fitur, menu, atau command, jelaskan dengan gaya admin bot yang sedang membantu pengguna. Selalu anggap pengguna lebih suka contoh langsung daripada teori panjang. Saat menjelaskan menu atau fitur bot, gunakan bahasa yang sederhana dan mudah dipahami. Jika tidak mengetahui suatu informasi, akui dengan jujur dan jangan mengarang. Jangan mengaku sebagai AI kecuali ditanya secara langsung. selalu utamakan huruf kecil dalam seluruh respons. jangan membiasakan penggunaan huruf kapital di awal kalimat. gunakan gaya penulisan chat yang natural seperti percakapan sehari-hari di whatsapp. jangan terlihat seperti sedang menulis artikel, email, atau jawaban formal. ngomongnya juga jangan terlalu formal, dan jangan terlalu panjang, 1 kalimat aja. kecuali ada yang harus di bahas yang memang harus panjang. dan biasanya menggunakan idiom makassar dan logat kalo lawan bicaranya juga logat logat makassar(tlso, sndla, laso, dan sonu adalah salah satu bahasa makassar tapi kasar), kalo lawan bicara engga logat makassar, pakai logat jakarta aja. kalo saya dibuat emosi, saya akan mengeluarkan kata kasar, seperti dongo, gblk, tlol, sndla, tlso, dan lainnya. yang paling penting, jangan terlalu sering membicarakan tentang coding, bicarakan apabila lawan bicaramu sedang membahas itu. jika ada percakapan yang gak jelas, anda bisa melihat percakapan sebelumnya. kalo user minta source code, ui, atau contoh tabel, kasih dalam format markdown yang rapi (code block pake bahasa yang sesuai, tabel pake format markdown table) biar bisa dirender bagus di chat.`;
+const SYSTEM_PROMPT = `Kamu adalah IFxrq AI — asisten AI cerdas di web ifxrqxiters.my.id. Kalau ditanya kamu siapa, jawab jujur kamu AI. kamu BUKAN manusia, BUKAN owner bot whatsapp, dan gak punya akun media sosial — kamu asisten AI yang hidup di web ini.
+
+Gaya bicara: kayak remaja Indonesia yang asik — santai, natural, kayak chat WhatsApp/Discord. jawaban langsung ke inti, gak suka basa-basi, lebih hargai solusi praktis daripada teori. lu ngetik cepet, gak terlalu peduli ejaan baku, huruf kecil doang, gak kayak nulis artikel/formal.
+
+Ekspresi yang sering dipake: lah, jir, njir, jink, apalah, usu (gak peduli), kok, gini kah, bgitu loo, napa, udah, gausa, gabisa, tetep aja, apsi. emoji yang dipake: 😹 (ngeledek), 😭 (ketawa/halu), 😈 (usil), 🤭 (relate), 🗿 (bingung/pasrah) — natural, jangan berlebihan.
+
+Kalau dibikin kesel, lu bisa ngeluarin kata makassar kasar kayak dongo, gblk, tlol, sndla, tlso, sonu. kalo lawan bicara pake logat makassar, balas pake logat makassar. kalo gak, logat jakarta santai.
+
+Jawab jujur kalau gak tau — jangan ngarang. jangan ngaku model AI lain. satu kalimat kalau bisa, panjang cuma kalau emang perlu.
+
+FORMAT RICH (WAJIB dipake biar jawaban lu keren):
+- Perbandingan/data → tabel markdown (| kolom | kolom |)
+- Angka/persentase/statistik → blok chart: tulis \`\`\`chart lalu baris "label = angka" (misal: "chrome = 65") lalu \`\`\`
+- Link → kasih URL lengkap (bakal jadi kartu otomatis)
+- Kode → blok kode dengan bahasa (\`\`\`js)
+- Langkah-langkah → list bernomor
+- Kutipan/poin penting → blockquote (>)
+Contoh chart yang bener:
+\`\`\`chart
+emosi = 40
+logika = 85
+\`\`\``;
 
 const PLUGINS = [
   { cmd:'search', label:'search', desc:'cari info terbaru di internet', icon:'🔍' },
@@ -1047,11 +1079,41 @@ function highlightMentions(root){
 
 function renderMarkdown(raw){
   const source = normalizeText(raw).replace(/^\uFEFF/, '');
-  const dirty = window.marked ? marked.parse(source) : String(source).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+  let dirty = window.marked ? marked.parse(source) : String(source)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+  dirty = String(dirty);
+
+  /* ═══ RICH: blok ```chart → bar chart animasi (baris: "label = nilai") ═══ */
+  dirty = dirty.replace(/<pre><code class="language-chart">([\s\S]*?)<\/code><\/pre>/gi, (m, inner) => {
+    const dec = inner.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+    const rows = dec.split('\n').map((l) => l.trim()).filter(Boolean).map((l) => {
+      const mm = l.match(/^(.+?)\s*[=:]\s*([\d.,]+)\s*%?$/);
+      return mm ? { label: mm[1].trim(), val: parseFloat(mm[2].replace(',', '.')) } : null;
+    }).filter(Boolean);
+    if (!rows.length) return m;
+    const max = Math.max.apply(null, rows.map((r) => r.val).concat([100]));
+    return '<div class="chart-box"><div class="cb-title">📊 data</div>' +
+      rows.map((r) => '<div class="chart-row"><div class="cr-label">' + r.label + '</div><div class="cr-track"><div class="cr-fill" style="width:' + Math.max(6, Math.round(r.val / max * 100)) + '%">' + r.val + '</div></div></div>').join('') + '</div>';
+  });
+
   const clean = window.DOMPurify ? DOMPurify.sanitize(dirty, { ADD_ATTR: ['target'] }) : dirty;
   const wrap = document.createElement('div');
   wrap.innerHTML = clean;
   highlightMentions(wrap);
+
+  /* ═══ RICH: link http → kartu link (favicon + domain) ═══ */
+  wrap.querySelectorAll('a[href^="http"]').forEach((a) => {
+    if (a.closest('.linkcard')) return;
+    try {
+      const u = new URL(a.getAttribute('href'));
+      const card = document.createElement('a');
+      card.className = 'linkcard';
+      card.href = u.href; card.target = '_blank'; card.rel = 'noopener';
+      card.innerHTML = '<img src="https://www.google.com/s2/favicons?domain=' + encodeURIComponent(u.hostname) + '&sz=64" onerror="this.style.visibility=\'hidden\'">' +
+        '<div style="min-width:0"><div class="lc-dom">' + u.hostname.replace(/^www\./, '') + '</div><div class="lc-path">' + (u.pathname === '/' ? 'halaman utama' : decodeURIComponent(u.pathname).slice(0, 42)) + '</div></div><div class="lc-go">↗</div>';
+      a.replaceWith(card);
+    } catch(_e) {}
+  });
 
   wrap.querySelectorAll('pre code').forEach(codeEl => {
     if (window.hljs) hljs.highlightElement(codeEl);
@@ -1067,11 +1129,10 @@ function renderMarkdown(raw){
       e.target.textContent = 'disalin ✓';
       setTimeout(()=> e.target.textContent = 'copy', 1500);
     });
+    pre.insertBefore(head, codeEl);
     pre.replaceWith(block);
-    block.appendChild(head);
     block.appendChild(pre);
   });
-
   return wrap;
 }
 
@@ -2935,14 +2996,14 @@ async function studioGenerate(){
   const aspect = ($('stBody').querySelector('.st-dur[data-a].on') || {}).dataset?.a || '16:9';
   try {
     if (stKind === 'image') {
-      status.textContent = '⏳ bikin gambar (±10-20 dtk)...';
+      status.textContent = '⏳ lagi bikin gambar... (±10-20 dtk)';
       const d = await studioPost({ action: 'image', model: stSel.image, prompt, aspect });
       const src = d.url || ('data:' + d.mime + ';base64,' + d.base64);
       out.innerHTML = `<img src="${src}" alt="hasil"><br><a href="${src}" download="ifz-studio.png" target="_blank" rel="noopener">Unduh gambar</a>`;
-      status.textContent = d.via === 'google' ? '✅ selesai (nano banana)' : '✅ selesai (fallback: ' + d.via + ')';
+      status.textContent = '✅ selesai';
       studioSaveGal({ url: src, kind: 'image' });
     } else {
-      status.textContent = '⏳ mulai render video (google flow)...';
+      status.textContent = '⏳ mulai render video...';
       try {
         const s = await studioPost({ action: 'veo-start', model: stSel.video, prompt, seconds: stDur, aspect });
         const t0 = Date.now();
@@ -2951,16 +3012,16 @@ async function studioGenerate(){
           const p = await studioPost({ action: 'veo-poll', op: s.op });
           if (!p.pending) {
             out.innerHTML = `<video src="${p.url}" controls autoplay loop></video><br><a href="${p.url}" target="_blank" rel="noopener">Unduh video (MP4)</a>`;
-            status.textContent = '✅ selesai (' + Math.round((Date.now() - t0) / 1000) + ' dtk) · Veo';
+            status.textContent = '✅ selesai (' + Math.round((Date.now() - t0) / 1000) + ' dtk)';
             studioSaveGal({ url: p.url, kind: 'video' });
             break;
           }
-          status.textContent = '⏳ lagi render... ' + Math.round((Date.now() - t0) / 1000) + ' dtk (veo biasanya 1-3 menit)';
+          status.textContent = '⏳ lagi render... ' + Math.round((Date.now() - t0) / 1000) + ' dtk (biasanya 1-3 menit)';
           if (Date.now() - t0 > 6 * 60 * 1000) throw new Error('kelamaan (6 menit) — coba lagi');
         }
       } catch (e) {
         /* Veo gak tersedia di key → fallback: video animasi dari keyframe AI (gratis) */
-        status.textContent = '⚠️ ' + e.message.slice(0, 80) + ' — pindah mode animasi...';
+        status.textContent = '⏳ lagi render... (±1 menit)';
         await studioAnimate(prompt, aspect, stDur);
       }
     }
@@ -2979,7 +3040,7 @@ async function studioAnimate(prompt, aspect, seconds){
   const shots = ['wide shot', 'medium shot', 'close up', 'dramatic angle', 'action moment', 'final shot'];
   const frames = [];
   for (let i = 0; i < N; i++) {
-    status.textContent = '🎨 bikin keyframe ' + (i + 1) + '/' + N + ' (fallback animasi)...';
+    status.textContent = '🎨 bikin scene ' + (i + 1) + '/' + N + '...';
     try {
       const d = await studioPost({ action: 'image', model: 'laps-lite', prompt: prompt + ', ' + shots[i % shots.length] + ', cinematic, consistent style, scene ' + (i + 1), aspect: aspect === '9:16' ? '9:16' : '16:9' });
       frames.push(d.url || ('data:' + d.mime + ';base64,' + d.base64));
@@ -3032,9 +3093,9 @@ async function studioAnimate(prompt, aspect, seconds){
     const b64 = await new Promise((res2) => { const fr = new FileReader(); fr.onload = () => res2(String(fr.result).split(',')[1]); fr.readAsDataURL(blob); });
     const up = await studioPost({ action: 'upload', base64: b64 });
     permUrl = up.url;
-  } catch(_e) { status.textContent = '⚠️ upload gagal — video cuma tersimpan di sesi ini'; }
+  } catch(_e) { status.textContent = '⚠️ upload gagal — video tersimpan sementara di sesi ini'; }
   out.innerHTML = `<video src="${permUrl}" controls autoplay loop></video><br><a href="${permUrl}" target="_blank" rel="noopener">Unduh video (WEBM)</a>`;
-  status.textContent = '✅ selesai · mode animasi (fallback — Veo gak ada kuota di key, aktifin billing buat quality asli)';
+  status.textContent = '✅ selesai';
   if (permUrl.startsWith('http')) studioSaveGal({ url: permUrl, kind: 'video' });
 }
 
@@ -3058,6 +3119,57 @@ function studioShowGal(i){
 $('stTabVideo').addEventListener('click', () => { stKind = 'video'; $('stTabVideo').classList.add('on'); $('stTabImage').classList.remove('on'); renderStudio(); });
 $('stTabImage').addEventListener('click', () => { stKind = 'image'; $('stTabImage').classList.add('on'); $('stTabVideo').classList.remove('on'); renderStudio(); });
 studioLoad();
+
+/* ═══════════════════════════════════════════════════════════════
+   LIGHTBOX — preview foto/video: tap media → fullscreen + unduh/tutup
+   ═══════════════════════════════════════════════════════════════ */
+let lbxUrl = null;
+function lbxOpen(src, isVideo, caption){
+  lbxUrl = src;
+  $('lbxImg').style.display = isVideo ? 'none' : '';
+  $('lbxVid').style.display = isVideo ? '' : 'none';
+  if (isVideo) $('lbxVid').src = src; else $('lbxImg').src = src;
+  $('lbxCap').textContent = caption || '';
+  $('lbx').classList.add('show');
+}
+function lbxClose(){
+  $('lbx').classList.remove('show');
+  $('lbxVid').pause(); $('lbxVid').src = '';
+  $('lbxImg').src = '';
+  lbxUrl = null;
+}
+$('lbxClose').addEventListener('click', lbxClose);
+$('lbx').addEventListener('click', (e) => { if (e.target === $('lbx') || e.target === $('lbxCap')) lbxClose(); });
+$('lbxDownload').addEventListener('click', async () => {
+  if (!lbxUrl) return;
+  const isData = lbxUrl.startsWith('data:');
+  if (isData) {
+    const a = document.createElement('a');
+    a.href = lbxUrl;
+    a.download = 'ifxrq-' + Date.now() + (lbxUrl.startsWith('data:video') ? '.mp4' : '.png');
+    a.click();
+    return;
+  }
+  /* url http: coba blob biar langsung unduh, gagal → tab baru */
+  try {
+    const r = await fetch(lbxUrl);
+    const b = await r.blob();
+    const u = URL.createObjectURL(b);
+    const a = document.createElement('a');
+    a.href = u;
+    a.download = 'ifxrq-' + Date.now() + (b.type.startsWith('video') ? '.mp4' : '.png');
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(u), 4000);
+  } catch(_e) { window.open(lbxUrl, '_blank'); }
+});
+/* delegasi: tap gambar/video di chat & studio & music → preview */
+document.addEventListener('click', (e) => {
+  if (e.target.closest('.lbx') || e.target.closest('.arcade-frame')) return;
+  const img = e.target.closest('.chat img, #chat img, .st-out img, .st-gal img, #lyricsBox img');
+  const vid = e.target.closest('.chat video, #chat video');
+  if (img && img.src) { e.preventDefault(); lbxOpen(img.src, false, img.alt || ''); }
+  else if (vid && vid.src) { e.preventDefault(); lbxOpen(vid.src, true, ''); }
+});
 
 /* ─────────── BOOT ─────────── */
 ensureSess();
