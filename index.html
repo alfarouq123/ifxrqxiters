@@ -466,179 +466,173 @@
   .gform{ display:flex; gap:8px; margin-top:14px; }
 
 
-  /* ═══════════ IFZRQ FC — FOOTBALL MANAGER ═══════════ */
-  #viewFootball .viewpage{ padding:0; display:flex; flex-direction:column; overflow:hidden; }
-  #fbRoot{ flex:1; position:relative; min-height:0; overflow-y:auto; padding:10px 10px 20px; }
-  .fb-empty{ text-align:center; color:var(--muted); padding:40px 20px; font-size:13px; }
-  .fb-lobby{ position:absolute; inset:10px 10px 20px; }
-  .fb-profile{ position:absolute; top:0; left:0; display:flex; align-items:center; gap:8px; background:var(--panel-2);
-    border:2px solid var(--line); border-radius:14px; padding:8px 14px 8px 8px; cursor:pointer; }
-  .fb-profile img{ width:34px; height:34px; border-radius:10px; background:#7d8590; }
-  .fb-profile b{ display:block; font-size:13px; color:var(--text); }
-  .fb-profile span{ font-size:9px; color:var(--muted); font-family:'JetBrains Mono',monospace; }
-  .fb-side{ position:absolute; left:0; top:42%; transform:translateY(-50%); display:flex; flex-direction:column; gap:10px; }
-  .fb-bigbtn{ width:86px; height:58px; border-radius:14px; border:3px solid #0b0a12; cursor:pointer;
-    font-weight:900; font-size:13px; color:#fff; text-shadow:0 2px 0 rgba(0,0,0,.35); box-shadow:0 4px 0 #0b0a12; }
+    /* ═══════════ IFZRQ FC v2 — fullscreen + FC26 cards ═══════════ */
+  #viewFootball{ height:100%; }
+  #viewFootball .viewpage{ position:absolute; inset:0; padding:0; overflow:hidden; display:block; }
+  #fbRoot{ position:absolute; inset:0; overflow-y:auto; overflow-x:hidden; background:#0a1208; }
+  .fb-empty{ text-align:center; color:#8a93a3; padding:60px 20px; font-size:13px; }
+  /* LOBBY fullscreen */
+  .fb-lobby{ position:relative; min-height:100%; padding:12px; box-sizing:border-box; }
+  .fb-profile{ position:absolute; top:12px; left:12px; display:flex; align-items:center; gap:8px; background:#141b26; border:2px solid #263140; border-radius:14px; padding:6px 14px 6px 6px; cursor:pointer; z-index:2; }
+  .fb-profile img{ width:36px; height:36px; border-radius:10px; background:#3a4150; }
+  .fb-profile b{ display:block; font-size:13px; color:#eef2f7; }
+  .fb-profile span{ font-size:9px; color:#8a93a3; font-family:'JetBrains Mono',monospace; }
+  .fb-side{ position:absolute; left:12px; top:44%; transform:translateY(-50%); display:flex; flex-direction:column; gap:12px; z-index:2; }
+  .fb-bigbtn{ width:92px; height:60px; border-radius:14px; border:3px solid #0b0a12; cursor:pointer; font-weight:900; font-size:14px; color:#fff; text-shadow:0 2px 0 rgba(0,0,0,.35); box-shadow:0 5px 0 #0b0a12; letter-spacing:.5px; }
   .fb-bigbtn:active{ transform:translateY(3px); box-shadow:0 1px 0 #0b0a12; }
   .fb-bn-draft{ background:linear-gradient(180deg,#f59e0b,#d97706); }
   .fb-bn-team{ background:linear-gradient(180deg,#3b82f6,#2563eb); }
   .fb-bn-index{ background:linear-gradient(180deg,#a855f7,#7c3aed); }
-  .fb-lobby-mid{ display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100%; gap:10px; padding-bottom:14%; }
-  .fb-lobby-title{ font-size:34px; font-weight:900; color:#fff; letter-spacing:1px; font-family:'Chakra Petch',sans-serif; text-shadow:0 3px 0 #0b0a12; }
-  .fb-lobby-sub{ font-size:11px; color:var(--muted); font-family:'JetBrains Mono',monospace; background:var(--panel-2); padding:4px 12px; border-radius:20px; border:1px solid var(--line); }
-  .fb-play{ width:130px; height:130px; border-radius:50%; border:4px solid #0b0a12; background:linear-gradient(180deg,#34d399,#059669);
-    color:#fff; font-weight:900; font-size:24px; cursor:pointer; box-shadow:0 6px 0 #0b0a12, 0 0 30px rgba(52,211,153,.4); margin-top:8px; }
+  .fb-lobby-mid{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; padding-bottom:10%; }
+  .fb-lobby-title{ font-size:40px; font-weight:900; color:#fff; letter-spacing:2px; font-family:'Chakra Petch',sans-serif; text-shadow:0 4px 0 #0b0a12, 0 0 30px rgba(52,211,153,.3); }
+  .fb-lobby-sub{ font-size:11px; color:#9fb3c8; font-family:'JetBrains Mono',monospace; background:#141b26; padding:5px 14px; border-radius:20px; border:1px solid #263140; }
+  .fb-play{ width:150px; height:150px; border-radius:50%; border:5px solid #0b0a12; background:linear-gradient(180deg,#34d399,#059669); color:#fff; font-weight:900; font-size:28px; cursor:pointer; box-shadow:0 7px 0 #0b0a12, 0 0 40px rgba(52,211,153,.5); }
   .fb-play:active{ transform:translateY(4px); box-shadow:0 2px 0 #0b0a12; }
-  .fb-modal{ position:fixed; inset:0; z-index:140; background:rgba(5,6,10,.8); display:flex; align-items:center; justify-content:center; }
-  .fb-modal-card{ background:var(--panel); border:2px solid var(--line); border-radius:18px; padding:22px; width:min(340px,90vw); }
-  .fb-modal-card h3{ color:#c084fc; font-size:16px; margin-bottom:14px; letter-spacing:1px; }
-  .fb-prof-row{ display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--line); font-size:13px; }
-  .fb-prof-row span{ color:var(--muted); } .fb-prof-row b{ color:var(--text); }
-  .fb-winbar{ height:12px; background:var(--bg); border-radius:8px; margin:12px 0; overflow:hidden; border:1px solid var(--line); }
-  .fb-winbar i{ display:block; height:100%; background:linear-gradient(90deg,#059669,#34d399); border-radius:8px; }
-  .fb-btn{ width:100%; padding:12px; border-radius:12px; border:3px solid #0b0a12; background:linear-gradient(180deg,#8b5cf6,#6d28d9);
-    color:#fff; font-weight:800; font-size:13px; cursor:pointer; box-shadow:0 4px 0 #0b0a12; }
+  .fb-modal{ position:fixed; inset:0; z-index:150; background:rgba(5,8,12,.85); display:flex; align-items:center; justify-content:center; }
+  .fb-modal-card{ background:#141b26; border:2px solid #263140; border-radius:18px; padding:20px; width:min(340px,92vw); }
+  .fb-modal-card h3{ color:#c084fc; font-size:16px; margin-bottom:12px; letter-spacing:1px; }
+  .fb-prof-row{ display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #263140; font-size:13px; }
+  .fb-prof-row span{ color:#8a93a3; } .fb-prof-row b{ color:#eef2f7; }
+  .fb-winbar{ height:12px; background:#0a0f16; border-radius:8px; margin:12px 0; overflow:hidden; border:1px solid #263140; }
+  .fb-winbar i{ display:block; height:100%; background:linear-gradient(90deg,#059669,#34d399); }
+  .fb-btn{ width:100%; padding:12px; border-radius:12px; border:3px solid #0b0a12; background:linear-gradient(180deg,#8b5cf6,#6d28d9); color:#fff; font-weight:800; font-size:13px; cursor:pointer; box-shadow:0 4px 0 #0b0a12; }
   .fb-btn:active{ transform:translateY(3px); box-shadow:0 1px 0 #0b0a12; }
   .fb-btn.fb-ghost{ background:linear-gradient(180deg,#4b5563,#374151); }
   .fb-btn.fb-warn{ background:linear-gradient(180deg,#ef4444,#b91c1c); }
   .fb-btn.fb-alt{ background:linear-gradient(180deg,#0ea5e9,#0369a1); }
-  .fb-draft-title{ text-align:center; font-size:20px; font-weight:900; color:#fff; margin:6px 0 14px; letter-spacing:.5px; text-shadow:0 2px 0 #0b0a12; }
-  .fb-draft-pos{ text-align:center; font-size:12px; color:#c084fc; font-family:'JetBrains Mono',monospace; margin-bottom:12px; }
-  .fb-cards{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; max-width:520px; margin:0 auto 16px; }
-  .fb-cardwrap{ position:relative; aspect-ratio:3/4.2; }
-  .fb-year{ text-align:center; padding-top:45%; font-size:22px; font-weight:900; color:#ffd75e; font-family:'JetBrains Mono',monospace; }
+  /* DRAFT */
+  .fb-draft{ min-height:100%; padding:12px; box-sizing:border-box; position:relative; }
+  .fb-draft-top{ text-align:center; font-size:20px; font-weight:900; color:#fff; margin:8px 0 18px; letter-spacing:1px; text-shadow:0 2px 0 #0b0a12; font-family:'Chakra Petch',sans-serif; }
+  .fb-cards{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px; max-width:560px; margin:0 auto 18px; }
+  .fb-cardwrap{ position:relative; aspect-ratio:3/4.4; }
+  .fb-back{ position:absolute; inset:0; border-radius:12px; background:linear-gradient(160deg,#10151d,#1a2230); border:2px solid #263140; }
+  .fb-year{ text-align:center; padding-top:46%; font-size:22px; font-weight:900; color:#ffd75e; font-family:'JetBrains Mono',monospace; }
   .fb-front{ position:absolute; inset:0; }
-  /* kartu */
-  .fbc{ position:relative; width:100%; height:100%; border-radius:10px; border:2px solid #0b0a12; overflow:hidden;
-    display:flex; flex-direction:column; align-items:center; padding-top:6px; cursor:pointer; }
-  .fbc-ovr{ font-size:20px; font-weight:900; font-family:'Chakra Petch',sans-serif; line-height:1; }
+  .fb-dr-exit{ max-width:200px; margin:0 auto; display:block; }
+  /* kartu FC26 shield */
+  .fbc{ position:relative; width:100%; height:100%; border-radius:14px 14px 46% 46% / 14px 14px 20% 20%; border:2px solid #0b0a12; overflow:hidden; display:flex; flex-direction:column; align-items:center; padding:6px 4px 0; cursor:pointer; box-shadow:0 4px 10px rgba(0,0,0,.5); }
+  .fbc-top{ width:100%; display:flex; justify-content:space-between; align-items:flex-start; padding:0 6px; }
+  .fbc-l{ text-align:center; }
+  .fbc-ovr{ font-size:20px; font-weight:900; line-height:1; font-family:'Chakra Petch',sans-serif; }
   .fbc-pos{ font-size:9px; font-weight:800; letter-spacing:1px; }
-  .fbc-face{ width:44%; aspect-ratio:1; border-radius:8px; margin-top:3px; background:#7d8590; }
-  .fbc-name{ font-size:8.5px; font-weight:800; text-align:center; padding:0 3px; margin-top:3px; line-height:1.1; }
-  .fbc-country{ font-size:7.5px; opacity:.8; }
-  .fbc-rar{ position:absolute; bottom:0; left:0; right:0; text-align:center; font-size:7px; font-weight:900; letter-spacing:1px; padding:2px 0; background:rgba(0,0,0,.35); color:#fff; }
-  .fbr-bronze{ background:linear-gradient(160deg,#8a5a33,#c98d55 50%,#8a5a33); color:#3d2412; }
-  .fbr-silver{ background:linear-gradient(160deg,#9aa5b1,#e8eef5 50%,#9aa5b1); color:#2c3440; }
-  .fbr-gold{ background:linear-gradient(160deg,#b8912e,#f5d76e 50%,#b8912e); color:#4a3608; }
-  .fbr-legend{ background:linear-gradient(160deg,#efe3b8,#fffbe8 35%,#f3e6b5 60%,#e8d9a0); color:#5c4a12;
-    box-shadow:0 0 14px rgba(255,240,190,.55), inset 0 0 12px rgba(255,255,255,.5); border-color:#8d7a3a; }
-  .fbr-icon{ background:linear-gradient(160deg,#0a0a12 0%,#23233a 45%,#0a0a12 100%); color:#ffd75e;
-    box-shadow:0 0 16px rgba(192,132,252,.5), inset 0 0 14px rgba(192,132,252,.25); border-color:#c084fc; }
+  .fbc-flag{ font-size:16px; }
+  .fbc-face{ width:46%; aspect-ratio:1; border-radius:10px; margin-top:2px; background:#3a4150; }
+  .fbc-name{ font-size:9px; font-weight:800; text-align:center; margin-top:3px; line-height:1.1; padding:0 2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:96%; }
+  .fbc-rar{ position:absolute; bottom:0; left:0; right:0; text-align:center; font-size:7px; font-weight:900; letter-spacing:1px; padding:2px 0; background:rgba(0,0,0,.4); color:#fff; }
+  .fbr-bronze{ background:linear-gradient(160deg,#7a4a26,#c98d55 50%,#7a4a26); color:#2e1a0b; }
+  .fbr-silver{ background:linear-gradient(160deg,#8b98a8,#e8eef5 50%,#8b98a8); color:#242c38; }
+  .fbr-gold{ background:linear-gradient(160deg,#a8802a,#f5d76e 50%,#a8802a); color:#3a2a06; }
+  .fbr-legend{ background:linear-gradient(160deg,#efe3b8,#fffbe8 35%,#f3e6b5 60%,#e0cf98); color:#4a3a10; box-shadow:0 0 16px rgba(255,240,190,.6), inset 0 0 14px rgba(255,255,255,.55); border-color:#8d7a3a; }
+  .fbr-icon{ background:linear-gradient(160deg,#0a0a12,#23233a 45%,#0a0a12); color:#ffd75e; box-shadow:0 0 18px rgba(192,132,252,.55), inset 0 0 16px rgba(192,132,252,.3); border-color:#c084fc; }
   .fbr-icon .fbc-name{ color:#fff; }
-  .fbr-mystery{ background:#0b0a12; border:2px dashed #333; align-items:center; justify-content:center; }
+  .fbr-mystery{ background:#0a0a12; border:2px dashed #333; align-items:center; justify-content:center; }
   .fbc-q{ font-size:34px; font-weight:900; color:#333; }
-  /* animasi reveal kartu terbaik */
-  .fbc-anim .fbc-pos, .fbc-anim .fbc-country, .fbc-anim .fbc-ovr, .fbc-anim .fbc-face, .fbc-anim .fbc-name, .fbc-anim .fbc-rar{ opacity:0; transform:translateY(6px); transition:all .4s ease; }
+  .fbc-anim .fbc-pos,.fbc-anim .fbc-flag,.fbc-anim .fbc-ovr,.fbc-anim .fbc-face,.fbc-anim .fbc-name,.fbc-anim .fbc-rar{ opacity:0; transform:translateY(8px); transition:all .4s ease; }
   .fbc-anim.st-pos .fbc-pos{ opacity:1; transform:none; }
-  .fbc-anim.st-country .fbc-country{ opacity:1; transform:none; }
+  .fbc-anim.st-country .fbc-flag{ opacity:1; transform:none; }
   .fbc-anim.st-ovr .fbc-ovr{ opacity:1; transform:none; }
-  .fbc-anim.st-full .fbc-face, .fbc-anim.st-full .fbc-name, .fbc-anim.st-full .fbc-rar{ opacity:1; transform:none; }
+  .fbc-anim.st-full .fbc-face,.fbc-anim.st-full .fbc-name,.fbc-anim.st-full .fbc-rar{ opacity:1; transform:none; }
   .fbc-in{ animation:fbcIn .5s cubic-bezier(.2,.9,.3,1.2) both; }
   @keyframes fbcIn{ from{ transform:scale(.6) rotateY(80deg); opacity:0; } to{ transform:none; opacity:1; } }
-  /* formasi */
-  .fb-formgrid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:12px; max-width:520px; margin:0 auto 16px; }
-  .fb-formcard{ background:var(--panel-2); border:2px solid var(--line); border-radius:14px; padding:10px; text-align:center; cursor:pointer; }
+  .fb-formgrid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:12px; max-width:560px; margin:0 auto 18px; }
+  .fb-formcard{ background:#141b26; border:2px solid #263140; border-radius:14px; padding:10px; text-align:center; cursor:pointer; }
   .fb-formcard:hover{ border-color:#c084fc; }
-  .fb-formcard b{ display:block; margin-top:6px; color:var(--text); font-size:13px; }
+  .fb-formcard b{ display:block; margin-top:6px; color:#eef2f7; font-size:13px; }
   .fb-formsvg{ width:100%; border-radius:8px; }
-  /* builder */
-  .fb-build{ display:flex; gap:10px; align-items:flex-start; }
-  .fb-build-left{ flex:0 0 150px; }
-  .fb-build-right{ flex:1; min-width:0; }
-  .fb-panel{ background:var(--panel-2); border:2px solid var(--line); border-radius:14px; padding:12px; display:flex; flex-direction:column; gap:8px; }
-  .fb-row{ display:flex; justify-content:space-between; font-size:11px; }
-  .fb-row span{ color:var(--muted); } .fb-row b{ color:#c084fc; }
-  .fb-chem{ font-size:10px; }
-  .fb-chem span{ color:var(--muted); display:block; margin-bottom:3px; }
-  .fb-chembar{ height:14px; background:var(--bg); border-radius:8px; overflow:hidden; border:1px solid var(--line); }
-  .fb-chembar i{ display:block; height:100%; background:linear-gradient(90deg,#f59e0b,#34d399); transition:width .5s; }
-  .fb-chembar.big{ height:18px; }
-  .fb-chem b{ color:#34d399; font-size:11px; }
-  .fb-hint{ font-size:9.5px; color:var(--muted); line-height:1.5; }
-  .fb-pitch{ position:relative; width:100%; aspect-ratio:68/96; background:linear-gradient(180deg,#1e8c46,#17693a);
-    border:2px solid #0b0a12; border-radius:12px; overflow:hidden; }
-  .fb-pitch:before{ content:''; position:absolute; left:3%; right:3%; top:50%; height:2px; background:#ffffff44; }
-  .fb-slot{ position:absolute; width:17%; transform:translate(-50%,-50%); text-align:center; cursor:pointer; }
-  .fb-plus{ width:30px; height:30px; margin:0 auto; border-radius:50%; background:rgba(0,0,0,.45); border:2px dashed #ffffff88;
-    color:#fff; font-size:18px; font-weight:900; line-height:26px; }
-  .fb-slotpos{ font-size:8.5px; color:#fffa; font-weight:800; margin-top:2px; text-shadow:0 1px 2px #000; }
-  .fb-mini{ background:linear-gradient(160deg,#f5d76e,#b8912e); border:2px solid #0b0a12; border-radius:8px; padding:3px 2px; }
-  .fb-mini b{ display:block; font-size:13px; color:#3d2c05; }
-  .fb-mini span{ display:block; font-size:7px; color:#3d2c05; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:700; }
-  .fb-mini i{ font-size:7px; color:#3d2c0599; font-style:normal; font-weight:800; }
-  .fb-bslot{ flex:0 0 48px; aspect-ratio:3/4; }
-  .fb-slot.sel .fb-mini, .tslot.sel .fb-mini{ outline:3px solid #c084fc; }
-  .tslot.badpos .fb-mini{ background:linear-gradient(160deg,#b91c1c,#7f1d1d); }
-  .tslot.badpos .fb-mini b, .tslot.badpos .fb-mini span, .tslot.badpos .fb-mini i{ color:#fecaca; }
-  .fb-bench-title{ font-size:10px; font-weight:800; color:var(--muted); margin:10px 0 6px; letter-spacing:1px; }
+  /* BUILDER / TEAM vertikal */
+  .fb-build{ position:relative; min-height:100%; padding:10px; box-sizing:border-box; display:flex; gap:10px; align-items:stretch; }
+  .fb-build.fb-vert{ flex-direction:column; }
+  .fb-build-main{ flex:1; display:flex; flex-direction:column; min-width:0; }
+  .fb-pitch{ position:relative; width:100%; flex:1; min-height:420px; background:linear-gradient(180deg,#1e8c46,#17693a); border:3px solid #0b0a12; border-radius:14px; overflow:hidden; }
+  .fb-pitch.v{ aspect-ratio:68/96; }
+  .fb-pitch:before{ content:''; position:absolute; left:4%; right:4%; top:50%; height:2px; background:#ffffff33; }
+  .fb-slot{ position:absolute; width:17%; transform:translate(-50%,-50%); text-align:center; cursor:pointer; z-index:2; }
+  .fb-plus{ width:32px; height:32px; margin:0 auto; border-radius:50%; background:rgba(0,0,0,.45); border:2px dashed #ffffff88; color:#fff; font-size:18px; font-weight:900; line-height:28px; }
+  .fb-slotpos{ font-size:9px; color:#fffa; font-weight:800; margin-top:2px; text-shadow:0 1px 2px #000; }
+  .fb-mini{ border:2px solid #0b0a12; border-radius:8px; padding:3px 2px; box-shadow:0 3px 6px rgba(0,0,0,.4); touch-action:none; }
+  .fb-mini b{ display:block; font-size:13px; }
+  .fb-mini i{ display:block; font-size:7px; font-style:normal; font-weight:800; }
+  .fb-mini span{ display:block; font-size:7px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .fb-mini.fbr-bronze{ background:linear-gradient(160deg,#7a4a26,#c98d55); } .fb-mini.fbr-bronze b,.fb-mini.fbr-bronze i,.fb-mini.fbr-bronze span{ color:#2e1a0b; }
+  .fb-mini.fbr-silver{ background:linear-gradient(160deg,#8b98a8,#e8eef5); } .fb-mini.fbr-silver b,.fb-mini.fbr-silver i,.fb-mini.fbr-silver span{ color:#242c38; }
+  .fb-mini.fbr-gold{ background:linear-gradient(160deg,#a8802a,#f5d76e); } .fb-mini.fbr-gold b,.fb-mini.fbr-gold i,.fb-mini.fbr-gold span{ color:#3a2a06; }
+  .fb-mini.fbr-legend{ background:linear-gradient(160deg,#efe3b8,#fffbe8); } .fb-mini.fbr-legend b,.fb-mini.fbr-legend i,.fb-mini.fbr-legend span{ color:#4a3a10; }
+  .fb-mini.fbr-icon{ background:linear-gradient(160deg,#0a0a12,#23233a); } .fb-mini.fbr-icon b,.fb-mini.fbr-icon i,.fb-mini.fbr-icon span{ color:#ffd75e; }
+  .fb-dragghost{ position:fixed; width:52px; z-index:200; pointer-events:none; opacity:.9; transform:scale(1.1); }
+  .fb-bench{ margin-top:8px; }
+  .fb-bench-title{ font-size:10px; font-weight:800; color:#8a93a3; letter-spacing:1px; margin-bottom:5px; }
   .fb-bench-row{ display:flex; gap:6px; }
-  .fb-confirm{ margin-top:12px; width:100%; padding:14px; border-radius:14px; border:3px solid #0b0a12;
-    background:linear-gradient(180deg,#6b7280,#4b5563); color:#ffffff88; font-weight:900; font-size:15px; cursor:not-allowed; box-shadow:0 4px 0 #0b0a12; }
-  .fb-confirm.ok{ background:linear-gradient(180deg,#34d399,#059669); color:#fff; cursor:pointer; box-shadow:0 4px 0 #0b0a12, 0 0 20px rgba(52,211,153,.5); }
-  /* index */
-  .fb-idx-tabs{ display:flex; gap:6px; overflow-x:auto; scrollbar-width:none; margin-bottom:12px; }
-  .fb-idx-tabs::-webkit-scrollbar{ display:none; }
-  .fb-idx-tab{ flex:0 0 auto; padding:8px 14px; border-radius:12px; background:var(--panel-2); border:2px solid var(--line); font-size:11px; font-weight:800; cursor:pointer; }
+  .fb-bslot{ flex:0 0 50px; aspect-ratio:3/4; }
+  .fb-slot.badpos .fb-mini{ background:linear-gradient(160deg,#b91c1c,#7f1d1d)!important; } .fb-slot.badpos .fb-mini b,.fb-slot.badpos .fb-mini i,.fb-slot.badpos .fb-mini span{ color:#fecaca!important; }
+  .fb-sidepanel{ background:#141b26; border:2px solid #263140; border-radius:14px; padding:12px; display:flex; flex-direction:column; gap:8px; }
+  .fb-row{ display:flex; justify-content:space-between; font-size:11px; }
+  .fb-row span{ color:#8a93a3; } .fb-row b{ color:#c084fc; }
+  .fb-chem{ font-size:10px; } .fb-chem span{ color:#8a93a3; display:block; margin-bottom:3px; }
+  .fb-chembar{ height:14px; background:#0a0f16; border-radius:8px; overflow:hidden; border:1px solid #263140; }
+  .fb-chembar i{ display:block; height:100%; background:linear-gradient(90deg,#f59e0b,#34d399); transition:width .5s; }
+  .fb-chembar.big{ height:18px; } .fb-chem b{ color:#34d399; font-size:11px; }
+  .fb-hint{ font-size:9.5px; color:#8a93a3; line-height:1.5; }
+  .fb-confirm{ margin-top:10px; width:100%; padding:15px; border-radius:14px; border:3px solid #0b0a12; background:linear-gradient(180deg,#6b7280,#4b5563); color:#ffffff88; font-weight:900; font-size:15px; cursor:not-allowed; box-shadow:0 4px 0 #0b0a12; }
+  .fb-confirm.ok{ background:linear-gradient(180deg,#34d399,#059669); color:#fff; cursor:pointer; box-shadow:0 4px 0 #0b0a12, 0 0 24px rgba(52,211,153,.5); }
+  .fb-confirm-scr{ min-height:100%; padding:12px; box-sizing:border-box; }
+  .fb-cf-ovr{ text-align:center; font-size:46px; font-weight:900; color:#f5d76e; font-family:'Chakra Petch',sans-serif; text-shadow:0 3px 0 #0b0a12; }
+  .fb-cf-cards{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; max-width:560px; margin:14px auto; }
+  .fb-cf-cards .fbc{ aspect-ratio:3/4.4; cursor:default; }
+  /* INDEX */
+  .fb-index{ min-height:100%; padding:12px; box-sizing:border-box; }
+  .fb-idx-tabs{ display:flex; gap:6px; overflow-x:auto; margin-bottom:12px; }
+  .fb-idx-tab{ flex:0 0 auto; padding:8px 14px; border-radius:12px; background:#141b26; border:2px solid #263140; font-size:11px; font-weight:800; cursor:pointer; color:#eef2f7; }
   .fb-idx-tab span{ color:#c084fc; font-size:9px; margin-left:4px; }
   .fb-idx-tab.on{ border-color:#c084fc; background:rgba(192,132,252,.12); }
-  .fb-idx-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(72px,1fr)); gap:8px; margin-bottom:14px; }
-  /* play menu */
-  .fb-playmenu{ max-width:420px; margin:0 auto; }
+  .fb-idx-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(76px,1fr)); gap:8px; margin-bottom:14px; }
+  /* PLAY */
+  .fb-playmenu{ max-width:440px; margin:0 auto; padding:12px; }
   .fb-playcards{ display:flex; flex-direction:column; gap:10px; margin-bottom:14px; }
-  .fb-playcard{ background:var(--panel-2); border:2px solid var(--line); border-radius:16px; padding:18px; cursor:pointer; }
+  .fb-playcard{ background:#141b26; border:2px solid #263140; border-radius:16px; padding:18px; cursor:pointer; }
   .fb-playcard:hover{ border-color:#c084fc; }
   .fb-playcard b{ display:block; font-size:17px; color:#fff; margin-bottom:4px; }
-  .fb-playcard span{ font-size:11px; color:var(--muted); }
+  .fb-playcard span{ font-size:11px; color:#8a93a3; }
   .fb-search{ display:flex; flex-direction:column; align-items:center; gap:14px; padding:26px 0; }
-  .fb-spinner{ width:44px; height:44px; border-radius:50%; border:5px solid var(--line); border-top-color:#c084fc; animation:fbspin 1s linear infinite; }
+  .fb-spinner{ width:44px; height:44px; border-radius:50%; border:5px solid #263140; border-top-color:#c084fc; animation:fbspin 1s linear infinite; }
   @keyframes fbspin{ to{ transform:rotate(360deg); } }
-  .fb-search span{ font-size:12px; color:var(--muted); font-family:'JetBrains Mono',monospace; }
   .fb-btnrow{ display:flex; flex-direction:column; gap:8px; margin-bottom:12px; }
-  .fb-input{ background:var(--bg); border:2px solid var(--line); border-radius:12px; padding:12px; color:var(--text); font-size:14px; text-align:center; font-family:'JetBrains Mono',monospace; letter-spacing:3px; }
-  .fb-input:focus{ outline:none; border-color:#c084fc; }
-  .fb-roomstatus{ text-align:center; font-size:13px; color:var(--text); padding:10px; }
-  .fb-roomstatus b{ color:#c084fc; }
-  /* match */
-  .fb-match{ max-width:760px; margin:0 auto; position:relative; }
-  .fb-mscore{ display:flex; align-items:center; justify-content:center; gap:14px; padding:4px 0; font-size:13px; }
-  .fb-mscore b{ color:var(--text); font-size:12px; max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .fb-mscore span{ font-size:22px; font-weight:900; color:#fff; font-family:'Chakra Petch',sans-serif; }
-  .fb-mtimer{ height:8px; background:var(--bg); border-radius:6px; overflow:hidden; margin:6px 0; position:relative; border:1px solid var(--line); }
+  .fb-input{ background:#0a0f16; border:2px solid #263140; border-radius:12px; padding:12px; color:#eef2f7; font-size:14px; text-align:center; font-family:'JetBrains Mono',monospace; letter-spacing:3px; }
+  .fb-roomstatus{ text-align:center; font-size:13px; color:#eef2f7; padding:10px; } .fb-roomstatus b{ color:#c084fc; }
+  /* MATCH fullscreen */
+  .fb-match{ position:absolute; inset:0; display:flex; flex-direction:column; background:#0a1208; }
+  #fbMCanvas{ width:100%; flex:1; min-height:0; background:#1e8c46; border-radius:0; }
+  .fb-hud{ position:absolute; top:8px; left:50%; transform:translateX(-50%); display:flex; align-items:center; gap:10px; background:rgba(10,15,22,.85); border:2px solid #263140; border-radius:14px; padding:6px 14px; z-index:3; }
+  .fb-hud b{ color:#eef2f7; font-size:11px; max-width:110px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .fb-hud span{ font-size:20px; font-weight:900; color:#fff; font-family:'Chakra Petch',sans-serif; }
+  .fb-hud i{ font-style:normal; font-size:10px; font-weight:900; color:#ffd75e; }
+  .fb-mtimer{ height:6px; background:#0a0f16; overflow:hidden; }
   .fb-mtimer i{ display:block; height:100%; width:0%; background:linear-gradient(90deg,#34d399,#fbbf24,#ef4444); }
-  .fb-mtimer span{ position:absolute; right:6px; top:-2px; font-size:9px; font-weight:900; color:#fff; text-shadow:0 1px 2px #000; }
-  #fbMCanvas{ width:100%; border:2px solid #0b0a12; border-radius:12px; background:#1e8c46; }
-  .fb-mctrl{ display:flex; align-items:center; gap:10px; margin-top:8px; }
-  .fb-mctrl .fb-btn{ width:auto; padding:10px 18px; }
+  .fb-mctrl{ display:flex; align-items:center; gap:10px; padding:8px; }
+  .fb-mctrl .fb-btn{ width:auto; padding:10px 16px; }
   #fbMTacNow{ font-size:12px; font-weight:800; color:#c084fc; }
-  .fb-mcd{ font-size:10px; color:var(--muted); font-family:'JetBrains Mono',monospace; }
-  .fb-moverlay{ position:absolute; inset:0; z-index:5; display:none; align-items:center; justify-content:center; background:rgba(5,6,10,.82); border-radius:12px; }
+  .fb-mcd{ font-size:10px; color:#8a93a3; font-family:'JetBrains Mono',monospace; }
+  .fb-moverlay{ position:absolute; inset:0; z-index:6; display:none; align-items:center; justify-content:center; background:rgba(5,8,12,.85); }
   .fb-moverlay.show{ display:flex; }
-  .fb-ovl-card{ background:var(--panel); border:2px solid var(--line); border-radius:16px; padding:18px; width:min(88%,380px); text-align:center; }
+  .fb-ovl-card{ background:#141b26; border:2px solid #263140; border-radius:16px; padding:18px; width:min(88%,380px); text-align:center; max-height:90%; overflow-y:auto; }
   .fb-ovl-card.big{ width:min(94%,440px); }
   .fb-ovl-card h3{ color:#c084fc; font-size:16px; margin-bottom:10px; }
-  .fb-ovl-card p{ font-size:12px; color:var(--text); margin-bottom:12px; }
+  .fb-ovl-card p{ font-size:12px; color:#eef2f7; margin-bottom:12px; }
   .fb-stats{ margin:10px 0; }
-  .fb-stat{ display:flex; justify-content:space-between; align-items:center; padding:6px 4px; border-bottom:1px solid var(--line); font-size:13px; }
+  .fb-stat{ display:flex; justify-content:space-between; align-items:center; padding:6px 4px; border-bottom:1px solid #263140; font-size:13px; }
   .fb-stat b{ width:50px; text-align:center; color:#fff; }
-  .fb-stat b:first-child{ text-align:left; } .fb-stat b:last-child{ text-align:right; }
-  .fb-stat span{ flex:1; color:var(--muted); font-size:10.5px; }
+  .fb-stat span{ flex:1; color:#8a93a3; font-size:10.5px; }
   .fb-subcols{ display:flex; gap:10px; text-align:left; }
   .fb-subcols > div{ flex:1; max-height:180px; overflow-y:auto; }
   .fb-subtitle{ font-size:9px; font-weight:800; color:#c084fc; letter-spacing:1px; margin-bottom:4px; }
-  .fb-subrow{ display:flex; gap:6px; align-items:center; font-size:10.5px; padding:6px 8px; border:1px solid var(--line); border-radius:8px; margin-bottom:4px; cursor:pointer; color:var(--text); }
-  .fb-subrow b{ color:#f5d76e; }
-  .fb-subrow i{ margin-left:auto; color:var(--muted); font-style:normal; font-size:9px; }
+  .fb-subrow{ display:flex; gap:6px; align-items:center; font-size:10.5px; padding:6px 8px; border:1px solid #263140; border-radius:8px; margin-bottom:4px; cursor:pointer; color:#eef2f7; }
+  .fb-subrow b{ color:#f5d76e; } .fb-subrow i{ margin-left:auto; color:#8a93a3; font-style:normal; font-size:9px; }
   .fb-subrow.sel{ border-color:#c084fc; background:rgba(192,132,252,.12); }
-  .fb-tacopt{ text-align:left; padding:10px 12px; border:2px solid var(--line); border-radius:12px; margin-bottom:6px; cursor:pointer; }
-  .fb-tacopt b{ display:block; color:var(--text); font-size:13px; }
-  .fb-tacopt span{ font-size:10px; color:var(--muted); }
+  .fb-tacopt{ text-align:left; padding:10px 12px; border:2px solid #263140; border-radius:12px; margin-bottom:6px; cursor:pointer; }
+  .fb-tacopt b{ display:block; color:#eef2f7; font-size:13px; } .fb-tacopt span{ font-size:10px; color:#8a93a3; }
   .fb-tacopt.on{ border-color:#c084fc; background:rgba(192,132,252,.1); }
-  .fb-cf-ovr{ text-align:center; font-size:42px; font-weight:900; color:#f5d76e; font-family:'Chakra Petch',sans-serif; text-shadow:0 3px 0 #0b0a12; }
-  .fb-cf-cards{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; max-width:520px; margin:14px auto; }
-  .fb-cf-cards .fbc{ aspect-ratio:3/4.2; cursor:default; }
-  @media (max-width:480px){ .fb-build{ flex-direction:column-reverse; } .fb-build-left{ flex:none; width:100%; } .fb-cards{ grid-template-columns:repeat(2,1fr); } .fb-cf-cards{ grid-template-columns:repeat(3,1fr); } }
+  @media (max-width:520px){ .fb-cards{ grid-template-columns:repeat(2,1fr); } .fb-cf-cards{ grid-template-columns:repeat(3,1fr); } .fb-build.fb-vert{ } }
 
-  /* ═══ STUDIO (AI video + image) ═══ */
+/* ═══ STUDIO (AI video + image) ═══ */
   #viewStudio .viewpage{ padding-bottom:40px; }
   .st-chips{ display:flex; gap:8px; margin-bottom:14px; }
   .st-chip{ flex:1; text-align:center; padding:10px; border-radius:14px; background:var(--panel-2); border:1px solid var(--line); color:var(--muted); font-weight:800; font-size:13px; cursor:pointer; }
@@ -3362,28 +3356,27 @@ document.addEventListener('click', (e) => {
    IFZRQ FC — Football Team Manager (draft · squad · index · match 2D)
    UI style: roblox-ish (chunky, tebal, playful)
    ═══════════════════════════════════════════════════════════════════ */
+/* ═══ IFZRQ FC v2 — full rewrite (FC26 cards, vertical builder, engine realistis) ═══ */
 window.FB = (function(){
 'use strict';
-
-/* ─────────── UTIL ─────────── */
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 function mulberry(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
 const rnd = Math.random;
 const pick = (arr) => arr[Math.floor(rnd()*arr.length)];
 
-/* ─────────── RARITY ─────────── */
-const RAR = {
-  bronze: { label:'Perunggu', cls:'fbr-bronze' },
-  silver: { label:'Perak',    cls:'fbr-silver' },
-  gold:   { label:'Emas',     cls:'fbr-gold' },
-  legend: { label:'Legenda',  cls:'fbr-legend' },
-  icon:   { label:'Ikon',     cls:'fbr-icon' },
-};
-function rarityOf(p){ return p.r; } // tersimpen eksplisit
+/* bendera (nama negara → emoji) */
+const FLAGS = { 'Brasil':'🇧🇷','Argentina':'🇦🇷','Prancis':'🇫🇷','Jerman':'🇩🇪','Spanyol':'🇪🇸','Italia':'🇮🇹','Belanda':'🇳','Portugal':'🇵🇹','Inggris':'🏴󠁢󠁮󠁧󠁿','Belgia':'🇧','Kroasia':'🇷','Uruguay':'🇺','Norwegia':'🇳🇴','Mesir':'🇪🇬','Polandia':'🇵🇱','Turki':'🇹🇷','Rusia':'🇷🇺','Hongaria':'🇭🇺','Skotlandia':'🏴󠁢󠁣󠁴󠁿','Ceko':'🇨🇿','Denmark':'🇩🇰','Ukraina':'🇺','Swedia':'🇸','Wales':'󠁧󠁷󠁬󠁳󠁿','Irlandia Utara':'🇬🇧','Korea Selatan':'🇰🇷','Jepang':'🇯🇵','Amerika Serikat':'🇺🇸','Pantai Gading':'🇨🇮','Kamerun':'🇨🇲','Georgia':'🇬🇪','Swiss':'🇨','Austria':'🇹','Maroko':'🇲🇦','Aljazair':'🇩🇿','Ghana':'🇬','Senegal':'🇳','Nigeria':'🇳🇬','Irlandia':'🇮🇪','Montenegro':'🇲🇪','Ekuador':'🇪🇨','Kolombia':'🇨🇴','Meksiko':'🇲','Kanada':'🇦','Chile':'🇨🇱','Paraguay':'🇵🇾','Peru':'🇵🇪','Yunani':'🇬🇷','Serbia':'🇷🇸','Rumania':'🇷','Bulgaria':'🇬','Indonesia':'🇮🇩' };
+const flag = (c) => FLAGS[c] || '🏳️';
 
-/* ─────────── DATABASE PEMAIN (±500) ───────────
-   format: Nama|POS|Negara|OVR|rarity   (icon & legend = pensiun/legendaris) */
+const RAR = {
+  bronze: { label:'PERUNGGU', cls:'fbr-bronze' },
+  silver: { label:'PERAK',    cls:'fbr-silver' },
+  gold:   { label:'EMAS',     cls:'fbr-gold' },
+  legend: { label:'LEGENDA',  cls:'fbr-legend' },
+  icon:   { label:'IKON',     cls:'fbr-icon' },
+};
+
 const DB_RAW = [
 /* ═══ IKON (hitam, efek) ═══ */
 "Pelé|ST|Brasil|98|icon","Diego Maradona|CAM|Argentina|97|icon","Johan Cruyff|CF|Belanda|96|icon","Zinedine Zidane|CAM|Prancis|96|icon","Alfredo Di Stéfano|ST|Spanyol|96|icon","Ronaldo Nazário|ST|Brasil|96|icon","Ferenc Puskás|ST|Hongaria|96|icon","Franz Beckenbauer|CB|Jerman|95|icon","Garrincha|RW|Brasil|95|icon","Lev Yashin|GK|Rusia|95|icon","Eusébio|ST|Portugal|95|icon","Michel Platini|CAM|Prancis|95|icon","Ronaldinho|LW|Brasil|95|icon","Marco van Basten|ST|Belanda|94|icon","Gerd Müller|ST|Jerman|94|icon","Romário|ST|Brasil|94|icon","Thierry Henry|ST|Prancis|94|icon","Paolo Maldini|CB|Italia|94|icon","Franco Baresi|CB|Italia|94|icon","Lothar Matthäus|CM|Jerman|94|icon","Zico|CAM|Brasil|94|icon","Roberto Baggio|CF|Italia|93|icon","Cafu|RB|Brasil|93|icon","Xavi|CM|Spanyol|93|icon","Luís Figo|RW|Portugal|93|icon","Kaká|CAM|Brasil|93|icon","Andrés Iniesta|CM|Spanyol|94|icon","Iker Casillas|GK|Spanyol|93|icon","Oliver Kahn|GK|Jerman|93|icon","Bobby Charlton|CM|Inggris|93|icon","George Best|RW|Irlandia Utara|93|icon","Andriy Shevchenko|ST|Ukraina|93|icon","Cannavaro|CB|Italia|93|icon","Rivaldo|LW|Brasil|92|icon","Roberto Carlos|LB|Brasil|92|icon","Francesco Totti|CAM|Italia|92|icon","Raúl|ST|Spanyol|92|icon","Didier Drogba|ST|Pantai Gading|92|icon","Samuel Eto'o|ST|Kamerun|92|icon","Bobby Moore|CB|Inggris|92|icon","Peter Schmeichel|GK|Denmark|91|icon","Sergio Ramos|CB|Spanyol|92|icon","Pavel Nedvěd|LW|Ceko|91|icon","Alessandro Del Piero|ST|Italia|91|icon","Filippo Inzaghi|ST|Italia|90|icon","David Beckham|RM|Inggris|90|icon","Steven Gerrard|CM|Inggris|91|icon","Frank Lampard|CM|Inggris|91|icon","Ruud van Nistelrooy|ST|Belanda|91|icon","Gabriel Batistuta|ST|Argentina|91|icon","Carlos Puyol|CB|Spanyol|91|icon","Dennis Bergkamp|CF|Belanda|91|icon","Wayne Rooney|ST|Inggris|91|icon","Kenny Dalglish|CF|Skotlandia|92|icon",
@@ -3432,7 +3425,6 @@ function buildDB(){
 const PLAYERS = buildDB();
 const byId = (id) => PLAYERS[id];
 
-/* ─────────── FORMASI ─────────── */
 const FORMATIONS = {
   '433-attack':  { label:'4-3-3 Attack',  slots:['GK','LB','CB','CB','RB','CM','CM','CAM','LW','ST','RW'] },
   '433-holding': { label:'4-3-3 Holding', slots:['GK','LB','CB','CB','RB','CDM','CM','CM','LW','ST','RW'] },
@@ -3441,114 +3433,65 @@ const FORMATIONS = {
   '4231':        { label:'4-2-3-1',       slots:['GK','LB','CB','CB','RB','CDM','CDM','CAM','LM','RM','ST'] },
   '352':         { label:'3-5-2',         slots:['GK','CB','CB','CB','LWB','CM','CM','CM','RWB','ST','ST'] },
 };
-/* posisi layout (x: 0=gawang sendiri→100 gawang lawan, y: 0-100) */
 const POSXY = { GK:[5,50], CB:[20,50], LB:[22,15], RB:[22,85], LWB:[35,12], RWB:[35,88], CDM:[35,50], CM:[45,50], CAM:[58,50], LM:[50,15], RM:[50,85], LW:[68,15], RW:[68,85], ST:[75,50] };
 const POSGROUP = { GK:'GK', CB:'DEF', LB:'DEF', RB:'DEF', LWB:'DEF', RWB:'DEF', CDM:'MID', CM:'MID', CAM:'MID', LM:'MID', RM:'MID', LW:'ATT', RW:'ATT', ST:'ATT' };
+function posPenalty(pp, sp){ if (pp === sp) return 0; const a = POSGROUP[pp], b = POSGROUP[sp]; if (a==='GK'||b==='GK') return -25; if (a===b) return -6; return -12; }
+function effOVR(p, sp){ return Math.max(30, p.ovr + posPenalty(p.pos, sp)); }
+function squadOVR(sq){ if (!sq) return 0; const slots = FORMATIONS[sq.formation].slots; let s=0,n=0; sq.players.forEach((pid,i)=>{ if (pid!=null&&byId(pid)){ s+=effOVR(byId(pid),slots[i]); n++; } }); return n?Math.round(s/n):0; }
+function squadChem(sq){ if (!sq) return 0; const slots = FORMATIONS[sq.formation].slots; let pts=0; sq.players.forEach((pid,i)=>{ const p=pid!=null?byId(pid):null; if(!p)return; if (sq.players.some((q,j)=>j!==i&&q!=null&&byId(q)&&byId(q).country===p.country)) pts++; if (p.pos===slots[i]) pts++; }); return Math.min(100, Math.round(pts/22*100)); }
 
-function posPenalty(playerPos, slotPos){
-  if (playerPos === slotPos) return 0;
-  const pg = POSGROUP[playerPos], sg = POSGROUP[slotPos];
-  if (sg === 'GK' || pg === 'GK') return -25;
-  if (pg === sg) return -6;
-  return -12;
-}
-function effOVR(p, slotPos){ return Math.max(30, p.ovr + posPenalty(p.pos, slotPos)); }
-function squadOVR(squad){
-  if (!squad) return 0;
-  const slots = FORMATIONS[squad.formation].slots;
-  let s = 0, n = 0;
-  squad.players.forEach((pid, i) => { if (pid != null && byId(pid)) { s += effOVR(byId(pid), slots[i]); n++; } });
-  return n ? Math.round(s / n) : 0;
-}
-function squadChem(squad){
-  if (!squad) return 0;
-  const slots = FORMATIONS[squad.formation].slots;
-  let pts = 0;
-  squad.players.forEach((pid, i) => {
-    const p = pid != null ? byId(pid) : null;
-    if (!p) return;
-    if (squad.players.some((pid2, j) => j !== i && pid2 != null && byId(pid2) && byId(pid2).country === p.country)) pts++;
-    if (p.pos === slots[i]) pts++;
-  });
-  return Math.min(100, Math.round(pts / 22 * 100));
-}
+const FACE_SVG = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><rect width="80" height="80" fill="#3a4150"/><circle cx="40" cy="30" r="14" fill="#8b94a3"/><path d="M12 78 Q14 52 40 52 Q66 52 68 78 Z" fill="#8b94a3"/></svg>');
 
-/* ─────────── KARTU ─────────── */
-const FACE_SVG = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><rect width="80" height="80" fill="#7d8590"/><circle cx="40" cy="30" r="14" fill="#aab2bd"/><path d="M12 78 Q14 52 40 52 Q66 52 68 78 Z" fill="#aab2bd"/></svg>');
+/* kartu gaya FC26/27: shield, OVR+POS kiri, bendera, nama */
 function cardHTML(p, opts){
   opts = opts || {};
-  if (opts.mystery) return '<div class="fbc fbr-mystery' + (opts.cls || '') + '"><div class="fbc-q">?</div></div>';
+  if (opts.mystery) return '<div class="fbc fbr-mystery'+(opts.cls||'')+'"><div class="fbc-q">?</div></div>';
   const r = RAR[p.r];
-  return '<div class="fbc ' + r.cls + (opts.cls || '') + '" data-pid="' + p.id + '">' +
-    '<div class="fbc-ovr">' + p.ovr + '</div>' +
-    '<div class="fbc-pos">' + esc(p.pos) + '</div>' +
-    '<img class="fbc-face" src="' + FACE_SVG + '" alt="">' +
-    '<div class="fbc-name">' + esc(p.name) + '</div>' +
-    '<div class="fbc-country">' + esc(p.country) + '</div>' +
-    '<div class="fbc-rar">' + r.label + '</div>' +
-    '</div>';
+  return '<div class="fbc '+r.cls+(opts.cls||'')+'" data-pid="'+p.id+'">'
+    + '<div class="fbc-top"><div class="fbc-l"><div class="fbc-ovr">'+p.ovr+'</div><div class="fbc-pos">'+esc(p.pos)+'</div></div><div class="fbc-flag">'+flag(p.country)+'</div></div>'
+    + '<img class="fbc-face" src="'+FACE_SVG+'" alt="">'
+    + '<div class="fbc-name">'+esc(p.name)+'</div>'
+    + '<div class="fbc-rar">'+r.label+'</div>'
+    + '</div>';
+}
+/* mini card di pitch/bench — warna ikut rarity (fix bug silver→gold) */
+function miniCard(p, slot, eff){
+  const o = eff != null ? eff : p.ovr;
+  return '<div class="fb-mini '+RAR[p.r].cls+'"><b>'+o+'</b><i>'+esc(slot)+'</i><span>'+flag(p.country)+' '+esc(p.name.split(' ').slice(-1)[0])+'</span></div>';
 }
 
-/* ─────────── STATE ─────────── */
+/* ── state akun ── */
 const FB_TOKEN = () => localStorage.getItem('ifxrq_token') || '';
-let state = null; // {division, points, matches, w,d,l, rating, squad, index, history}
-let myName = 'Player';
+let state = null, myName = 'Player', myUid = '';
 async function fbPost(body){
   const r = await fetch('/api/football', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ ...body, token: FB_TOKEN() }) });
   const d = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error(d?.error?.message || d?.error || 'gagal');
   return d;
 }
-let myUid = '';
-async function fbRefresh(){
-  const d = await fbPost({ action:'state' });
-  state = d.state; myName = d.name || 'Player'; myUid = d.uid || '';
-}
+async function fbRefresh(){ const d = await fbPost({ action:'state' }); state = d.state; myName = d.name || 'Player'; myUid = d.uid || ''; }
 
-/* ─────────── SCREEN ROUTER ─────────── */
 let pollTimer = null;
-function screen(name, html){
-  clearInterval(pollTimer);
-  $('fbRoot').innerHTML = html;
-  $('fbRoot').dataset.screen = name;
-}
-function showLobby(){
-  fbRefresh().then(renderLobby).catch((e) => { $('fbRoot').innerHTML = '<div class="fb-empty">' + esc(e.message) + '</div>'; });
-}
+function screen(name, html){ clearInterval(pollTimer); const root = $('fbRoot'); root.innerHTML = html; root.dataset.screen = name; root.scrollTop = 0; }
+function showLobby(){ fbRefresh().then(renderLobby).catch((e) => { $('fbRoot').innerHTML = '<div class="fb-empty">'+esc(e.message)+'</div>'; }); }
 function renderLobby(){
   const total = state.w + state.d + state.l;
   const wr = total ? Math.round(state.w / total * 100) : 0;
-  screen('lobby', `
-    <div class="fb-lobby">
-      <button type="button" class="fb-profile" id="fbProfile">
-        <img src="${FACE_SVG}" alt="">
-        <div><b>${esc(myName)}</b><span>ID: ${esc(String((state.squad && state.squad.createdBy) || 'guest').slice(0, 8))}</span></div>
-      </button>
-      <div class="fb-side">
-        <button type="button" class="fb-bigbtn fb-bn-draft" id="fbBtnDraft"><span>DRAFT</span></button>
-        <button type="button" class="fb-bigbtn fb-bn-team" id="fbBtnTeam"><span>TEAM</span></button>
-        <button type="button" class="fb-bigbtn fb-bn-index" id="fbBtnIndex"><span>INDEX</span></button>
-      </div>
-      <div class="fb-lobby-mid">
-        <div class="fb-lobby-title">IFZRQ FC</div>
-        <div class="fb-lobby-sub">Divisi ${state.division} · ${state.division >= 4 ? state.points + ' poin (' + state.matches + '/10 match)' : state.rating + ' rating'}</div>
-        <button type="button" class="fb-play" id="fbBtnPlay"><span>PLAY</span></button>
-      </div>
-    </div>`);
+  screen('lobby', '<div class="fb-lobby">'
+    + '<button type="button" class="fb-profile" id="fbProfile"><img src="'+FACE_SVG+'" alt=""><div><b>'+esc(myName)+'</b><span>div '+state.division+' · '+wr+'% WR</span></div></button>'
+    + '<div class="fb-side"><button type="button" class="fb-bigbtn fb-bn-draft" id="fbBtnDraft">DRAFT</button><button type="button" class="fb-bigbtn fb-bn-team" id="fbBtnTeam">TEAM</button><button type="button" class="fb-bigbtn fb-bn-index" id="fbBtnIndex">INDEX</button></div>'
+    + '<div class="fb-lobby-mid"><div class="fb-lobby-title">IFZRQ FC</div><div class="fb-lobby-sub">'+(state.division>=4 ? state.points+' poin · '+state.matches+'/10 match' : state.rating+' rating')+'</div><button type="button" class="fb-play" id="fbBtnPlay">PLAY</button></div>'
+    + '</div>');
   $('fbProfile').onclick = () => {
-    $('fbRoot').insertAdjacentHTML('beforeend', `
-      <div class="fb-modal" id="fbProfModal">
-        <div class="fb-modal-card">
-          <h3>PROFIL</h3>
-          <div class="fb-prof-row"><span>Nama</span><b>${esc(myName)}</b></div>
-          <div class="fb-prof-row"><span>ID Akun</span><b>${esc(uid8())}</b></div>
-          <div class="fb-prof-row"><span>Total Match</span><b>${total}</b></div>
-          <div class="fb-prof-row"><span>W / D / L</span><b>${state.w} / ${state.d} / ${state.l}</b></div>
-          <div class="fb-prof-row"><span>Win Rate</span><b>${wr}%</b></div>
-          <div class="fb-winbar"><i style="width:${wr}%"></i></div>
-          <button type="button" class="fb-btn" id="fbProfClose">Tutup</button>
-        </div>
-      </div>`);
+    $('fbRoot').insertAdjacentHTML('beforeend', '<div class="fb-modal" id="fbProfModal"><div class="fb-modal-card"><h3>PROFIL</h3>'
+      + '<div class="fb-prof-row"><span>Nama</span><b>'+esc(myName)+'</b></div>'
+      + '<div class="fb-prof-row"><span>ID Akun</span><b>'+esc(myUid)+'</b></div>'
+      + '<div class="fb-prof-row"><span>Divisi</span><b>'+state.division+'</b></div>'
+      + '<div class="fb-prof-row"><span>Total Match</span><b>'+total+'</b></div>'
+      + '<div class="fb-prof-row"><span>W / D / L</span><b>'+state.w+' / '+state.d+' / '+state.l+'</b></div>'
+      + '<div class="fb-prof-row"><span>Win Rate</span><b>'+wr+'%</b></div>'
+      + '<div class="fb-winbar"><i style="width:'+wr+'%"></i></div>'
+      + '<button type="button" class="fb-btn" id="fbProfClose">Tutup</button></div></div>');
     $('fbProfClose').onclick = () => $('fbProfModal').remove();
   };
   $('fbBtnDraft').onclick = startDraft;
@@ -3556,379 +3499,259 @@ function renderLobby(){
   $('fbBtnIndex').onclick = showIndex;
   $('fbBtnPlay').onclick = showPlay;
 }
-function uid8(){ try { const t = JSON.parse(atob((FB_TOKEN() || '').split('.')[0])); return String(t.uid || '').slice(0, 8); } catch(e){ return 'guest'; } }
+function uid8(){ return myUid.slice(0,8) || 'guest'; }
 
-/* ─────────── DRAFT ─────────── */
+/* ── DRAFT ── */
 let draft = null;
-function startDraft(){
-  draft = { phase:'captain', formation:null, players:Array(11).fill(null), bench:Array(5).fill(null) };
-  drawCards(null, 'PILIH KAPTEN TIM ANDA', true);
-}
+function startDraft(){ draft = { formation:null, players:Array(11).fill(null), bench:Array(5).fill(null) }; drawCards(null, 'PILIH KAPTEN TIM ANDA', 'captain'); }
 function draw4(forPos){
-  /* 4 kandidat: rarity-weighted; kalau slot posisi → filter pemain posisi itu (fallback grup) */
   let pool = PLAYERS;
-  if (forPos) {
-    const exact = PLAYERS.filter((p) => p.pos === forPos);
-    if (exact.length >= 4) pool = exact;
-    else pool = PLAYERS.filter((p) => POSGROUP[p.pos] === POSGROUP[forPos]);
-  }
-  const out = [];
-  const w = (p) => p.r === 'icon' ? 0.5 : p.r === 'legend' ? 1 : p.r === 'gold' ? 4 : p.r === 'silver' ? 8 : 14;
+  if (forPos) { const exact = PLAYERS.filter((p) => p.pos === forPos); pool = exact.length >= 4 ? exact : PLAYERS.filter((p) => POSGROUP[p.pos] === POSGROUP[forPos]); }
+  const out = []; const w = (p) => p.r==='icon'?0.5 : p.r==='legend'?1 : p.r==='gold'?4 : p.r==='silver'?8 : 14;
   let guard = 0;
-  while (out.length < 4 && guard < 500) {
-    guard++;
-    const p = pool[Math.floor(rnd() * pool.length)];
-    if (out.includes(p)) continue;
-    if (rnd() * 30 < w(p)) out.push(p);
-    else if (guard > 300 && !out.includes(p)) out.push(p);
-  }
+  while (out.length < 4 && guard < 600) { guard++; const p = pool[Math.floor(rnd()*pool.length)]; if (out.includes(p)) continue; if (rnd()*30 < w(p)) out.push(p); else if (guard > 400) out.push(p); }
   return out;
 }
-function drawCards(forPos, title, isCaptain){
+let currentSlot = null;
+function drawCards(forPos, title, capSlot){
   const cands = draw4(forPos);
-  const best = cands.reduce((a, b) => (b.ovr > a.ovr ? b : a));
+  const best = cands.reduce((a,b) => (b.ovr > a.ovr ? b : a));
   const bestIdx = cands.indexOf(best);
-  const years = [2008,2010,2012,2014,2016,2018,2019,2020,2021,2022,2023,2024,2025,2026];
-  screen('draft', `
-    <div class="fb-draft">
-      <div class="fb-draft-title">${esc(title || 'PILIH PEMAIN')}</div>
-      ${forPos ? '<div class="fb-draft-pos">POSISI: <b>' + esc(forPos) + '</b></div>' : ''}
-      <div class="fb-cards" id="fbCards">
-        ${cands.map((p, i) => `
-          <div class="fb-cardwrap" data-i="${i}">
-            <div class="fbc fb-back" id="fbBack${i}"><div class="fb-year" id="fbYear${i}">20??</div></div>
-            <div class="fb-front" id="fbFront${i}" style="display:none"></div>
-          </div>`).join('')}
-      </div>
-      <button type="button" class="fb-btn fb-ghost" id="fbDraftExit">Exit</button>
-    </div>`);
+  const years = [2006,2008,2010,2012,2014,2016,2018,2019,2020,2021,2022,2023,2024,2025,2026,2027];
+  screen('draft', '<div class="fb-draft">'
+    + '<div class="fb-draft-top">PICK: '+(forPos||'KAPTEN')+'</div>'
+    + '<div class="fb-cards" id="fbCards">' + cands.map((p,i) => '<div class="fb-cardwrap" data-i="'+i+'"><div class="fbc fb-back" id="fbBack'+i+'"><div class="fb-year" id="fbYear'+i+'">20??</div></div><div class="fb-front" id="fbFront'+i+'" style="display:none"></div></div>').join('') + '</div>'
+    + '<button type="button" class="fb-btn fb-ghost fb-dr-exit" id="fbDraftExit">Exit</button>'
+    + '</div>');
   $('fbDraftExit').onclick = showLobby;
-  /* animasi tahun acak */
   const spin = {};
-  cands.forEach((_, i) => {
-    spin[i] = setInterval(() => { const y = $('fbYear' + i); if (!y) { clearInterval(spin[i]); return; } y.textContent = pick(years); }, 70);
-  });
-  const settleYears = cands.map(() => pick(years));
+  cands.forEach((_,i) => { spin[i] = setInterval(() => { const y = $('fbYear'+i); if (!y) { clearInterval(spin[i]); return; } y.textContent = pick(years); }, 70); });
   setTimeout(() => {
     Object.values(spin).forEach(clearInterval);
-    cands.forEach((_, i) => { $('fbYear' + i).textContent = settleYears[i]; });
-    /* reveal — kartu terbaik dapat animasi urutan posisi→negara→ovr (kalo gold+) */
-    cands.forEach((p, i) => {
-      const front = $('fbFront' + i);
+    cands.forEach((p,i) => {
+      const bk = $('fbBack'+i), front = $('fbFront'+i);
+      if (!bk || !front || !document.body.contains(front)) return;
+      bk.style.display = 'none'; front.style.display = '';
       const isBest = i === bestIdx;
-      const animated = isBest && (p.r === 'gold' || p.r === 'legend' || p.r === 'icon');
-      setTimeout(() => {
-        const bk = $('fbBack' + i);
-        if (!bk || !document.body.contains(front)) return; /* layar udah ganti */
-        bk.style.display = 'none';
-        front.style.display = '';
-        if (!animated) { front.innerHTML = cardHTML(p, { cls:' fbc-in' }); return; }
-        /* animasi berurutan: posisi → negara → ovr → full */
-        front.innerHTML = cardHTML(p, { cls:' fbc-anim fbc-in' });
+      const animated = isBest && (p.r==='gold'||p.r==='legend'||p.r==='icon');
+      front.innerHTML = cardHTML(p, { cls: animated ? ' fbc-anim fbc-in' : ' fbc-in' });
+      if (animated) {
         const card = front.querySelector('.fbc');
-        const seq = [
-          [400, () => card.classList.add('st-pos')],
-          [1000, () => card.classList.add('st-country')],
-          [1600, () => card.classList.add('st-ovr')],
-          [2300, () => card.classList.add('st-full')],
-        ];
-        seq.forEach(([d, fn]) => setTimeout(fn, d));
-      }, 600 + i * 250);
+        [[400,'st-pos'],[1000,'st-country'],[1600,'st-ovr'],[2300,'st-full']].forEach(([d,cl]) => setTimeout(() => { if (document.body.contains(card)) card.classList.add(cl); }, d));
+      }
     });
-    /* klik pilih */
-    cands.forEach((p, i) => {
-      $('fbCards').children[i].onclick = () => {
-        if (isCaptain) { draft.captain = p.id; showFormationSelect(); }
-        else pickForSlot(p);
-      };
+    cands.forEach((p,i) => {
+      const wrap = $('fbCards').children[i];
+      if (wrap) wrap.onclick = () => { if (capSlot === 'captain') { draft.captain = p.id; showFormationSelect(); } else pickForSlot(p); };
     });
   }, 1400);
 }
 function showFormationSelect(){
-  screen('form', `
-    <div class="fb-draft">
-      <div class="fb-draft-title">PILIH FORMASI</div>
-      <div class="fb-formgrid">
-        ${Object.entries(FORMATIONS).map(([k, f]) => `
-          <div class="fb-formcard" data-f="${k}">
-            ${formationSVG(k)}
-            <b>${f.label}</b>
-          </div>`).join('')}
-      </div>
-      <button type="button" class="fb-btn fb-ghost" id="fbFormBack">← Ulang pilih kapten</button>
-    </div>`);
+  screen('form', '<div class="fb-draft"><div class="fb-draft-top">PILIH FORMASI</div><div class="fb-formgrid">'
+    + Object.entries(FORMATIONS).map(([k,f]) => '<div class="fb-formcard" data-f="'+k+'">'+formationSVG(k)+'<b>'+f.label+'</b></div>').join('')
+    + '</div><button type="button" class="fb-btn fb-ghost" id="fbFormBack">← Ulang kapten</button></div>');
   $('fbFormBack').onclick = startDraft;
-  document.querySelectorAll('.fb-formcard').forEach((el) => {
-    el.onclick = () => { draft.formation = el.dataset.f; showBuilder(); };
-  });
+  document.querySelectorAll('.fb-formcard').forEach((el) => { el.onclick = () => { draft.formation = el.dataset.f; showBuilder(); }; });
 }
 function formationSVG(key){
   const f = FORMATIONS[key];
-  const counts = {};
-  const dots = f.slots.map((s, i) => {
-    const [x, y] = POSXY[s];
-    const cy = counts[s] ? (y === 50 ? 50 + (counts[s] * 16) : y + counts[s] * 6) : y;
-    counts[s] = (counts[s] || 0) + 1;
-    const yy = s === 'ST' || s === 'CAM' || s === 'CM' || s === 'CDM' || s === 'CB' ? (50 + (i - 5.5) * 5) : cy;
-    return `<circle cx="${x}" cy="${Math.max(8, Math.min(92, yy))}" r="4" fill="#fff" stroke="#222" stroke-width="1.2"/><text x="${x}" y="${Math.max(8, Math.min(92, yy)) - 7}" font-size="5" text-anchor="middle" fill="#fff">${s}</text>`;
+  const seen = {};
+  const dots = f.slots.map((s,i) => {
+    const base = POSXY[s];
+    let y = base[1];
+    const same = f.slots.filter((z) => z === s).length;
+    if (same > 1) { const idx = f.slots.filter((z,j) => j < i && z === s).length; y = 50 + (idx - (same-1)/2) * 26; }
+    return '<circle cx="'+base[0]+'" cy="'+Math.max(8,Math.min(92,y))+'" r="4" fill="#fff" stroke="#222" stroke-width="1.2"/><text x="'+base[0]+'" y="'+(Math.max(8,Math.min(92,y))-7)+'" font-size="5" text-anchor="middle" fill="#fff">'+s+'</text>';
   }).join('');
-  return `<svg viewBox="0 0 100 100" class="fb-formsvg"><rect x="2" y="2" width="96" height="96" rx="6" fill="#1c7c3c"/><rect x="2" y="45" width="96" height="1.5" fill="#ffffff55"/>${dots}</svg>`;
+  return '<svg viewBox="0 0 100 100" class="fb-formsvg"><rect x="2" y="2" width="96" height="96" rx="6" fill="#1c7c3c"/><rect x="2" y="45" width="96" height="1.5" fill="#ffffff55"/>'+dots+'</svg>';
 }
-let currentSlot = null;
+/* builder VERTIKAL (portrait) — cocok buat HP */
+function tmpSquad(){ return { formation: draft.formation, players: draft.players, bench: draft.bench }; }
 function showBuilder(){
   const f = FORMATIONS[draft.formation];
   const benchDone = draft.bench.filter((x) => x != null).length;
   const allDone = draft.players.every((x) => x != null) && benchDone === 5;
-  screen('build', `
-    <div class="fb-build">
-      <div class="fb-build-left">
-        <div class="fb-panel">
-          <div class="fb-row"><span>Formasi</span><b>${f.label}</b></div>
-          <div class="fb-row"><span>OVR Tim</span><b id="fbBOvr">${squadOVR(tmpSquad())}</b></div>
-          <div class="fb-chem"><span>Chemistry</span><div class="fb-chembar"><i id="fbBChem" style="width:${squadChem(tmpSquad())}%"></i></div><b id="fbBChemN">${squadChem(tmpSquad())}%</b></div>
-          <button type="button" class="fb-btn fb-warn" id="fbRestart">Restart</button>
-          <button type="button" class="fb-btn fb-ghost" id="fbExit">Exit</button>
-        </div>
-      </div>
-      <div class="fb-build-right">
-        <div class="fb-pitch" id="fbPitch">${pitchSlotsHTML()}</div>
-        <div class="fb-bench">
-          <div class="fb-bench-title">CADANGAN (${benchDone}/5)</div>
-          <div class="fb-bench-row" id="fbBenchRow">${benchHTML()}</div>
-        </div>
-        <button type="button" class="fb-confirm ${allDone ? 'ok' : ''}" id="fbConfirm">${allDone ? 'CONFIRM' : 'CONFIRM'}</button>
-      </div>
-    </div>`);
+  screen('build', '<div class="fb-build fb-vert">'
+    + '<div class="fb-build-main"><div class="fb-pitch v" id="fbPitch">'+vSlotsHTML()+'</div>'
+    + '<div class="fb-bench"><div class="fb-bench-title">CADANGAN ('+benchDone+'/5)</div><div class="fb-bench-row" id="fbBenchRow">'+vBenchHTML()+'</div></div></div>'
+    + '<div class="fb-panel fb-sidepanel">'
+    + '<div class="fb-row"><span>Formasi</span><b>'+f.label+'</b></div>'
+    + '<div class="fb-row"><span>OVR Tim</span><b id="fbBOvr">'+squadOVR(tmpSquad())+'</b></div>'
+    + '<div class="fb-chem"><span>Chemistry</span><div class="fb-chembar"><i style="width:'+squadChem(tmpSquad())+'%"></i></div><b>'+squadChem(tmpSquad())+'%</b></div>'
+    + '<div class="fb-hint">tap + buat acak pemain. seret kartu buat tukar posisi.</div>'
+    + '<button type="button" class="fb-btn fb-warn" id="fbRestart">Restart</button>'
+    + '<button type="button" class="fb-btn fb-ghost" id="fbExit">Exit</button></div>'
+    + '<button type="button" class="fb-confirm '+(allDone?'ok':'')+'" id="fbConfirm">CONFIRM</button>'
+    + '</div>');
   $('fbRestart').onclick = startDraft;
   $('fbExit').onclick = showLobby;
   $('fbConfirm').onclick = () => { if (allDone) confirmDraft(); };
-  document.querySelectorAll('.fb-slot').forEach((el) => {
-    el.onclick = () => {
-      const idx = +el.dataset.i;
-      if (draft.players[idx] != null) return; /* udah keisi = terkunci */
-      currentSlot = { type:'main', idx };
-      drawCards(FORMATIONS[draft.formation].slots[idx], 'PILIH ' + FORMATIONS[draft.formation].slots[idx]);
-    };
+  bindDrag();
+  document.querySelectorAll('.fb-slot:not(.filled)').forEach((el) => {
+    el.onclick = (e) => { if (e._dragged) return; const idx = +el.dataset.i; currentSlot = { type:'main', idx }; drawCards(FORMATIONS[draft.formation].slots[idx], 'PILIH '+FORMATIONS[draft.formation].slots[idx]); };
   });
-  document.querySelectorAll('.fb-bslot').forEach((el) => {
-    el.onclick = () => {
-      const idx = +el.dataset.i;
-      if (draft.bench[idx] != null) return;
-      currentSlot = { type:'bench', idx };
-      drawCards(null, 'PILIH CADANGAN');
-    };
+  document.querySelectorAll('.fb-bslot:not(.filled)').forEach((el) => {
+    el.onclick = (e) => { if (e._dragged) return; currentSlot = { type:'bench', idx: +el.dataset.i }; drawCards(null, 'PILIH CADANGAN'); };
   });
 }
-function tmpSquad(){ return { formation: draft.formation, players: draft.players, bench: draft.bench }; }
-function pitchSlotsHTML(){
+function vXY(s, i, slots){ // vertikal: gawang sendiri bawah
+  const same = slots.filter((z) => z === s).length;
+  let y = 100 - POSXY[s][0];
+  let x = POSXY[s][1];
+  if (same > 1) { const idx = slots.filter((z,j) => j < i && z === s).length; x = 50 + (idx - (same-1)/2) * 26; }
+  return [x, y];
+}
+function vSlotsHTML(){
   const f = FORMATIONS[draft.formation];
-  const counts = {};
-  return f.slots.map((s, i) => {
-    const [x, y] = POSXY[s];
-    counts[s] = (counts[s] || 0) + 1;
-    const spread = { 1: 0, 2: -14 }[ /* duplikat ST/CB */ (f.slots.filter(z => z === s).length) ] || 0;
-    const off = f.slots.filter((z, j) => j < i && z === s).length * 28;
-    const pid = draft.players[i];
-    const p = pid != null ? byId(pid) : null;
-    const left = (x / 100 * 92 + 2), top = (y === 50 && ['ST','CB','CM','CDM','CAM'].includes(s) ? 50 + off - ((f.slots.filter(z=>z===s).length - 1) * 14) : y) / 100 * 92 + 4;
-    return `<div class="fb-slot ${p ? 'filled' : ''}" data-i="${i}" style="left:${left}%;top:${top}%">
-      ${p ? miniCard(p, s) : '<div class="fb-plus">+</div><div class="fb-slotpos">' + s + '</div>'}
-    </div>`;
+  return f.slots.map((s,i) => {
+    const [x,y] = vXY(s,i,f.slots);
+    const pid = draft.players[i]; const p = pid != null ? byId(pid) : null;
+    return '<div class="fb-slot '+(p?'filled':'')+'" data-i="'+i+'" data-kind="main" style="left:'+x+'%;top:'+y+'%">'+(p?miniCard(p,s,effOVR(p,s)):'<div class="fb-plus">+</div><div class="fb-slotpos">'+s+'</div>')+'</div>';
   }).join('');
 }
-function miniCard(p, slot){
-  const eff = effOVR(p, slot);
-  return `<div class="fb-mini ${RAR[p.r].cls}"><b>${eff}</b><span>${esc(p.name.split(' ').slice(-1)[0])}</span><i>${slot}</i></div>`;
+function vBenchHTML(){
+  return draft.bench.map((pid,i) => { const p = pid != null ? byId(pid) : null; return '<div class="fb-bslot '+(p?'filled':'')+'" data-i="'+i+'" data-kind="bench">'+(p?miniCard(p,'CAD',p.ovr):'<div class="fb-plus">+</div>')+'</div>'; }).join('');
 }
-function benchHTML(){
-  return draft.bench.map((pid, i) => {
-    const p = pid != null ? byId(pid) : null;
-    return `<div class="fb-bslot ${p ? 'filled' : ''}" data-i="${i}">${p ? miniCard(p, 'CAD') : '<div class="fb-plus">+</div>'}</div>`;
-  }).join('');
+function pickForSlot(p){ if (currentSlot.type==='main') draft.players[currentSlot.idx] = p.id; else draft.bench[currentSlot.idx] = p.id; showBuilder(); }
+
+/* drag & drop tukar posisi (builder + team) */
+let dragSrc = null, dragGhost = null;
+function bindDrag(){
+  document.querySelectorAll('.fb-mini').forEach((el) => {
+    el.addEventListener('pointerdown', (e) => {
+      const holder = el.closest('.fb-slot, .fb-bslot');
+      if (!holder) return;
+      e.preventDefault();
+      dragSrc = { kind: holder.dataset.kind, idx: +holder.dataset.i };
+      dragGhost = el.cloneNode(true);
+      dragGhost.className = 'fb-mini fb-dragghost '+el.className.split(' ').filter((c)=>c.startsWith('fbr-')).join(' ');
+      dragGhost.innerHTML = el.innerHTML;
+      document.body.appendChild(dragGhost);
+      moveGhost(e);
+      const move = (ev) => moveGhost(ev);
+      const up = (ev) => {
+        window.removeEventListener('pointermove', move);
+        window.removeEventListener('pointerup', up);
+        if (dragGhost) dragGhost.remove(); dragGhost = null;
+        const tgt = document.elementFromPoint(ev.clientX, ev.clientY);
+        const holder2 = tgt ? tgt.closest('.fb-slot, .fb-bslot') : null;
+        if (holder2 && dragSrc) {
+          const dst = { kind: holder2.dataset.kind, idx: +holder2.dataset.i };
+          if (dst.kind !== dragSrc.kind || dst.idx !== dragSrc.idx) swapCells(dragSrc, dst, true);
+        }
+        dragSrc = null;
+      };
+      window.addEventListener('pointermove', move);
+      window.addEventListener('pointerup', up);
+    });
+  });
 }
-function pickForSlot(p){
-  if (currentSlot.type === 'main') draft.players[currentSlot.idx] = p.id;
-  else draft.bench[currentSlot.idx] = p.id;
-  showBuilder();
+function moveGhost(e){ if (!dragGhost) return; dragGhost.style.left = (e.clientX - 24) + 'px'; dragGhost.style.top = (e.clientY - 30) + 'px'; }
+function swapCells(a, b, isDraft){
+  const arr = isDraft ? draft : state.squad;
+  const A = a.kind === 'main' ? arr.players : arr.bench;
+  const B = b.kind === 'main' ? arr.players : arr.bench;
+  const t = A[a.idx]; A[a.idx] = B[b.idx]; B[b.idx] = t;
+  if (isDraft) { showBuilder(); }
+  else { fbPost({ action:'saveSquad', squad: arr }).then((d) => { state = d.state; }).catch(()=>{}); showTeam(); }
 }
+
 function confirmDraft(){
   const squad = { formation: draft.formation, players: draft.players, bench: draft.bench, captain: draft.captain, createdBy: uid8() };
   const indexAdd = [...squad.players, ...squad.bench].filter((x) => x != null);
   const ovr = squadOVR(squad), chem = squadChem(squad);
-  /* layar animasi confirm: ovr & chemistry count-up, kartu muncul satu-satu dari ovr terkecil */
-  const order = squad.players.map((pid, i) => ({ pid, slot: FORMATIONS[squad.formation].slots[i] }))
-    .sort((a, b) => effOVR(byId(a.pid), a.slot) - effOVR(byId(b.pid), b.slot));
-  screen('confirm', `
-    <div class="fb-confirm-scr">
-      <div class="fb-draft-title">TIM KONFIRMASI</div>
-      <div class="fb-cf-ovr" id="fbCfOvr">OVR 0</div>
-      <div class="fb-chem"><span>Chemistry</span><div class="fb-chembar big"><i id="fbCfChem" style="width:0%"></i></div><b id="fbCfChemN">0%</b></div>
-      <div class="fb-cf-cards" id="fbCfCards"></div>
-      <button type="button" class="fb-btn fb-ghost" id="fbCfDone" style="visibility:hidden">Selesai → Lobby</button>
-    </div>`);
-  let o = 0; const t1 = setInterval(() => { o++; $('fbCfOvr').textContent = 'OVR ' + o; if (o >= ovr) { clearInterval(t1); $('fbCfOvr').textContent = 'OVR ' + ovr; } }, 25);
-  let c = 0; const t2 = setInterval(() => { c++; $('fbCfChem').style.width = Math.min(c, chem) + '%'; $('fbCfChemN').textContent = Math.min(c, chem) + '%'; if (c >= chem) clearInterval(t2); }, 18);
-  order.forEach((o2, i) => {
-    setTimeout(() => {
-      $('fbCfCards').insertAdjacentHTML('beforeend', cardHTML(byId(o2.pid), { cls: ' fbc-in' }));
-    }, 900 + i * 260);
-  });
-  setTimeout(() => { $('fbCfDone').style.visibility = ''; }, 1400 + order.length * 260);
-  $('fbCfDone').onclick = async () => {
-    try {
-      const d = await fbPost({ action:'saveSquad', squad, indexAdd });
-      state = d.state;
-      showLobby();
-    } catch (e) { alert('gagal simpen: ' + e.message); }
-  };
+  const order = squad.players.map((pid,i) => ({ pid, slot: FORMATIONS[squad.formation].slots[i] })).sort((a,b) => effOVR(byId(a.pid),a.slot) - effOVR(byId(b.pid),b.slot));
+  screen('confirm', '<div class="fb-confirm-scr"><div class="fb-draft-top">TIM KONFIRMASI</div>'
+    + '<div class="fb-cf-ovr" id="fbCfOvr">OVR 0</div>'
+    + '<div class="fb-chem"><span>Chemistry</span><div class="fb-chembar big"><i id="fbCfChem" style="width:0%"></i></div><b id="fbCfChemN">0%</b></div>'
+    + '<div class="fb-cf-cards" id="fbCfCards"></div>'
+    + '<button type="button" class="fb-btn fb-ghost" id="fbCfDone" style="visibility:hidden">Selesai → Lobby</button></div>');
+  let o = 0; const t1 = setInterval(() => { o++; if (o >= ovr) { clearInterval(t1); $('fbCfOvr').textContent = 'OVR '+ovr; } else $('fbCfOvr').textContent = 'OVR '+o; }, 22);
+  let c = 0; const t2 = setInterval(() => { c++; const v = Math.min(c,chem); $('fbCfChem').style.width = v+'%'; $('fbCfChemN').textContent = v+'%'; if (c>=chem) clearInterval(t2); }, 16);
+  order.forEach((o2,i) => setTimeout(() => { if ($('fbCfCards')) $('fbCfCards').insertAdjacentHTML('beforeend', cardHTML(byId(o2.pid), { cls:' fbc-in' })); }, 800 + i*240));
+  setTimeout(() => { const b = $('fbCfDone'); if (b) b.style.visibility = ''; }, 1200 + order.length*240);
+  $('fbCfDone').onclick = async () => { try { const d = await fbPost({ action:'saveSquad', squad, indexAdd }); state = d.state; showLobby(); } catch (e) { alert('gagal simpen: '+e.message); } };
 }
 
-/* ─────────── TEAM (atur posisi) ─────────── */
-let swapSel = null;
+
+/* ── TEAM (vertikal, drag, ada cadangan) ── */
 function showTeam(){
   if (!state.squad) { alert('belum ada tim — draft dulu'); return; }
   const sq = state.squad;
   const f = FORMATIONS[sq.formation];
-  swapSel = null;
-  screen('team', `
-    <div class="fb-build">
-      <div class="fb-build-left">
-        <div class="fb-panel">
-          <div class="fb-row"><span>Formasi</span><b>${f.label}</b></div>
-          <div class="fb-row"><span>OVR Efektif</span><b id="fbTOvr">${squadOVR(sq)}</b></div>
-          <div class="fb-chem"><span>Chemistry</span><div class="fb-chembar"><i style="width:${squadChem(sq)}%"></i></div><b>${squadChem(sq)}%</b></div>
-          <div class="fb-hint">tap 2 pemain buat tukar posisi. posisi gak ideal = OVR turun</div>
-          <button type="button" class="fb-btn fb-ghost" id="fbTBack">← Lobby</button>
-        </div>
-      </div>
-      <div class="fb-build-right">
-        <div class="fb-pitch" id="fbPitch">${teamPitchHTML()}</div>
-      </div>
-    </div>`);
+  screen('team', '<div class="fb-build fb-vert">'
+    + '<div class="fb-build-main"><div class="fb-pitch v" id="fbPitch">'+teamVSlotsHTML()+'</div>'
+    + '<div class="fb-bench"><div class="fb-bench-title">CADANGAN</div><div class="fb-bench-row" id="fbBenchRow">'+teamVBenchHTML()+'</div></div></div>'
+    + '<div class="fb-panel fb-sidepanel">'
+    + '<div class="fb-row"><span>Formasi</span><b>'+f.label+'</b></div>'
+    + '<div class="fb-row"><span>OVR Efektif</span><b>'+squadOVR(sq)+'</b></div>'
+    + '<div class="fb-chem"><span>Chemistry</span><div class="fb-chembar"><i style="width:'+squadChem(sq)+'%"></i></div><b>'+squadChem(sq)+'%</b></div>'
+    + '<div class="fb-hint">seret kartu ke slot lain buat tukar posisi / masukin cadangan. posisi gak ideal = OVR turun (merah).</div>'
+    + '<button type="button" class="fb-btn fb-ghost" id="fbTBack">← Lobby</button></div>'
+    + '</div>');
   $('fbTBack').onclick = showLobby;
-  renderTeamBinds();
+  bindDrag();
 }
-function teamPitchHTML(){
-  const sq = state.squad;
-  const f = FORMATIONS[sq.formation];
-  return f.slots.map((s, i) => {
-    const [x, y] = POSXY[s];
-    const off = f.slots.filter((z, j) => j < i && z === s).length * 28;
-    const top = (y === 50 && ['ST','CB','CM','CDM','CAM'].includes(s) ? 50 + off - ((f.slots.filter(z=>z===s).length - 1) * 14) : y) / 100 * 92 + 4;
+function teamVSlotsHTML(){
+  const sq = state.squad; const f = FORMATIONS[sq.formation];
+  return f.slots.map((s,i) => {
+    const [x,y] = vXY(s,i,f.slots);
     const p = sq.players[i] != null ? byId(sq.players[i]) : null;
-    return `<div class="fb-slot tslot filled ${p && p.pos !== s ? 'badpos' : ''}" data-i="${i}" style="left:${x / 100 * 92 + 2}%;top:${top}%">
-      ${p ? miniCard(p, s) : ''}
-    </div>`;
+    const bad = p && p.pos !== s;
+    return '<div class="fb-slot filled '+(bad?'badpos':'')+'" data-i="'+i+'" data-kind="main" style="left:'+x+'%;top:'+y+'%">'+(p?miniCard(p,s,effOVR(p,s)):'')+'</div>';
   }).join('');
 }
-function renderTeamBinds(){
-  document.querySelectorAll('.tslot').forEach((el) => {
-    el.onclick = () => {
-      const i = +el.dataset.i;
-      if (swapSel == null) { swapSel = i; el.classList.add('sel'); return; }
-      if (swapSel === i) { el.classList.remove('sel'); swapSel = null; return; }
-      /* tukar */
-      const sq = state.squad;
-      const tmp = sq.players[swapSel];
-      sq.players[swapSel] = sq.players[i];
-      sq.players[i] = tmp;
-      swapSel = null;
-      fbPost({ action:'saveSquad', squad: sq }).then((d) => { state = d.state; }).catch(() => {});
-      showTeam();
-    };
-  });
+function teamVBenchHTML(){
+  const sq = state.squad;
+  return (sq.bench || []).map((pid,i) => { const p = pid != null ? byId(pid) : null; return '<div class="fb-bslot '+(p?'filled':'')+'" data-i="'+i+'" data-kind="bench">'+(p?miniCard(p,'CAD',p.ovr):'<div class="fb-plus">+</div>')+'</div>'; }).join('');
 }
 
-/* ─────────── INDEX (koleksi) ─────────── */
+/* ── INDEX ─ */
 function showIndex(){
   fbRefresh().then(() => {
     const owned = new Set(state.index || []);
     const rars = ['icon','legend','gold','silver','bronze'];
-    screen('index', `
-      <div class="fb-index">
-        <div class="fb-draft-title">INDEX PEMAIN</div>
-        <div class="fb-idx-tabs" id="fbIdxTabs">
-          ${rars.map((r, i) => `<div class="fb-idx-tab ${i === 0 ? 'on' : ''}" data-r="${r}">${RAR[r].label} <span>${PLAYERS.filter((p) => p.r === r && owned.has(p.id)).length}/${PLAYERS.filter((p) => p.r === r).length}</span></div>`).join('')}
-        </div>
-        <div class="fb-idx-grid" id="fbIdxGrid"></div>
-        <button type="button" class="fb-btn fb-ghost" id="fbIdxBack">← Lobby</button>
-      </div>`);
+    screen('index', '<div class="fb-index"><div class="fb-draft-top">INDEX PEMAIN</div>'
+      + '<div class="fb-idx-tabs" id="fbIdxTabs">'+rars.map((r,i) => '<div class="fb-idx-tab '+(i===0?'on':'')+'" data-r="'+r+'">'+RAR[r].label+' <span>'+PLAYERS.filter((p)=>p.r===r&&owned.has(p.id)).length+'/'+PLAYERS.filter((p)=>p.r===r).length+'</span></div>').join('')+'</div>'
+      + '<div class="fb-idx-grid" id="fbIdxGrid"></div>'
+      + '<button type="button" class="fb-btn fb-ghost" id="fbIdxBack">← Lobby</button></div>');
     $('fbIdxBack').onclick = showLobby;
-    const renderGrid = (r) => {
-      $('fbIdxGrid').innerHTML = PLAYERS.filter((p) => p.r === r).map((p) => owned.has(p.id) ? cardHTML(p) : cardHTML(p, { mystery:true })).join('');
-    };
+    const renderGrid = (r) => { $('fbIdxGrid').innerHTML = PLAYERS.filter((p) => p.r === r).map((p) => owned.has(p.id) ? cardHTML(p) : cardHTML(p, { mystery:true })).join(''); };
     renderGrid('icon');
-    document.querySelectorAll('.fb-idx-tab').forEach((el) => {
-      el.onclick = () => {
-        document.querySelectorAll('.fb-idx-tab').forEach((x) => x.classList.remove('on'));
-        el.classList.add('on');
-        renderGrid(el.dataset.r);
-      };
-    });
+    document.querySelectorAll('.fb-idx-tab').forEach((el) => { el.onclick = () => { document.querySelectorAll('.fb-idx-tab').forEach((x) => x.classList.remove('on')); el.classList.add('on'); renderGrid(el.dataset.r); }; });
   });
 }
 
-/* ─────────── PLAY MENU ─────────── */
+/* ── PLAY ── */
 function showPlay(){
   if (!state.squad) { alert('draft tim dulu sebelum main'); return; }
-  screen('play', `
-    <div class="fb-playmenu">
-      <div class="fb-draft-title">PLAY</div>
-      <div class="fb-playcards">
-        <div class="fb-playcard" id="fbPvAI">
-          <b>VS AI</b><span>lawan AI sesuai divisi lu (divisi ${state.division})</span>
-        </div>
-        <div class="fb-playcard" id="fbPvP">
-          <b>PVP</b><span>cari lawan beneran yang lagi nyari match</span>
-        </div>
-        <div class="fb-playcard" id="fbFriend">
-          <b>LAGA TEMAN</b><span>bikin room / masuk pakai ID — by1 bareng temen</span>
-        </div>
-      </div>
-      <button type="button" class="fb-btn fb-ghost" id="fbPlayBack">← Lobby</button>
-    </div>`);
+  screen('play', '<div class="fb-playmenu"><div class="fb-draft-top">PLAY</div><div class="fb-playcards">'
+    + '<div class="fb-playcard" id="fbPvAI"><b>VS AI</b><span>lawan AI sesuai divisi lu (divisi '+state.division+')</span></div>'
+    + '<div class="fb-playcard" id="fbPvP"><b>PVP</b><span>cari lawan beneran yang lagi nyari match</span></div>'
+    + '<div class="fb-playcard" id="fbFriend"><b>LAGA TEMAN</b><span>bikin room / masuk pakai ID — by1 bareng temen</span></div>'
+    + '</div><button type="button" class="fb-btn fb-ghost" id="fbPlayBack">← Lobby</button></div>');
   $('fbPlayBack').onclick = showLobby;
   $('fbPvAI').onclick = playVsAI;
   $('fbPvP').onclick = playPvp;
   $('fbFriend').onclick = showFriendMenu;
 }
-
-/* ─────────── VS AI ─────────── */
 const DIV_OVR = { 10:62, 9:65, 8:68, 7:71, 6:74, 5:77, 4:80, 3:84, 2:87, 1:90 };
 function genAITeam(div){
-  const g = mulberry(Date.now() % 100000 + div * 77);
+  const g = mulberry((Date.now() % 100000) + div * 77);
   const fk = Object.keys(FORMATIONS);
-  const fk2 = fk[Math.floor(g() * fk.length)];
+  const fk2 = fk[Math.floor(g()*fk.length)]; // formasi acak buat AI
   const slots = FORMATIONS[fk2].slots;
   const target = DIV_OVR[div] || 65;
-  const players = slots.map((s) => {
-    const pool = PLAYERS.filter((p) => POSGROUP[p.pos] === POSGROUP[s]);
-    return pool[Math.floor(g() * pool.length)].id;
-  });
-  const bench = Array.from({ length: 5 }, () => {
-    const pool = PLAYERS.filter((p) => p.ovr >= target - 12 && p.ovr <= target + 4);
-    const pool2 = pool.length ? pool : PLAYERS;
-    return pool2[Math.floor(g() * pool2.length)].id;
-  });
-  return { formation: fk2, players, bench, name: 'AI Divisi ' + div, boost: target };
+  const players = slots.map((s) => { const pool = PLAYERS.filter((p) => POSGROUP[p.pos] === POSGROUP[s]); return pool[Math.floor(g()*pool.length)].id; });
+  const bench = Array.from({ length:5 }, () => { const pool = PLAYERS.filter((p) => p.ovr >= target-12 && p.ovr <= target+4); return (pool.length?pool:PLAYERS)[Math.floor(g()*(pool.length?pool.length:PLAYERS.length))].id; });
+  return { formation: fk2, players, bench };
 }
-function playVsAI(){
-  const ai = genAITeam(state.division);
-  startMatch({ mode:'ai', mySquad: state.squad, oppSquad: ai, oppName: 'AI Divisi ' + state.division });
-}
+function playVsAI(){ startMatch({ mode:'ai', mySquad: state.squad, oppSquad: genAITeam(state.division), oppName: 'AI Divisi '+state.division }); }
 
-/* ─────────── PVP (matchmaking) ─────────── */
 let pvpTimer = null;
 function playPvp(){
-  screen('pvp', `
-    <div class="fb-playmenu">
-      <div class="fb-draft-title">MENCARI LAWAN...</div>
-      <div class="fb-search"><div class="fb-spinner"></div><span id="fbPvpInfo">nyari player yang lagi nyari match juga...</span></div>
-      <div class="fb-btnrow">
-        <button type="button" class="fb-btn fb-warn" id="fbPvpCancel">Batalkan</button>
-      </div>
-    </div>`);
-  fbPost({ action:'queueJoin', name: myName, squad: state.squad }).catch(() => {});
+  screen('pvp', '<div class="fb-playmenu"><div class="fb-draft-top">MENCARI LAWAN...</div><div class="fb-search"><div class="fb-spinner"></div><span id="fbPvpInfo">nyari player yang lagi nyari match juga...</span></div><div class="fb-btnrow"><button type="button" class="fb-btn fb-warn" id="fbPvpCancel">Batalkan</button></div></div>');
+  fbPost({ action:'queueJoin', name: myName, squad: state.squad }).catch(()=>{});
   let secs = 0;
   pvpTimer = setInterval(async () => {
     secs++;
@@ -3940,541 +3763,612 @@ function playPvp(){
         const imA = m.a.uid === myUid || m.a.name === myName;
         const me = imA ? m.a : m.b, opp = imA ? m.b : m.a;
         startMatch({ mode:'pvp', mySquad: me.squad || state.squad, oppSquad: opp.squad || genAITeam(state.division), oppName: opp.name, mid: m.mid, seed: m.seed });
-      } else if (secs > 30) {
-        clearInterval(pvpTimer);
-        fbPost({ action:'queueLeave' }).catch(() => {});
-        alert('gak ada player yang nyari match — pencarian dibatalkan');
-        showPlay();
-      } else {
-        $('fbPvpInfo').textContent = 'nyari player... (' + secs + '/30 dtk)';
-      }
+      } else if (secs > 30) { clearInterval(pvpTimer); fbPost({ action:'queueLeave' }).catch(()=>{}); alert('gak ada player yang nyari match — pencarian dibatalkan'); showPlay(); }
+      else $('fbPvpInfo').textContent = 'nyari player... ('+secs+'/30 dtk)';
     } catch (e) {}
   }, 2000);
-  $('fbPvpCancel').onclick = () => {
-    clearInterval(pvpTimer);
-    fbPost({ action:'queueLeave' }).catch(() => {});
-    showPlay();
-  };
+  $('fbPvpCancel').onclick = () => { clearInterval(pvpTimer); fbPost({ action:'queueLeave' }).catch(()=>{}); showPlay(); };
 }
-
-/* ─────────── LAGA TEMAN ─────────── */
 let roomTimer = null;
 function showFriendMenu(){
-  screen('friend', `
-    <div class="fb-playmenu">
-      <div class="fb-draft-title">LAGA TEMAN</div>
-      <div class="fb-btnrow">
-        <button type="button" class="fb-btn" id="fbRoomCreate">Bikin Room</button>
-        <input id="fbRoomId" class="fb-input" placeholder="ID ROOM (misal 3FA2B1)" maxlength="6" autocomplete="off">
-        <button type="button" class="fb-btn fb-alt" id="fbRoomJoin">Masuk Room</button>
-      </div>
-      <div id="fbRoomStatus"></div>
-      <button type="button" class="fb-btn fb-ghost" id="fbFriendBack">← Lobby</button>
-    </div>`);
+  screen('friend', '<div class="fb-playmenu"><div class="fb-draft-top">LAGA TEMAN</div><div class="fb-btnrow">'
+    + '<button type="button" class="fb-btn" id="fbRoomCreate">Bikin Room</button>'
+    + '<input id="fbRoomId" class="fb-input" placeholder="ID ROOM" maxlength="6" autocomplete="off">'
+    + '<button type="button" class="fb-btn fb-alt" id="fbRoomJoin">Masuk Room</button></div>'
+    + '<div id="fbRoomStatus"></div><button type="button" class="fb-btn fb-ghost" id="fbFriendBack">← Lobby</button></div>');
   $('fbFriendBack').onclick = () => { clearInterval(roomTimer); showPlay(); };
-  $('fbRoomCreate').onclick = async () => {
-    try {
-      const d = await fbPost({ action:'roomCreate', name: myName, squad: state.squad });
-      friendLobby(d.roomId, true);
-    } catch (e) { alert(e.message); }
-  };
+  $('fbRoomCreate').onclick = async () => { try { const d = await fbPost({ action:'roomCreate', name: myName, squad: state.squad }); friendLobby(d.roomId, true); } catch (e) { alert(e.message); } };
   $('fbRoomJoin').onclick = async () => {
     const rid = $('fbRoomId').value.trim().toUpperCase();
     if (!rid) return;
-    try {
-      const d = await fbPost({ action:'roomJoin', roomId: rid, name: myName, squad: state.squad });
-      if (d.alreadyHost) { friendLobby(rid, true); return; }
-      friendLobby(rid, false);
-    } catch (e) { alert('room gak ketemu / udah mulai'); }
+    try { const d = await fbPost({ action:'roomJoin', roomId: rid, name: myName, squad: state.squad }); if (d.alreadyHost) { friendLobby(rid, true); return; } friendLobby(rid, false); }
+    catch (e) { alert('room gak ketemu / udah mulai'); }
   };
 }
 function friendLobby(roomId, isHost){
-  screen('room', `
-    <div class="fb-playmenu">
-      <div class="fb-draft-title">ROOM ${esc(roomId)}</div>
-      <div class="fb-roomstatus" id="fbRoomStat">nunggu pemain...</div>
-      <div class="fb-btnrow">
-        ${isHost ? '<button type="button" class="fb-btn" id="fbRoomStart" style="display:none">Mulai Match</button>' : ''}
-        <button type="button" class="fb-btn fb-warn" id="fbRoomLeave">Keluar Room</button>
-      </div>
-    </div>`);
+  screen('room', '<div class="fb-playmenu"><div class="fb-draft-top">ROOM '+esc(roomId)+'</div><div class="fb-roomstatus" id="fbRoomStat">nunggu pemain...</div><div class="fb-btnrow">'+(isHost?'<button type="button" class="fb-btn" id="fbRoomStart" style="display:none">Mulai Match</button>':'')+'<button type="button" class="fb-btn fb-warn" id="fbRoomLeave">Keluar Room</button></div></div>');
   $('fbRoomLeave').onclick = () => { clearInterval(roomTimer); fbPost({ action:'roomLeave', roomId }).catch(()=>{}); showFriendMenu(); };
   roomTimer = setInterval(async () => {
     try {
       const d = await fbPost({ action:'roomPoll', roomId });
       const r = d.room;
-      if (r.status === 'ready' && !$('fbRoomStart') && r.guest) {
-        $('fbRoomStat').innerHTML = 'lawan: <b>' + esc(r.guest.name) + '</b> — siap!';
-        if ($('fbRoomStart')) $('fbRoomStart').style.display = '';
-      } else if (r.status === 'waiting') {
-        $('fbRoomStat').innerHTML = 'bagikan ID <b>' + esc(roomId) + '</b> ke temen lu';
-      } else if (r.status === 'playing') {
+      if (r.status === 'waiting') $('fbRoomStat').innerHTML = 'bagikan ID <b>'+esc(roomId)+'</b> ke temen lu';
+      else if (r.status === 'ready') { $('fbRoomStat').innerHTML = 'lawan: <b>'+esc(r.guest.name)+'</b> — siap!'; const sb = $('fbRoomStart'); if (sb) { sb.style.display = ''; sb.onclick = () => fbPost({ action:'roomStart', roomId }).catch(()=>{}); } }
+      else if (r.status === 'playing') {
         clearInterval(roomTimer);
         const imHost = r.host.uid === myUid || r.host.name === myName;
         const me = imHost ? r.host : r.guest, opp = imHost ? r.guest : r.host;
         startMatch({ mode:'friend', mySquad: me.squad || state.squad, oppSquad: opp.squad || genAITeam(5), oppName: opp.name, roomId, seed: r.seed });
-        return;
-      }
-      if ($('fbRoomStart')) {
-        $('fbRoomStart').onclick = () => fbPost({ action:'roomStart', roomId }).catch(()=>{});
-        if (r.status === 'ready') $('fbRoomStart').style.display = '';
       }
     } catch (e) { clearInterval(roomTimer); alert('room closed'); showFriendMenu(); }
   }, 2000);
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   MATCH ENGINE 2D — marble football
-   ═══════════════════════════════════════════════════════════════ */
-const TACTICS = {
-  balance:   { label:'Balance',          short:'pass mix, normal' },
-  tikitaka:  { label:'Tiki Taka',        short:'umpan pendek terus' },
-  bus:       { label:'Parking the Bus',  short:'mid mundur defend' },
-  counter:   { label:'Counter Attack',   short:' rebut → serang balik cepet' },
-  longball:  { label:'Long Ball',        short:'umpan jauh ke sayap/ST' },
-};
-let M = null; // match state aktif
 
+/* ═══════════ MATCH ENGINE v2 — marble football realistis ═══════════
+   - AI pintar: cari ruang, support run, bentuk bertahan, tau kapan umpan/tembak/dribble
+   - kepribadian pemain (dribbler/playmaker/runner/bruiser)
+   - umpan bisa gagal kalo ovr jelek / ditekan
+   - pelanggaran (tackle keras) → free kick + pagar / penalti
+   - corner kick, throw-in, offside + VAR garis
+   - gol → selebrasi (variasi, lari ke pinggir) → replay (dari awal serangan, assist disorot)
+   - kamera zoom/shake
+   waktu: 1 detik real = 2 menit game (45 dtk) ; taktik cooldown 20 dtk
+*/
+const TACTICS = {
+  balance:  { label:'Balance',          short:'menyerang & bertahan setara' },
+  tikitaka: { label:'Tiki Taka',        short:'umpan-umpan pendek' },
+  bus:      { label:'Parking the Bus',  short:'mid mundur bantu defend' },
+  counter:  { label:'Counter Attack',   short:'rebut → serbal cepet' },
+  longball: { label:'Long Ball',        short:'umpan jauh ke sayap/ST' },
+};
+let M = null;
 function startMatch(cfg){
   const R = cfg.seed != null ? mulberry(cfg.seed) : mulberry(Date.now() & 0x7fffffff);
-  const mkTeam = (squad, side, isAI, boost) => {
+  const mk = (squad, side, boost) => {
     const f = FORMATIONS[squad.formation] || FORMATIONS['433-attack'];
     const slots = f.slots;
-    const ps = squad.players.map((pid, i) => {
+    const ps = squad.players.map((pid,i) => {
       const p = byId(pid) || { name:'?', pos:slots[i], country:'?', ovr:60, r:'bronze' };
-      const eff = effOVR(p, slots[i]) + (boost ? Math.max(-6, Math.min(6, boost - squadOVR(squad))) : 0);
-      return { name: p.name, pos: slots[i], ovr: Math.round(eff), slot: slots[i] };
+      const ovr = Math.round(effOVR(p, slots[i]) + (boost||0));
+      /* kepribadian */
+      const q = mulberry(p.id * 31 + 7);
+      const trait = ['dribbler','playmaker','runner','bruiser'][Math.floor(q()*4)];
+      const per = {
+        drib: 0.4 + q()*0.5 + (trait==='dribbler'?0.25:0),
+        pass: 0.4 + q()*0.5 + (trait==='playmaker'?0.25:0),
+        def:  0.4 + q()*0.5 + (trait==='bruiser'?0.25:0),
+        aggr: 0.3 + q()*0.6 + (trait==='bruiser'?0.3:0),
+        pace: 0.6 + (p.ovr-55)/60 + (trait==='runner'?0.2:0),
+      };
+      return { name:p.name, pos:slots[i], ovr, trait, per };
     });
-    return { squad, side, isAI, tactic: 'balance', players: ps, onField: ps.map((_, i) => i), bench: (squad.bench || []).map((pid) => byId(pid)).filter(Boolean) };
+    return { squad, side, tactic:'balance', players: ps, onField: ps.map((_,i)=>i), bench:(squad.bench||[]).map((pid)=>byId(pid)).filter(Boolean) };
   };
   M = {
-    cfg,
-    R,
-    t: 0, min: 0, half: 1, added: 2 + Math.floor(R() * 3),
-    score: [0, 0],
-    stats: { shots:[0,0], sot:[0,0], saves:[0,0], tackles:[0,0], off:[0,0], poss:[0,0] },
-    teams: [ mkTeam(cfg.mySquad, 0, false, 0), mkTeam(cfg.oppSquad, 1, true, cfg.mode === 'ai' ? (DIV_OVR[state.division]||65) : 0) ],
-    ents: [], ball: { x:50, y:50, vx:0, vy:0, owner:null },
-    paused: true, over: false, waitingHT: false, tacticCD: 0, lastTouch: null,
-    spd: 1, raf: null, lastTs: 0, decisionT: 0,
+    cfg, R,
+    t:0, min:0, half:1, added: 2+Math.floor(R()*3),
+    score:[0,0],
+    stats:{ shots:[0,0], sot:[0,0], saves:[0,0], tackles:[0,0], off:[0,0], poss:[0,0], fouls:[0,0] },
+    teams:[ mk(cfg.mySquad,0,0), mk(cfg.oppSquad,1, cfg.mode==='ai' ? Math.max(-6,Math.min(6,(DIV_OVR[state.division]||65)-squadOVR(cfg.oppSquad))) : 0) ],
+    ents:[], ball:{ x:50,y:50,vx:0,vy:0,owner:null,ownerTeam:null },
+    phase:'kick', paused:true, over:false, spd:1, raf:null, lastTs:0,
+    cam:{ x:50,y:50,z:1.08,shake:0 },
+    snaps:[], attackStart:0, varInfo:null, celeb:null, replay:null,
+    setpiece:null, pendingOff:null, wall:[], assistBy:null, lastTouchBy:[null,null],
+    tacticCD:0, decT:0,
   };
   buildEnts();
-  screen('match', `
-    <div class="fb-match">
-      <div class="fb-mscore">
-        <b id="fbMHome">${esc(myName)}</b>
-        <span id="fbMScore">0 - 0</span>
-        <b id="fbMAway">${esc(cfg.oppName)}</b>
-      </div>
-      <div class="fb-mtimer"><i id="fbMTimeBar"></i><span id="fbMMin">0'</span></div>
-      <canvas id="fbMCanvas" width="760" height="480"></canvas>
-      <div class="fb-mctrl">
-        <button type="button" class="fb-btn fb-alt" id="fbMTactic">TACTICS</button>
-        <span id="fbMTacNow">Balance</span>
-        <span class="fb-mcd" id="fbMCD"></span>
-        <button type="button" class="fb-btn fb-ghost" id="fbMSkip">Skip ⏩</button>
-      </div>
-      <div class="fb-moverlay" id="fbMOverlay"></div>
-    </div>`);
+  screen('match', '<div class="fb-match">'
+    + '<canvas id="fbMCanvas" width="760" height="470"></canvas>'
+    + '<div class="fb-hud"><b id="fbMHome">'+esc(myName)+'</b><span id="fbMScore">0 - 0</span><b id="fbMAway">'+esc(cfg.oppName)+'</b><i id="fbMMin">0\'</i></div>'
+    + '<div class="fb-mtimer"><i id="fbMTimeBar"></i></div>'
+    + '<div class="fb-mctrl"><button type="button" class="fb-btn fb-alt" id="fbMTactic">TACTICS</button><span id="fbMTacNow">Balance</span><span class="fb-mcd" id="fbMCD"></span><button type="button" class="fb-btn fb-ghost" id="fbMSkip">⏩ Skip</button></div>'
+    + '<div class="fb-moverlay" id="fbMOverlay"></div>'
+    + '</div>');
   $('fbMTactic').onclick = openTactics;
   $('fbMSkip').onclick = () => { M.spd = 30; };
-  showOverlay('KICK OFF', esc(myName) + ' vs ' + esc(cfg.oppName), [{ label:'MULAI', fn: () => { hideOverlay(); M.paused = false; loop(performance.now()); } }]);
+  showOverlay('KICK OFF', esc(myName)+' vs '+esc(cfg.oppName), [{ label:'MULAI', fn: () => { hideOverlay(); M.paused = false; loop(performance.now()); } }]);
 }
 function buildEnts(){
   M.ents = [];
-  M.teams.forEach((team, ti) => {
-    team.onField.forEach((pi, k) => {
+  M.teams.forEach((team,ti) => {
+    team.onField.forEach((pi,k) => {
       const p = team.players[pi];
-      const [hx, hy] = POSXY[p.slot];
-      const x = ti === 0 ? hx : 100 - hx;
-      const y = ti === 0 ? hy : 100 - hy;
-      M.ents.push({
-        team: ti, idx: k, name: p.name, ovr: p.ovr, isGK: p.slot === 'GK',
-        x, y, hx, hy, vx: 0, vy: 0, r: 2.4,
-        spd: 5.2 + (p.ovr - 60) / 12, skill: p.ovr,
-      });
+      const [hx,hy] = POSXY[p.pos];
+      const x = ti===0 ? hx : 100-hx;
+      const y = hy;
+      M.ents.push({ team:ti, idx:k, name:p.name, ovr:p.ovr, per:p.per, trait:p.trait, isGK:p.pos==='GK', slotName:p.pos,
+        hx, hy, x, y, vx:0, vy:0, r:2.4, spd: 5.0 + (p.ovr-60)/11 + p.per.pace*0.8, skill:p.ovr,
+        decT: rnd()*0.2, celeb:0, celebType:0 });
     });
   });
 }
-/* field helpers: tim 0 serang ke x=100, tim 1 serang ke x=0 */
-const goalX = (ti) => (ti === 0 ? 98 : 2);
-function tacticsOffset(team, ent){
-  const tac = M.teams[team].tactic;
-  const slot = ent.slotName || '';
-  let dx = 0;
-  if (tac === 'bus' && (slot === 'CM' || slot === 'CDM' || slot === 'CAM')) dx = -10;
-  if (tac === 'counter' && M.ball.ownerTeam === team && (slot === 'CM' || slot === 'CAM')) dx = 12;
-  if (tac === 'longball' && (slot === 'LW' || slot === 'RW' || slot === 'LM' || slot === 'RM')) dx = 8;
-  return dx;
-}
+const goalX = (ti) => (ti===0?98:2);
+const ownGoalX = (ti) => (ti===0?2:98);
+function dist(a,b){ return Math.hypot(a.x-b.x, a.y-b.y); }
+function nearestOpp(e, rad){ let best=null; M.ents.forEach((o)=>{ if(o.team!==e.team && (!rad||dist(o,e)<rad)) { if(!best||dist(o,e)<dist(best,e)) best=o; } }); return best; }
 function loop(ts){
   if (!M || M.over) return;
-  if (M.lastTs) {
-    const dt = Math.min(0.05, (ts - M.lastTs) / 1000) * M.spd;
-    if (!M.paused) simTick(dt);
-  }
-  M.lastTs = ts;
-  draw();
+  if (M.lastTs) { const dt = Math.min(0.05,(ts-M.lastTs)/1000)*M.spd; if (!M.paused) simTick(dt); }
+  M.lastTs = ts; draw();
   M.raf = requestAnimationFrame(loop);
 }
 function simTick(dt){
-  M.t += dt;
-  /* 1 detik real = 2 menit game */
-  const prevMin = M.min;
-  M.min = Math.min(90 + M.added, M.t * 2);
-  if (M.tacticCD > 0) M.tacticCD = Math.max(0, M.tacticCD - dt);
-  if (M.half === 1 && M.min >= 45) { M.half = 2; M.t = 22.5; halftime(); return; }
-  if (M.min >= 90 + M.added) { fulltime(); return; }
-  /* possession */
+  M.t += dt; M.min = Math.min(90+M.added, M.t*2);
+  if (M.tacticCD>0) M.tacticCD = Math.max(0, M.tacticCD-dt);
+  /* phase khusus */
+  if (M.phase==='celebration') { tickCeleb(dt); updCam(dt, M.celeb.spot[0], M.celeb.spot[1], 1.35); return; }
+  if (M.phase==='replay') { tickReplay(dt); return; }
+  if (M.phase==='var') { M.varInfo.t -= dt; if (M.varInfo.t<=0) applyVar(); updCam(dt, M.ball.x, M.ball.y, 1.3); return; }
+  if (M.phase==='setpiece') { M.setpiece.t -= dt; if (M.setpiece.t<=0) runSetPiece(); updCam(dt, M.ball.x, M.ball.y, 1.2); return; }
+  if (M.phase!=='play') return;
+  if (M.half===1 && M.min>=45) { M.half=2; halftime(); return; }
+  if (M.min>=90+M.added) { fulltime(); return; }
   const b = M.ball;
-  b.x += b.vx * dt * 10; b.y += b.vy * dt * 10;
-  b.vx *= 0.985; b.vy *= 0.985;
-  if (b.y < 2) { b.y = 2; b.vy = Math.abs(b.vy) * 0.6; }
-  if (b.y > 98) { b.y = 98; b.vy = -Math.abs(b.vy) * 0.6; }
-  if (b.x < 1.5 || b.x > 98.5) {
-    /* gol? */
-    if (b.y > 38 && b.y < 62 && (b.x < 1.5 || b.x > 98.5)) { goal(b.x > 98.5 ? 0 : 1); return; }
-    b.x = Math.max(1.5, Math.min(98.5, b.x)); b.vx *= -0.6;
+  /* bola fisik */
+  b.x += b.vx*dt*10; b.y += b.vy*dt*10; b.vx*=0.985; b.vy*=0.985;
+  if (b.y<2){b.y=2;b.vy=Math.abs(b.vy)*0.6;} if (b.y>98){b.y=98;b.vy=-Math.abs(b.vy)*0.6;}
+  if (b.x<1.5||b.x>98.5) {
+    if (b.y>38&&b.y<62) { goal(b.x>98.5?0:1); return; }
+    /* keluar garis gawang bukan gol → corner / goal kick */
+    const lastT = M.lastTouchBy[0]!=null?0:1;
+    const gx = b.x<1.5?1:99;
+    if (b.x<1.5) { /* dekat gawang tim1? tim0 nyerang ke 100, jadi x<1.5 = gawang tim0 */ cornerOrKick(0); } else cornerOrKick(1);
+    b.x=Math.max(1.5,Math.min(98.5,b.x)); b.vx*=-0.5;
   }
-  /* pemain */
-  M.decisionT += dt;
-  const decide = M.decisionT > 0.22;
-  if (decide) M.decisionT = 0;
-  let chaser = [null, null];
-  M.ents.forEach((e) => {
-    const team = e.team;
-    /* slotName: dari squad players */
-    if (!e.slotName) {
-      const p = M.teams[team].players[M.teams[team].onField[e.idx]];
-      e.slotName = p ? p.slot : '';
+  /* snapshot buat replay */
+  pushSnap();
+  /* keputusan */
+  M.decT += dt; const decide = M.decT>0.24; if (decide) M.decT=0;
+  /* chaser per tim */
+  const chaser = [null,null];
+  M.ents.forEach((e)=>{ if(e.isGK) return; if(!chaser[e.team] || dist(e,b)<dist(chaser[e.team],b)) chaser[e.team]=e; });
+  M.ents.forEach((e)=>{
+    if (e.isGK) { gkMove(e,dt); return; }
+    moveAI(e,dt,chaser,decide);
+    /* rebut / tackle / foul */
+    if (b.owner && b.ownerTeam!==e.team && dist(e,b.owner)<1.7) {
+      const o = b.owner;
+      const steal = dt*(0.4 + e.per.def*0.5 - o.per.drib*0.25);
+      if (M.R()<steal) { b.owner=e; b.ownerTeam=e.team; M.stats.tackles[e.team]++; M.lastTouchBy[e.team]=e; M.assistBy=null; }
+      else if (M.R() < dt*e.per.aggr*0.35 && e.trait==='bruiser') { foul(e,o); return; }
     }
-    if (e.isGK) {
-      /* kiper: jagain garis */
-      const gx = team === 0 ? 4 : 96;
-      const ty = 50 + (b.y - 50) * 0.35;
-      e.x += (gx - e.x) * dt * 3; e.y += (ty - e.y) * dt * 3;
-      /* tangkep bola deket */
-      if (dist(e, b) < 2.6 && Math.hypot(b.vx, b.vy) > 0.4) { trySave(e); }
-      else if (dist(e, b) < 1.6 && !b.owner) { b.owner = e; b.ownerTeam = team; }
-      return;
-    }
-    /* siapa ngejar bola */
-    if (!chaser[team] || dist(e, b) < dist(chaser[team], b)) chaser[team] = e;
-  });
-  M.ents.forEach((e) => {
-    if (e.isGK) return;
-    const b = M.ball;
-    const iChase = chaser[e.team] === e;
-    let tx, ty;
-    if (b.owner === e) {
-      /* bawa bola: maju ke gawang lawan */
-      const gx = goalX(e.team);
-      tx = e.x + (gx - e.x) * 0.2; ty = e.y + (50 - e.y) * 0.08;
-    } else if (iChase && !b.owner) {
-      tx = b.x; ty = b.y;
-    } else if (iChase && b.owner && b.ownerTeam !== e.team) {
-      tx = b.owner.x; ty = b.owner.y; /* press */
-    } else {
-      /* posisi formasi + taktik + ikut bola */
-      const shift = (b.x - 50) * 0.15 * (e.team === 0 ? 1 : -1);
-      const tac = tacticsOffset(e.team, e);
-      let hx = e.hx + shift + tac, hy = e.hy;
-      if (e.team === 1) hx = 100 - (e.hx + shift) + tac;
-      tx = Math.max(3, Math.min(97, hx)); ty = Math.max(5, Math.min(95, hy));
-    }
-    const dx = tx - e.x, dy = ty - e.y, d = Math.hypot(dx, dy);
-    const sp = e.spd * (b.owner === e ? 0.85 : 1) * (M.teams[e.team].tactic === 'counter' && b.ownerTeam === e.team ? 1.2 : 1);
-    if (d > 0.4) { e.x += dx / d * sp * dt; e.y += dy / d * sp * dt; }
-    /* rebut bola */
-    if (b.owner && b.ownerTeam !== e.team && dist(e, b.owner) < 1.6) {
-      const chance = dt * (0.5 + e.skill / 220) * (M.teams[e.team].tactic === 'bus' ? 1.5 : 1);
-      if (M.R() < chance) {
-        M.stats.tackles[e.team]++;
-        b.owner = e; b.ownerTeam = e.team;
-      }
-    }
-    /* terima bola bebas + ofside */
-    if (!b.owner && dist(e, b) < 1.5) {
-      if (b.offsideFlag && b.passTarget === e) {
-        M.stats.off[e.team]++;
-        b.offsideFlag = false; b.passTarget = null;
-        b.vx *= -0.25; b.vy *= -0.25; /* bola lepas ke lawan */
-      } else {
-        b.owner = e; b.ownerTeam = e.team; M.lastTouch = e;
-        b.offsideFlag = false; b.passTarget = null;
-      }
+    /* ambil bola bebas + offside */
+    if (!b.owner && dist(e,b)<1.5) {
+      if (M.pendingOff && M.pendingOff.receiver===e) { triggerVar(); return; }
+      b.owner=e; b.ownerTeam=e.team; M.lastTouchBy[e.team]=e;
     }
   });
-  /* keputusan pembawa bola */
-  if (b.owner && decide) decideAction(b.owner);
-  /* statistik possession */
-  if (b.ownerTeam != null) M.stats.poss[b.ownerTeam] += dt;
-  /* UI (di-guard: layar bisa aja udah ganti) */
-  const _sc = $('fbMScore');
-  if (!_sc) return;
-  _sc.textContent = M.score[0] + ' - ' + M.score[1];
-  $('fbMMin').textContent = Math.floor(M.min) + "'";
-  $('fbMTimeBar').style.width = Math.min(100, M.min / (90 + M.added) * 100) + '%';
-  $('fbMCD').textContent = M.tacticCD > 0 ? 'taktik: ' + Math.ceil(M.tacticCD) + 's' : '';
+  if (b.owner && decide) onBall(b.owner);
+  if (b.ownerTeam!=null) M.stats.poss[b.ownerTeam]+=dt;
+  updUI();
+  updCam(dt, b.x, b.y, 1.12);
 }
-function dist(a, b2){ return Math.hypot(a.x - b2.x, a.y - b2.y); }
-function ballSpeed(){ const b = M.ball; return Math.hypot(b.vx, b.vy); }
-function decideAction(e){
-  const b = M.ball;
-  const team = M.teams[e.team];
-  const gx = goalX(e.team);
-  const dGoal = Math.hypot(gx - e.x, 50 - e.y);
-  const pressure = M.ents.some((o) => o.team !== e.team && !o.isGK && dist(o, e) < 3);
-  /* SHOOT */
-  const shootUrge = dGoal < 18 ? 0.5 + e.skill / 300 : dGoal < 30 ? 0.12 : 0;
-  if (M.R() < shootUrge) { shoot(e); return; }
-  /* PASS */
-  const mates = M.ents.filter((o) => o.team === e.team && o !== e && !o.isGK);
-  const tac = team.tactic;
-  let targets = mates;
-  if (tac === 'tikitaka') targets = mates.sort((a2, b2) => dist(e, a2) - dist(e, b2)).slice(0, 4);
-  else if (tac === 'longball') {
-    const fwd = e.team === 0 ? 1 : -1;
-    targets = mates.sort((a2, b2) => (b2.x - a2.x) * fwd).slice(0, 4); /* paling maju */
-  } else if (tac === 'counter') {
-    const fwd = e.team === 0 ? 1 : -1;
-    targets = mates.sort((a2, b2) => (b2.x - a2.x) * fwd).slice(0, 5);
-  } else {
-    targets = mates.filter((m2) => dist(e, m2) < 40);
-    if (!targets.length) targets = mates;
-  }
-  const t2 = targets[Math.floor(M.R() * targets.length)];
-  if (pressure || M.R() < 0.55) { pass(e, t2); return; }
-  /* dribble (biarkan loop yang gerakin) */
+function cornerOrKick(defTeam){ /* defTeam = tim yang gawangnya di sisi keluar */
+  const atk = defTeam===0?1:0;
+  const byDef = M.lastTouchBy[defTeam]!=null;
+  if (byDef) corner(atk, defTeam); else goalKick(defTeam);
 }
-function pass(from, to){
+function goalKick(team){ /* sederhana: kiper pegang */ const gk = M.ents.find((e)=>e.team===team&&e.isGK); M.ball.owner=gk; M.ball.ownerTeam=team; M.ball.x=gk.x; M.ball.y=gk.y; M.ball.vx=0;M.ball.vy=0; }
+function gkMove(e,dt){
   const b = M.ball;
-  b.owner = null; b.ownerTeam = null;
-  const acc = from.skill / 100;
-  const err = (1 - acc) * 14 * (M.R() - 0.5) * 2;
-  const dx = to.x - b.x + err, dy = to.y - b.y + err * 0.6;
-  const d = Math.hypot(dx, dy) || 1;
-  const pow = 2.2 + d * 0.05;
-  b.vx = dx / d * pow; b.vy = dy / d * pow;
-  b.passTarget = to; b.passFrom = from;
-  /* offside check: penerima di depan bek terakhir lawan pas umpan */
-  const opps = M.ents.filter((o) => o.team !== from.team && !o.isGK);
-  if (opps.length) {
-    const lastX = from.team === 0 ? Math.max(...opps.map((o) => o.x)) : Math.min(...opps.map((o) => o.x));
-    const ahead = from.team === 0 ? to.x > lastX + 0.5 && to.x > 50 : to.x < lastX - 0.5 && to.x < 50;
-    b.offsideFlag = ahead;
-  }
-}
-function shoot(e){
-  const b = M.ball;
-  b.owner = null; b.ownerTeam = null;
-  const gx = goalX(e.team);
-  const acc = e.skill / 100;
-  const ty = 50 + (M.R() - 0.5) * 30 * (1.15 - acc);
-  const dx = gx - b.x, dy = ty - b.y;
-  const d = Math.hypot(dx, dy) || 1;
-  const pow = 4.5 + acc * 3;
-  b.vx = dx / d * pow; b.vy = dy / d * pow;
-  b.shotBy = e;
-  M.stats.shots[e.team]++;
-  /* on target? */
-  const t = (gx - b.x) / (b.vx || 0.001);
-  const yAt = b.y + b.vy * t;
-  if (yAt > 38 && yAt < 62) M.stats.sot[e.team]++;
+  const gx = ownGoalX(e.team);
+  const ty = 50 + (b.y-50)*0.35;
+  e.x += (gx - e.x)*dt*3; e.y += (ty-e.y)*dt*3;
+  const sp = Math.hypot(b.vx,b.vy);
+  if (dist(e,b)<2.6 && sp>0.4) trySave(e);
+  else if (!b.owner && dist(e,b)<1.8) { b.owner=e; b.ownerTeam=e.team; }
 }
 function trySave(gk){
-  const b = M.ball;
-  const shooter = b.shotBy;
-  const saveP = 0.35 + (gk.skill - (shooter ? shooter.skill : 70)) / 200;
-  if (M.R() < saveP) {
-    M.stats.saves[gk.team]++;
-    b.vx = 0; b.vy = 0; b.shotBy = null;
-    b.owner = gk; b.ownerTeam = gk.team;
-    b.x = gk.x; b.y = gk.y;
+  const b = M.ball; const shooter = M.shotBy || null;
+  const saveP = 0.35 + (gk.skill - (shooter?shooter.skill:70))/200;
+  if (M.R()<saveP) { M.stats.saves[gk.team]++; b.vx=0;b.vy=0; b.owner=gk; b.ownerTeam=gk.team; b.x=gk.x;b.y=gk.y; }
+}
+/* ── AI gerak + keputusan ── */
+function moveAI(e,dt,chaser,decide){
+  const b = M.ball; const team = M.teams[e.team];
+  if (b.owner===e) { /* bawa bola: dribble di-handle onBall; gerak pelan maju */ return; }
+  const iChase = chaser[e.team]===e;
+  let tx,ty;
+  const myGroup = POSGROUP[e.slotName];
+  if (b.ownerTeam===e.team) {
+    /* menyerang: cari ruang */
+    if (myGroup==='ATT') { /* run ke ruang depan */ tx = e.hxAdj!=null?e.hxAdj: (e.team===0? e.hx+18 : 100-(e.hx-18)); ty = e.hy + (b.y>50? -8:8)*(e.slotName==='ST'?0.5:1);
+      if (team.tactic==='longball' && (e.slotName==='LW'||e.slotName==='RW')) tx = e.team===0? 84 : 16;
+    } else if (myGroup==='MID') { /* support */ const bx=b.x, by=b.y; const fwd = e.team===0?1:-1; tx = bx + fwd*10; ty = by + (e.hy>50? -10:10); if (team.tactic==='bus') tx = bx - fwd*8; }
+    else { tx = (e.team===0? e.hx+16 : 100-(e.hx-16)); ty = e.hy; }
+    if (team.tactic==='counter' && b.ownerTeam===e.team) { const fwd=e.team===0?1:-1; tx += fwd*8; }
+  } else if (b.ownerTeam!=null ? b.ownerTeam!==e.team : true) {
+    /* bertahan: bentuk */
+    if (iChase && (b.owner || !b.owner)) { tx = b.owner? b.owner.x : b.x; ty = b.owner? b.owner.y : b.y; }
+    else {
+      const shift = (b.x-50)*0.22*(e.team===0?1:-1);
+      const homeX = e.team===0? e.hx : 100-e.hx;
+      tx = homeX + shift + (team.tactic==='bus' && (myGroup==='MID')? -8:0);
+      ty = e.hy + (b.y-50)*0.18;
+      if (team.tactic==='bus' && myGroup!=='ATT') tx -= (e.team===0?6:-6);
+    }
+  } else { tx = e.x; ty = e.y; }
+  tx = Math.max(3,Math.min(97,tx)); ty = Math.max(5,Math.min(95,ty));
+  const dx=tx-e.x, dy=ty-e.y, d=Math.hypot(dx,dy);
+  const sp = e.spd*(b.owner===e?0.85:1)*(team.tactic==='counter'&&b.ownerTeam===e.team?1.2:1);
+  if (d>0.4){ e.x += dx/d*sp*dt; e.y += dy/d*sp*dt; }
+}
+function onBall(e){
+  const b = M.ball; const team = M.teams[e.team];
+  const gx = goalX(e.team);
+  const dGoal = Math.hypot(gx-e.x, 50-e.y);
+  const press = nearestOpp(e, 6); const pressD = press? dist(e,press):99;
+  /* opsi skor */
+  let best = null;
+  const shootS = dGoal<24 ? (0.5 + e.skill/260 - dGoal/70) : (dGoal<32? 0.1:0);
+  best = { t:'shoot', s: shootS };
+  /* dribble kalo ada ruang */
+  const fwd = e.team===0?1:-1;
+  const space = !M.ents.some((o)=>o.team!==e.team && o.x*fwd> e.x*fwd && Math.abs(o.y-e.y)<6 && Math.abs(o.x-e.x)<8);
+  const dribS = (space?0.55:0.15) * (0.4+e.per.drib) * (e.trait==='dribbler'?1.5:1) * (pressD<2.5?0.6:1);
+  if (dribS > best.s) best = { t:'drib', s: dribS };
+  /* umpan terbaik */
+  const mates = M.ents.filter((o)=>o.team===e.team && o!==e && !o.isGK && dist(o,e)<42);
+  let pm = null;
+  for (const m2 of mates) {
+    const mFwd = (m2.x - e.x)*fwd;
+    const mSpace = !M.ents.some((o)=>o.team!==e.team && dist(o,m2)<4);
+    let s = (mFwd>0? mFwd*0.02:0) + (mSpace?0.4:0) + (team.tactic==='tikitaka'? (dist(e,m2)<16?0.4:0):0) + (team.tactic==='longball'? (mFwd>20?0.5:0):0);
+    if (!pm || s>pm.s) pm = { m:m2, s };
   }
-  /* gagal save → bola lanjut, gol kehitung di garis */
+  const passS = pm? (0.3 + pm.s*0.6)*(0.5+e.per.pass*0.5) : 0;
+  if (passS > best.s) best = { t:'pass', s: passS, m: pm.m };
+  /* tahan kalo ditekan & gak ada opsi */
+  if (pressD<2.5 && best.s<0.3) best = { t:'hold', s:1 };
+  if (M.R() < 0.75) { /* kadang tahan biar gak ganti2 */ }
+  if (best.t==='shoot') shoot(e);
+  else if (best.t==='pass') doPass(e, best.m);
+  else if (best.t==='drib') { /* dribble: bola nempel depan, gerak maju zigzag */
+    const ang = Math.atan2(50-e.y, gx-e.x) + Math.sin(M.t*6+e.idx)*0.25;
+    const sp = e.spd*0.8;
+    e.x += Math.cos(ang)*sp*0.016; e.y += Math.sin(ang)*sp*0.016;
+    b.x = e.x + Math.cos(ang)*1.6; b.y = e.y + Math.sin(ang)*1.6;
+  }
+  else { /* hold */ }
 }
+function doPass(from, to){
+  const b = M.ball; b.owner=null; b.ownerTeam=null;
+  const acc = Math.max(0.25, Math.min(0.95, 0.5 + from.per.pass*0.4 - dist(from,to)*0.004 - (nearestOpp(from,4)?0.08:0)));
+  const ok = M.R() < acc;
+  const err = ok? 0 : (0.5-M.R())*10;
+  const dx = to.x-from.x + (ok?0:err), dy = to.y-from.y + (ok?0:err*0.6);
+  const d = Math.hypot(dx,dy)||1; const pow = 2.2 + d*0.05;
+  b.vx = dx/d*pow; b.vy = dy/d*pow; b.passTarget = ok? to : null; b.from = from;
+  /* offside check */
+  const opps = M.ents.filter((o)=>o.team!==from.team && !o.isGK);
+  if (opps.length) {
+    const lastX = from.team===0? Math.max(...opps.map((o)=>o.x)) : Math.min(...opps.map((o)=>o.x));
+    const inHalf = from.team===0? to.x>50 : to.x<50;
+    const ahead = from.team===0? to.x>lastX : to.x<lastX;
+    if (ahead && inHalf) M.pendingOff = { receiver: to, lineX: lastX, onside:false, margin: Math.abs(to.x-lastX) };
+    else M.pendingOff = { receiver: to, lineX: lastX, onside:true, margin: ahead?0:Math.abs(to.x-lastX) };
+  }
+  M.lastTouchBy[from.team] = from;
+  if (M.assistBy==null || M.assistBy.team!==from.team) M.assistBy = from;
+}
+function shoot(e){
+  const b = M.ball; b.owner=null; b.ownerTeam=null;
+  const gx = goalX(e.team);
+  const acc = e.skill/100;
+  const ty = 50 + (M.R()-0.5)*30*(1.2-acc);
+  const dx = gx-b.x, dy = ty-b.y; const d = Math.hypot(dx,dy)||1;
+  const pow = 4.5 + acc*3;
+  b.vx = dx/d*pow; b.vy = dy/d*pow; M.shotBy = e;
+  M.stats.shots[e.team]++;
+  const t = (gx-b.x)/(b.vx||0.001); const yAt = b.y + b.vy*t;
+  if (yAt>38&&yAt<62) M.stats.sot[e.team]++;
+  M.attackStart = Math.max(M.attackStart, M.snaps.length - 60);
+}
+function triggerVar(){
+  const po = M.pendingOff; M.pendingOff=null;
+  M.phase='var'; M.varInfo = { ...po, t:2.2, result:'offside' };
+  M.stats.off[M.varInfo.receiver.team]++;
+  M.cam.shake = 2;
+}
+function applyVar(){
+  const v = M.varInfo; M.varInfo=null; M.phase='play';
+  /* offside → free kick buat tim bertahan */
+  const defT = v.receiver.team===0?1:0;
+  startFreeKick(defT, v.receiver.x, v.receiver.y);
+}
+function foul(e, o){
+  M.stats.fouls[e.team]++;
+  M.cam.shake = 5;
+  const box = (e.team===0 && o.x<16) || (e.team===1 && o.x>84);
+  if (box) startPenalty(o.team);
+  else startFreeKick(o.team, o.x, o.y);
+}
+function startFreeKick(atkT, x, y){
+  M.phase='setpiece';
+  const b = M.ball; b.owner=null;b.ownerTeam=null; b.vx=0;b.vy=0;
+  x = Math.max(14, Math.min(86, x)); y = Math.max(8, Math.min(92,y));
+  b.x=x; b.y=y;
+  /* pagar: 3 bek bertahan antara bola & gawang */
+  const defT = atkT===0?1:0; const gx = goalX(atkT);
+  const wallE = M.ents.filter((e)=>e.team===defT && !e.isGK).sort((a,b2)=>dist(a,b)-dist(b2,b)).slice(0,3);
+  const ang = Math.atan2(50-y, gx-x);
+  M.wall = wallE.map((e,i)=>{ e.x = x + Math.cos(ang)*8; e.y = y + Math.sin(ang)*8 + (i-1)*3; return e; });
+  const shooter = M.ents.filter((e)=>e.team===atkT && !e.isGK).sort((a,b2)=>b2.skill-a.skill)[0];
+  shooter.x = x - Math.cos(ang)*2; shooter.y = y - Math.sin(ang)*2;
+  M.setpiece = { type:'fk', atkT, shooter, t:1.2 };
+}
+function startCorner(atkT, defT){
+  M.phase='setpiece';
+  const b = M.ball; b.owner=null;b.ownerTeam=null;b.vx=0;b.vy=0;
+  const side = b.y<50? 4:96; const x = atkT===0? 98:2;
+  b.x = x; b.y = side;
+  const shooter = M.ents.filter((e)=>e.team===atkT && !e.isGK).sort((a,b2)=>b2.skill-a.skill)[0];
+  M.setpiece = { type:'ck', atkT, shooter, side, t:1.2 };
+}
+function corner(atkT, defT){ startCorner(atkT, defT); }
+function startPenalty(atkT){
+  M.phase='setpiece';
+  const b = M.ball; b.owner=null;b.ownerTeam=null;b.vx=0;b.vy=0;
+  const x = atkT===0? 88:12; b.x=x; b.y=50;
+  const shooter = M.ents.filter((e)=>e.team===atkT && !e.isGK).sort((a,b2)=>b2.skill-a.skill)[0];
+  M.setpiece = { type:'pk', atkT, shooter, t:1.0 };
+}
+function runSetPiece(){
+  const sp = M.setpiece; M.setpiece=null; M.phase='play';
+  const b = M.ball; const atkT = sp.atkT;
+  if (sp.type==='pk') {
+    const gk = M.ents.find((e)=>e.team!==atkT&&e.isGK);
+    M.stats.shots[atkT]++; M.stats.sot[atkT]++;
+    if (M.R() < 0.72 + sp.shooter.skill/400) { b.vx = (atkT===0?1:-1)*6; b.vy = (M.R()-0.5)*4; M.shotBy=sp.shooter; }
+    else { M.stats.saves[gk.team]++; b.owner=gk; b.ownerTeam=gk.team; b.x=gk.x;b.y=gk.y; b.vx=0;b.vy=0; }
+    return;
+  }
+  if (sp.type==='fk') {
+    const gx = goalX(atkT); const d = Math.hypot(gx-b.x,50-b.y);
+    if (d<30) { /* tembak langsung */
+      M.stats.shots[atkT]++;
+      const over = M.R() < 0.4 + sp.shooter.skill/250;
+      const ty = 50 + (M.R()-0.5)*20;
+      const dx = gx-b.x, dy = ty-b.y; const dd = Math.hypot(dx,dy)||1;
+      b.vx = dx/dd*5.5; b.vy = dy/dd*5.5; M.shotBy=sp.shooter; M.stats.sot[atkT]++;
+    } else { /* crossing */
+      doCross(atkT, sp.shooter, gx, 50);
+    }
+    return;
+  }
+  if (sp.type==='ck') { doCross(atkT, sp.shooter, goalX(atkT), 50); return; }
+}
+function doCross(atkT, from, tx, ty){
+  const b = M.ball; 
+  const target = M.ents.filter((e)=>e.team===atkT && !e.isGK).sort((a,b2)=> Math.hypot(tx-a.x,ty-a.y)-Math.hypot(tx-b2.x,ty-b2.y))[0];
+  const dx = (target?target.x:tx)-b.x, dy = (target?target.y:ty)-b.y; const d = Math.hypot(dx,dy)||1;
+  b.vx = dx/d*4.5; b.vy = dy/d*4.5; b.passTarget = target||null; b.from = from; M.lastTouchBy[atkT]=from; M.assistBy = from;
+}
+/* ── gol → selebrasi → replay ── */
 function goal(ti){
-  M.score[ti]++;
-  M.stats.sot[ti]++;
-  showOverlay('GOOOAL!', esc(ti === 0 ? myName : M.cfg.oppName) + ' mencetak gol! ' + M.score[0] + '-' + M.score[1], [{ label:'LANJUT', fn: () => { hideOverlay(); resetKickoff(ti === 0 ? 1 : 0); } }]);
-  M.paused = true;
+  M.score[ti]++; M.stats.sot[ti]++;
+  M.phase='celebration'; M.paused=false;
+  const scorer = M.shotBy || M.lastTouchBy[ti] || M.ents.find((e)=>e.team===ti&&!e.isGK);
+  const spot = [ ti===0? 94:6, (scorer.y<50? 14:86) ];
+  M.celeb = { scorer, spot, t:0, dur:6, type: Math.floor(M.R()*5), mates: [] };
+  /* 2 temen terdekat ikut */
+  M.celeb.mates = M.ents.filter((e)=>e.team===ti && e!==scorer && !e.isGK).sort((a,b)=>dist(a,scorer)-dist(b,scorer)).slice(0,2);
+  M.ball.owner=null; M.ball.ownerTeam=null; M.ball.vx=0;M.ball.vy=0;
+  M.cam.shake = 8;
 }
-function resetKickoff(kickTeam){
-  const b = M.ball;
-  b.x = 50; b.y = 50; b.vx = 0; b.vy = 0; b.owner = null; b.ownerTeam = null;
-  M.ents.forEach((e) => {
-    const [hx, hy] = [e.hx, e.hy];
-    e.x = e.team === 0 ? hx : 100 - hx; e.y = hy;
-  });
-  M.paused = false;
+function tickCeleb(dt){
+  const c = M.celeb; c.t += dt;
+  const s = c.scorer;
+  /* lari ke spot */
+  const dx = c.spot[0]-s.x, dy = c.spot[1]-s.y, d = Math.hypot(dx,dy);
+  if (d>1.5) { s.x += dx/d*7*dt; s.y += dy/d*7*dt; }
+  else s.celeb = c.type;
+  c.mates.forEach((m2,i)=>{ const tx = c.spot[0] + (i===0?-4:4), ty = c.spot[1]+ (i===0?3:-3); const ddx=tx-m2.x, ddy=ty-m2.y, dd=Math.hypot(ddx,ddy); if (dd>1.5){ m2.x+=ddx/dd*6*dt; m2.y+=ddy/dd*6*dt; } });
+  if (c.t>=c.dur) { startReplay(); }
+  updUI();
 }
+function pushSnap(){
+  M.snaps.push({ b:[M.ball.x,M.ball.y], e: M.ents.map((e)=>[e.x,e.y]) });
+  if (M.snaps.length>600) M.snaps.shift();
+}
+function startReplay(){
+  M.phase='replay';
+  const from = Math.max(0, M.snaps.length-480);
+  M.replay = { i: from, speed: 2 };
+}
+function tickReplay(dt){
+  const r = M.replay;
+  r.i += 2; /* 2x */
+  const idx = Math.min(M.snaps.length-1, Math.floor(r.i));
+  const s = M.snaps[idx];
+  if (s) {
+    s.e.forEach((pos,i)=>{ M.ents[i].x = pos[0]; M.ents[i].y = pos[1]; });
+    M.ball.x = s.b[0]; M.ball.y = s.b[1];
+    updCam(dt, M.ball.x, M.ball.y, 1.5);
+  }
+  if (r.i >= M.snaps.length-1) { M.replay=null; resetKickoff(M.lastConceded===0?1:0); }
+}
+function resetKickoff(kick){
+  const b = M.ball; b.x=50;b.y=50;b.vx=0;b.vy=0;b.owner=null;b.ownerTeam=null;
+  M.ents.forEach((e)=>{ e.x = e.team===0? e.hx : 100-e.hx; e.y = e.hy; e.celeb=0; });
+  M.snaps = []; M.attackStart=0; M.pendingOff=null; M.wall=[]; M.shotBy=null; M.assistBy=null;
+  M.lastConceded = null;
+  M.phase='play'; M.paused=false;
+}
+/* ── HT / FT ── */
 function halftime(){
-  M.paused = true;
-  /* layar ganti pemain: daftar pemain + bench, pilih 1-1 buat swap */
+  M.paused=true; M.phase='ht';
   const t = M.teams[0];
-  const rows = t.onField.map((pi, k) => {
-    const p = t.players[pi];
-    return `<div class="fb-subrow" data-k="${k}"><b>${p.ovr}</b> ${esc(p.name)} <i>${p.slot}</i></div>`;
-  }).join('');
-  const bench = t.bench.map((p, i) => `<div class="fb-subrow bench" data-b="${i}"><b>${p.ovr}</b> ${esc(p.name)} <i>${p.pos}</i></div>`).join('');
-  $('fbMOverlay').innerHTML = `
-    <div class="fb-ovl-card big">
-      <h3>JEDA — GANTI PEMAIN</h3>
-      <div class="fb-subcols">
-        <div><div class="fb-subtitle">DI LAPANGAN</div>${rows}</div>
-        <div><div class="fb-subtitle">CADANGAN</div>${bench}</div>
-      </div>
-      <div class="fb-hint">tap 1 pemain lapangan + 1 cadangan buat tukar (opsional)</div>
-      <button type="button" class="fb-btn" id="fbHTGo">LANJUT</button>
-    </div>`;
+  const rows = t.onField.map((pi,k) => { const p = t.players[pi]; return '<div class="fb-subrow" data-k="'+k+'"><b>'+p.ovr+'</b> '+esc(p.name)+' <i>'+p.slot+'</i></div>'; }).join('');
+  const bench = t.bench.map((p,i) => '<div class="fb-subrow bench" data-b="'+i+'"><b>'+p.ovr+'</b> '+esc(p.name)+' <i>'+p.pos+'</i></div>').join('');
+  $('fbMOverlay').innerHTML = '<div class="fb-ovl-card big"><h3>JEDA — GANTI PEMAIN</h3><div class="fb-subcols"><div><div class="fb-subtitle">DI LAPANGAN</div>'+rows+'</div><div><div class="fb-subtitle">CADANGAN</div>'+bench+'</div></div><div class="fb-hint">tap 1 lapangan + 1 cadangan buat tukar</div><button type="button" class="fb-btn" id="fbHTGo">LANJUT</button></div>';
   $('fbMOverlay').classList.add('show');
-  let selA = null, selB = null;
-  document.querySelectorAll('.fb-subrow[data-k]').forEach((el) => el.onclick = () => {
-    document.querySelectorAll('.fb-subrow').forEach((x) => x.classList.remove('sel'));
-    el.classList.add('sel'); selA = +el.dataset.k;
-  });
-  document.querySelectorAll('.fb-subrow[data-b]').forEach((el) => el.onclick = () => {
-    if (selA == null) return;
-    document.querySelectorAll('.fb-subrow[data-b]').forEach((x) => x.classList.remove('sel'));
-    el.classList.add('sel'); selB = +el.dataset.b;
-  });
+  let selA=null, selB=null;
+  document.querySelectorAll('.fb-subrow[data-k]').forEach((el)=> el.onclick = ()=>{ document.querySelectorAll('.fb-subrow').forEach((x)=>x.classList.remove('sel')); el.classList.add('sel'); selA=+el.dataset.k; });
+  document.querySelectorAll('.fb-subrow[data-b]').forEach((el)=> el.onclick = ()=>{ if(selA==null)return; document.querySelectorAll('.fb-subrow[data-b]').forEach((x)=>x.classList.remove('sel')); el.classList.add('sel'); selB=+el.dataset.b; });
   const go = () => {
-    if (selA != null && selB != null) {
-      const t2 = M.teams[0];
-      const onPi = t2.onField[selA];
-      const benchP = t2.bench[selB];
-      /* ganti data pemain di lapangan */
-      t2.players[onPi] = { name: benchP.name, pos: benchP.pos, ovr: benchP.ovr, slot: t2.players[onPi].slot };
-      t2.bench[selB] = { name: t2.players[onPi].name, pos: t2.players[onPi].slot, ovr: t2.players[onPi].ovr, r: 'bronze' };
-      /* update entitas */
-      const ent = M.ents.find((e) => e.team === 0 && e.idx === selA);
-      if (ent) { ent.name = benchP.name; ent.ovr = benchP.ovr; ent.spd = 5.2 + (benchP.ovr - 60) / 12; ent.skill = benchP.ovr; ent.slotName = t2.players[onPi].slot; }
+    if (selA!=null&&selB!=null) {
+      const t2 = M.teams[0]; const onPi = t2.onField[selA]; const bp = t2.bench[selB];
+      const old = { name:t2.players[onPi].name, pos:t2.players[onPi].pos, ovr:t2.players[onPi].ovr, r:'bronze' };
+      t2.players[onPi] = { name:bp.name, pos:bp.pos, ovr:bp.ovr, slot:t2.players[onPi].pos };
+      t2.bench[selB] = old;
+      const ent = M.ents.find((e)=>e.team===0&&e.idx===selA);
+      if (ent){ ent.name=bp.name; ent.ovr=bp.ovr; ent.spd=5.0+(bp.ovr-60)/11; ent.skill=bp.ovr; ent.slotName=t2.players[onPi].slot; ent.isGK = bp.pos==='GK'; }
     }
     hideOverlay();
-    if (M.cfg.mode !== 'ai' && M.cfg.mid) {
-      /* pvp: tunggu dua2nya siap (timeout 30 dtk) */
-      let waited = 0;
-      showOverlay('JEDA', 'nunggu lawan siap... (' + (30 - waited) + ')', []);
-      const tick = setInterval(async () => {
-        waited++;
-        try {
-          const d = await fbPost({ action: 'matchReady', mid: M.cfg.mid });
-          if (d.both || waited >= 30) {
-            clearInterval(tick);
-            hideOverlay(); resetKickoff(1); M.half = 2;
-          } else { showOverlay('JEDA', 'nunggu lawan siap... (' + (30 - waited) + ')', []); }
-        } catch (e) { clearInterval(tick); hideOverlay(); resetKickoff(1); M.half = 2; }
-      }, 1000);
-    } else { resetKickoff(1); M.half = 2; }
+    if (M.cfg.mode!=='ai' && M.cfg.mid) {
+      let waited=0; showOverlay('JEDA','nunggu lawan siap... (30)',[]);
+      const tick = setInterval(async ()=>{ waited++; try { const d = await fbPost({action:'matchReady',mid:M.cfg.mid}); if (d.both||waited>=30){ clearInterval(tick); hideOverlay(); M.half=2; M.phase='play'; M.paused=false; } else showOverlay('JEDA','nunggu lawan siap... ('+(30-waited)+')',[]); } catch(e){ clearInterval(tick); hideOverlay(); M.half=2; M.phase='play'; M.paused=false; } },1000);
+    } else { M.half=2; M.phase='play'; M.paused=false; }
   };
   $('fbHTGo').onclick = go;
 }
 function fulltime(){
-  M.over = true; M.paused = true;
-  cancelAnimationFrame(M.raf);
-  const [a, b2] = M.score;
-  const outcome = a > b2 ? 'w' : a < b2 ? 'l' : 'd';
-  const poss = M.stats.poss[0] + M.stats.poss[1] || 1;
-  $('fbMOverlay').innerHTML = `
-    <div class="fb-ovl-card big">
-      <h3>FULL TIME — ${a} : ${b2}</h3>
-      <div class="fb-stats">
-        <div class="fb-stat"><b>${Math.round(M.stats.poss[0] / poss * 100)}%</b><span>Possession</span><b>${Math.round(M.stats.poss[1] / poss * 100)}%</b></div>
-        <div class="fb-stat"><b>${M.stats.shots[0]}</b><span>Shots</span><b>${M.stats.shots[1]}</b></div>
-        <div class="fb-stat"><b>${M.stats.sot[0]}</b><span>On Target</span><b>${M.stats.sot[1]}</b></div>
-        <div class="fb-stat"><b>${M.stats.saves[0]}</b><span>Saving</span><b>${M.stats.saves[1]}</b></div>
-        <div class="fb-stat"><b>${M.stats.tackles[0]}</b><span>Tackle</span><b>${M.stats.tackles[1]}</b></div>
-        <div class="fb-stat"><b>${M.stats.off[0]}</b><span>Offside</span><b>${M.stats.off[1]}</b></div>
-      </div>
-      <button type="button" class="fb-btn" id="fbFTNext">LANJUT</button>
-    </div>`;
+  M.over=true; M.paused=true; M.phase='ft'; cancelAnimationFrame(M.raf);
+  const [a,b2]=M.score; const outcome = a>b2?'w':a<b2?'l':'d';
+  const poss = M.stats.poss[0]+M.stats.poss[1]||1;
+  $('fbMOverlay').innerHTML = '<div class="fb-ovl-card big"><h3>FULL TIME — '+a+' : '+b2+'</h3><div class="fb-stats">'
+    + '<div class="fb-stat"><b>'+Math.round(M.stats.poss[0]/poss*100)+'%</b><span>Possession</span><b>'+Math.round(M.stats.poss[1]/poss*100)+'%</b></div>'
+    + '<div class="fb-stat"><b>'+M.stats.shots[0]+'</b><span>Shots</span><b>'+M.stats.shots[1]+'</b></div>'
+    + '<div class="fb-stat"><b>'+M.stats.sot[0]+'</b><span>On Target</span><b>'+M.stats.sot[1]+'</b></div>'
+    + '<div class="fb-stat"><b>'+M.stats.saves[0]+'</b><span>Saving</span><b>'+M.stats.saves[1]+'</b></div>'
+    + '<div class="fb-stat"><b>'+M.stats.tackles[0]+'</b><span>Tackle</span><b>'+M.stats.tackles[1]+'</b></div>'
+    + '<div class="fb-stat"><b>'+M.stats.fouls[0]+'</b><span>Pelanggaran</span><b>'+M.stats.fouls[1]+'</b></div>'
+    + '<div class="fb-stat"><b>'+M.stats.off[0]+'</b><span>Offside</span><b>'+M.stats.off[1]+'</b></div>'
+    + '</div><button type="button" class="fb-btn" id="fbFTNext">LANJUT</button></div>';
   $('fbMOverlay').classList.add('show');
   $('fbFTNext').onclick = async () => {
     try {
-      const d = await fbPost({ action:'report', mode: M.cfg.mode, outcome, my: a, opp: b2, oppName: M.cfg.oppName });
+      const d = await fbPost({ action:'report', mode:M.cfg.mode, outcome, my:a, opp:b2, oppName:M.cfg.oppName });
       state = d.state;
-      if (d.promo === 'up') alert('🎉 PROMOSI! naik ke divisi ' + state.division);
-      else if (d.promo === 'down') alert('⚠️ DEGRADASI ke divisi ' + state.division);
-      if (M.cfg.mid) fbPost({ action:'matchDone', mid: M.cfg.mid }).catch(() => {});
-      if (M.cfg.roomId) fbPost({ action:'roomLeave', roomId: M.cfg.roomId }).catch(() => {});
+      if (d.promo==='up') alert('🎉 PROMOSI! naik ke divisi '+state.division);
+      else if (d.promo==='down') alert('⚠️ DEGRADASI ke divisi '+state.division);
+      if (M.cfg.mid) fbPost({ action:'matchDone', mid:M.cfg.mid }).catch(()=>{});
+      if (M.cfg.roomId) fbPost({ action:'roomLeave', roomId:M.cfg.roomId }).catch(()=>{});
     } catch (e) { alert(e.message); }
-    M = null;
-    showLobby();
+    M=null; showLobby();
   };
 }
 function openTactics(){
-  if (M.tacticCD > 0 || !M || M.paused || M.over) return;
-  $('fbMOverlay').innerHTML = `
-    <div class="fb-ovl-card">
-      <h3>TACTICS</h3>
-      ${Object.entries(TACTICS).map(([k, t]) => `<div class="fb-tacopt ${M.teams[0].tactic === k ? 'on' : ''}" data-t="${k}"><b>${t.label}</b><span>${t.short}</span></div>`).join('')}
-      <div class="fb-hint">taktik cuma bisa diganti tiap 20 detik</div>
-      <button type="button" class="fb-btn fb-ghost" id="fbTacClose">Tutup</button>
-    </div>`;
+  if (M.tacticCD>0 || !M || M.paused || M.over) return;
+  $('fbMOverlay').innerHTML = '<div class="fb-ovl-card"><h3>TACTICS</h3>'
+    + Object.entries(TACTICS).map(([k,t]) => '<div class="fb-tacopt '+(M.teams[0].tactic===k?'on':'')+'" data-t="'+k+'"><b>'+t.label+'</b><span>'+t.short+'</span></div>').join('')
+    + '<div class="fb-hint">taktik cuma bisa diganti tiap 20 dtk</div><button type="button" class="fb-btn fb-ghost" id="fbTacClose">Tutup</button></div>';
   $('fbMOverlay').classList.add('show');
   $('fbTacClose').onclick = () => $('fbMOverlay').classList.remove('show');
-  document.querySelectorAll('.fb-tacopt').forEach((el) => {
-    el.onclick = () => {
-      M.teams[0].tactic = el.dataset.t;
-      M.tacticCD = 20;
-      $('fbMTacNow').textContent = TACTICS[el.dataset.t].label;
-      $('fbMOverlay').classList.remove('show');
-    };
-  });
+  document.querySelectorAll('.fb-tacopt').forEach((el)=>{ el.onclick = () => { M.teams[0].tactic = el.dataset.t; M.tacticCD=20; $('fbMTacNow').textContent = TACTICS[el.dataset.t].label; $('fbMOverlay').classList.remove('show'); }; });
 }
 function showOverlay(title, sub, btns){
   const ov = $('fbMOverlay');
-  ov.innerHTML = `<div class="fb-ovl-card"><h3>${title}</h3>${sub ? '<p>' + sub + '</p>' : ''}</div>` +
-    (btns || []).map((b3, i) => `<button type="button" class="fb-btn" data-ob="${i}">${b3.label}</button>`).join('');
+  ov.innerHTML = '<div class="fb-ovl-card"><h3>'+title+'</h3>'+(sub?'<p>'+sub+'</p>':'')+'</div>' + (btns||[]).map((b3,i) => '<button type="button" class="fb-btn" data-ob="'+i+'">'+b3.label+'</button>').join('');
   ov.classList.add('show');
-  (btns || []).forEach((b3, i) => { ov.querySelector('[data-ob="' + i + '"]').onclick = b3.fn; });
+  (btns||[]).forEach((b3,i) => { ov.querySelector('[data-ob="'+i+'"]').onclick = b3.fn; });
 }
-function hideOverlay(){ const ov = $('fbMOverlay'); ov.classList.remove('show'); ov.innerHTML = ''; }
-
-/* ── render canvas ── */
+function hideOverlay(){ const ov = $('fbMOverlay'); ov.classList.remove('show'); ov.innerHTML=''; }
+function updUI(){
+  if (!$('fbMScore')) return;
+  $('fbMScore').textContent = M.score[0]+' - '+M.score[1];
+  $('fbMMin').textContent = Math.floor(M.min)+"'";
+  $('fbMTimeBar').style.width = Math.min(100, M.min/(90+M.added)*100)+'%';
+  $('fbMCD').textContent = M.tacticCD>0? 'taktik '+Math.ceil(M.tacticCD)+'s' : '';
+}
+function updCam(dt, tx, ty, tz){
+  const c = M.cam;
+  c.x += (tx-c.x)*0.06; c.y += (ty-c.y)*0.06;
+  c.z += (tz-c.z)*0.05;
+  c.shake *= 0.9;
+}
+/* ── DRAW v2 (kamera + VAR + selebrasi + replay) ── */
 function draw(){
   const cv = $('fbMCanvas'); if (!cv || !M) return;
-  const x = cv.getContext('2d');
-  const W = cv.width, H = cv.height;
-  const px = (v) => v / 100 * W, py = (v) => v / 100 * H;
+  const x = cv.getContext('2d'); const W = cv.width, H = cv.height;
+  const c = M.cam;
+  const shx = (M.R()-0.5)*c.shake, shy = (M.R()-0.5)*c.shake;
+  x.setTransform(1,0,0,1,0,0);
+  x.fillStyle = '#0b3d1f'; x.fillRect(0,0,W,H);
+  /* kamera transform */
+  const z = c.z;
+  x.save();
+  x.translate(W/2 + shx, H/2 + shy);
+  x.scale(z,z);
+  x.translate(-c.x/100*W, -c.y/100*H);
+  const px = (v) => v/100*W, py = (v) => v/100*H;
   /* lapangan */
-  x.fillStyle = '#1e8c46'; x.fillRect(0, 0, W, H);
-  x.fillStyle = '#1a7f40';
-  for (let i = 0; i < 10; i++) if (i % 2) x.fillRect(i * W / 10, 0, W / 10, H);
+  x.fillStyle = '#1e8c46'; x.fillRect(0,0,W,H);
+  x.fillStyle = '#1a7f40'; for (let i=0;i<10;i++) if (i%2) x.fillRect(i*W/10,0,W/10,H);
   x.strokeStyle = '#ffffffcc'; x.lineWidth = 2;
-  x.strokeRect(px(2), py(4), px(96), py(92));
-  x.beginPath(); x.moveTo(px(50), py(4)); x.lineTo(px(50), py(96)); x.stroke();
-  x.beginPath(); x.arc(px(50), py(50), px(8), 0, 7); x.stroke();
-  x.strokeRect(px(2), py(30), px(12), py(40)); x.strokeRect(px(86), py(30), px(12), py(40));
-  /* gawang */
-  x.fillStyle = '#ffffffdd';
-  x.fillRect(px(0.5), py(38), px(1.5), py(24)); x.fillRect(px(98), py(38), px(1.5), py(24));
+  x.strokeRect(px(2),py(4),px(96),py(92));
+  x.beginPath(); x.moveTo(px(50),py(4)); x.lineTo(px(50),py(96)); x.stroke();
+  x.beginPath(); x.arc(px(50),py(50),px(8),0,7); x.stroke();
+  x.strokeRect(px(2),py(30),px(12),py(40)); x.strokeRect(px(86),py(30),px(12),py(40));
+  x.fillStyle = '#ffffffdd'; x.fillRect(px(0.5),py(38),px(1.5),py(24)); x.fillRect(px(98),py(38),px(1.5),py(24));
+  /* VAR line */
+  if (M.phase==='var' && M.varInfo) {
+    x.strokeStyle = '#ff3b3b'; x.lineWidth = 2.5; x.setLineDash([6,4]);
+    x.beginPath(); x.moveTo(px(M.varInfo.lineX),py(0)); x.lineTo(px(M.varInfo.lineX),py(100)); x.stroke();
+    x.strokeStyle = '#3bd0ff'; x.beginPath(); x.moveTo(px(M.varInfo.receiver.x),py(0)); x.lineTo(px(M.varInfo.receiver.x),py(100)); x.stroke();
+    x.setLineDash([]);
+  }
+  /* pagar free kick */
+  M.wall.forEach((e)=>{ x.beginPath(); x.arc(px(e.x),py(e.y),10,0,7); x.fillStyle='#f8717133'; x.fill(); x.strokeStyle='#f87171'; x.lineWidth=1.5; x.stroke(); });
   /* pemain */
-  if (M) M.ents.forEach((e) => {
+  M.ents.forEach((e)=>{
     const X = px(e.x), Y = py(e.y);
-    const grad = e.team === 0 ? '#c084fc' : '#f87171';
-    x.beginPath(); x.arc(X, Y, e.isGK ? 13 : 12, 0, 7);
-    x.fillStyle = e.isGK ? (e.team === 0 ? '#fbbf24' : '#22d3ee') : grad;
-    x.fill(); x.lineWidth = 2.5; x.strokeStyle = '#0b0a12'; x.stroke();
-    x.fillStyle = '#fff'; x.font = 'bold 10px Inter, sans-serif'; x.textAlign = 'center';
-    x.fillText(e.ovr, X, Y + 3.5);
-    x.font = '600 8px Inter, sans-serif'; x.fillStyle = '#ffffffd0';
-    x.fillText(e.name.split(' ').slice(-1)[0].slice(0, 10), X, Y - 17);
+    /* bayangan */
+    x.beginPath(); x.ellipse(X, Y+10, 10, 4, 0, 0, 7); x.fillStyle='rgba(0,0,0,.35)'; x.fill();
+    /* selebrasi animasi */
+    let offy = 0, rot = 0;
+    if (e.celeb) {
+      const t = performance.now()/150;
+      if (e.celeb===0) offy = -Math.abs(Math.sin(t))*8; /* lompat */
+      else if (e.celeb===1) rot = Math.sin(t)*0.5; /* goyang */
+      else if (e.celeb===2) offy = -4; /* tangan ke atas */
+      else if (e.celeb===3) rot = t%6.28; /* putar */
+      else offy = -Math.abs(Math.sin(t*0.7))*5;
+    }
+    x.save(); x.translate(X, Y+offy); x.rotate(rot);
+    x.beginPath(); x.arc(0,0, e.isGK?13:12, 0, 7);
+    x.fillStyle = e.isGK? (e.team===0?'#fbbf24':'#22d3ee') : (e.team===0?'#c084fc':'#f87171');
+    x.fill(); x.lineWidth=2.5; x.strokeStyle='#0b0a12'; x.stroke();
+    x.fillStyle='#fff'; x.font='bold 10px Inter, sans-serif'; x.textAlign='center'; x.fillText(e.ovr, 0, 3.5);
+    x.font='600 8px Inter, sans-serif'; x.fillStyle='#ffffffd0'; x.fillText(e.name.split(' ').slice(-1)[0].slice(0,10), 0, -17);
+    x.restore();
   });
-  /* bola */
-  if (M) {
-    const b = M.ball;
-    x.beginPath(); x.arc(px(b.x), py(b.y), 6, 0, 7);
-    x.fillStyle = '#fff'; x.fill(); x.strokeStyle = '#222'; x.lineWidth = 1.5; x.stroke();
+  /* bola + bayangan */
+  const b = M.ball;
+  x.beginPath(); x.ellipse(px(b.x), py(b.y)+6, 5,2,0,0,7); x.fillStyle='rgba(0,0,0,.3)'; x.fill();
+  x.beginPath(); x.arc(px(b.x), py(b.y), 6, 0, 7); x.fillStyle='#fff'; x.fill(); x.strokeStyle='#222'; x.lineWidth=1.5; x.stroke();
+  /* sorot assist saat replay */
+  if (M.phase==='replay' && M.assistBy) {
+    x.beginPath(); x.arc(px(M.assistBy.x), py(M.assistBy.y), 16, 0, 7); x.strokeStyle='#ffd75e'; x.lineWidth=2.5; x.setLineDash([4,3]); x.stroke(); x.setLineDash([]);
+  }
+  x.restore();
+  /* overlay teks (screen-space) */
+  x.setTransform(1,0,0,1,0,0);
+  if (M.phase==='replay') {
+    x.fillStyle='rgba(0,0,0,.5)'; x.fillRect(0,0,W,26);
+    x.fillStyle='#ff5c5c'; x.beginPath(); x.arc(14,13,5,0,7); x.fill();
+    x.fillStyle='#fff'; x.font='bold 12px Inter, sans-serif'; x.textAlign='left'; x.fillText('REPLAY', 26, 17);
+    if (M.assistBy) { x.fillStyle='#ffd75e'; x.textAlign='right'; x.fillText('assist: '+M.assistBy.name, W-10, 17); }
+  }
+  if (M.phase==='var' && M.varInfo) {
+    x.fillStyle='rgba(0,0,0,.55)'; x.fillRect(0,0,W,30);
+    x.fillStyle='#3bd0ff'; x.font='bold 14px Inter, sans-serif'; x.textAlign='center';
+    x.fillText('VAR MEMERIKSA OFFSIDE...', W/2, 20);
+  }
+  if (M.phase==='celebration') {
+    x.fillStyle='rgba(0,0,0,.4)'; x.fillRect(0,0,W,30);
+    x.fillStyle='#ffd75e'; x.font='bold 16px Inter, sans-serif'; x.textAlign='center';
+    x.fillText('GOOOL! '+(M.celeb.scorer.name), W/2, 20);
   }
 }
-
-/* ─────────── INIT ─────────── */
+/* ── INIT ── */
 async function init(){
   if (!document.getElementById('fbRoot')) return;
   try { await fbRefresh(); renderLobby(); }
-  catch (e) { $('fbRoot').innerHTML = '<div class="fb-empty">' + esc(e.message) + '</div>'; }
+  catch (e) { $('fbRoot').innerHTML = '<div class="fb-empty">'+esc(e.message)+'</div>'; }
 }
 return { init, showLobby, get M(){ return M; }, PLAYERS, FORMATIONS, state: () => state, _startMatch: startMatch, _draw4: draw4, _squadOVR: squadOVR };
 })();
