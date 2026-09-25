@@ -466,6 +466,178 @@
   .gform{ display:flex; gap:8px; margin-top:14px; }
 
 
+  /* ═══════════ IFZRQ FC — FOOTBALL MANAGER ═══════════ */
+  #viewFootball .viewpage{ padding:0; display:flex; flex-direction:column; overflow:hidden; }
+  #fbRoot{ flex:1; position:relative; min-height:0; overflow-y:auto; padding:10px 10px 20px; }
+  .fb-empty{ text-align:center; color:var(--muted); padding:40px 20px; font-size:13px; }
+  .fb-lobby{ position:absolute; inset:10px 10px 20px; }
+  .fb-profile{ position:absolute; top:0; left:0; display:flex; align-items:center; gap:8px; background:var(--panel-2);
+    border:2px solid var(--line); border-radius:14px; padding:8px 14px 8px 8px; cursor:pointer; }
+  .fb-profile img{ width:34px; height:34px; border-radius:10px; background:#7d8590; }
+  .fb-profile b{ display:block; font-size:13px; color:var(--text); }
+  .fb-profile span{ font-size:9px; color:var(--muted); font-family:'JetBrains Mono',monospace; }
+  .fb-side{ position:absolute; left:0; top:42%; transform:translateY(-50%); display:flex; flex-direction:column; gap:10px; }
+  .fb-bigbtn{ width:86px; height:58px; border-radius:14px; border:3px solid #0b0a12; cursor:pointer;
+    font-weight:900; font-size:13px; color:#fff; text-shadow:0 2px 0 rgba(0,0,0,.35); box-shadow:0 4px 0 #0b0a12; }
+  .fb-bigbtn:active{ transform:translateY(3px); box-shadow:0 1px 0 #0b0a12; }
+  .fb-bn-draft{ background:linear-gradient(180deg,#f59e0b,#d97706); }
+  .fb-bn-team{ background:linear-gradient(180deg,#3b82f6,#2563eb); }
+  .fb-bn-index{ background:linear-gradient(180deg,#a855f7,#7c3aed); }
+  .fb-lobby-mid{ display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100%; gap:10px; padding-bottom:14%; }
+  .fb-lobby-title{ font-size:34px; font-weight:900; color:#fff; letter-spacing:1px; font-family:'Chakra Petch',sans-serif; text-shadow:0 3px 0 #0b0a12; }
+  .fb-lobby-sub{ font-size:11px; color:var(--muted); font-family:'JetBrains Mono',monospace; background:var(--panel-2); padding:4px 12px; border-radius:20px; border:1px solid var(--line); }
+  .fb-play{ width:130px; height:130px; border-radius:50%; border:4px solid #0b0a12; background:linear-gradient(180deg,#34d399,#059669);
+    color:#fff; font-weight:900; font-size:24px; cursor:pointer; box-shadow:0 6px 0 #0b0a12, 0 0 30px rgba(52,211,153,.4); margin-top:8px; }
+  .fb-play:active{ transform:translateY(4px); box-shadow:0 2px 0 #0b0a12; }
+  .fb-modal{ position:fixed; inset:0; z-index:140; background:rgba(5,6,10,.8); display:flex; align-items:center; justify-content:center; }
+  .fb-modal-card{ background:var(--panel); border:2px solid var(--line); border-radius:18px; padding:22px; width:min(340px,90vw); }
+  .fb-modal-card h3{ color:#c084fc; font-size:16px; margin-bottom:14px; letter-spacing:1px; }
+  .fb-prof-row{ display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--line); font-size:13px; }
+  .fb-prof-row span{ color:var(--muted); } .fb-prof-row b{ color:var(--text); }
+  .fb-winbar{ height:12px; background:var(--bg); border-radius:8px; margin:12px 0; overflow:hidden; border:1px solid var(--line); }
+  .fb-winbar i{ display:block; height:100%; background:linear-gradient(90deg,#059669,#34d399); border-radius:8px; }
+  .fb-btn{ width:100%; padding:12px; border-radius:12px; border:3px solid #0b0a12; background:linear-gradient(180deg,#8b5cf6,#6d28d9);
+    color:#fff; font-weight:800; font-size:13px; cursor:pointer; box-shadow:0 4px 0 #0b0a12; }
+  .fb-btn:active{ transform:translateY(3px); box-shadow:0 1px 0 #0b0a12; }
+  .fb-btn.fb-ghost{ background:linear-gradient(180deg,#4b5563,#374151); }
+  .fb-btn.fb-warn{ background:linear-gradient(180deg,#ef4444,#b91c1c); }
+  .fb-btn.fb-alt{ background:linear-gradient(180deg,#0ea5e9,#0369a1); }
+  .fb-draft-title{ text-align:center; font-size:20px; font-weight:900; color:#fff; margin:6px 0 14px; letter-spacing:.5px; text-shadow:0 2px 0 #0b0a12; }
+  .fb-draft-pos{ text-align:center; font-size:12px; color:#c084fc; font-family:'JetBrains Mono',monospace; margin-bottom:12px; }
+  .fb-cards{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; max-width:520px; margin:0 auto 16px; }
+  .fb-cardwrap{ position:relative; aspect-ratio:3/4.2; }
+  .fb-year{ text-align:center; padding-top:45%; font-size:22px; font-weight:900; color:#ffd75e; font-family:'JetBrains Mono',monospace; }
+  .fb-front{ position:absolute; inset:0; }
+  /* kartu */
+  .fbc{ position:relative; width:100%; height:100%; border-radius:10px; border:2px solid #0b0a12; overflow:hidden;
+    display:flex; flex-direction:column; align-items:center; padding-top:6px; cursor:pointer; }
+  .fbc-ovr{ font-size:20px; font-weight:900; font-family:'Chakra Petch',sans-serif; line-height:1; }
+  .fbc-pos{ font-size:9px; font-weight:800; letter-spacing:1px; }
+  .fbc-face{ width:44%; aspect-ratio:1; border-radius:8px; margin-top:3px; background:#7d8590; }
+  .fbc-name{ font-size:8.5px; font-weight:800; text-align:center; padding:0 3px; margin-top:3px; line-height:1.1; }
+  .fbc-country{ font-size:7.5px; opacity:.8; }
+  .fbc-rar{ position:absolute; bottom:0; left:0; right:0; text-align:center; font-size:7px; font-weight:900; letter-spacing:1px; padding:2px 0; background:rgba(0,0,0,.35); color:#fff; }
+  .fbr-bronze{ background:linear-gradient(160deg,#8a5a33,#c98d55 50%,#8a5a33); color:#3d2412; }
+  .fbr-silver{ background:linear-gradient(160deg,#9aa5b1,#e8eef5 50%,#9aa5b1); color:#2c3440; }
+  .fbr-gold{ background:linear-gradient(160deg,#b8912e,#f5d76e 50%,#b8912e); color:#4a3608; }
+  .fbr-legend{ background:linear-gradient(160deg,#efe3b8,#fffbe8 35%,#f3e6b5 60%,#e8d9a0); color:#5c4a12;
+    box-shadow:0 0 14px rgba(255,240,190,.55), inset 0 0 12px rgba(255,255,255,.5); border-color:#8d7a3a; }
+  .fbr-icon{ background:linear-gradient(160deg,#0a0a12 0%,#23233a 45%,#0a0a12 100%); color:#ffd75e;
+    box-shadow:0 0 16px rgba(192,132,252,.5), inset 0 0 14px rgba(192,132,252,.25); border-color:#c084fc; }
+  .fbr-icon .fbc-name{ color:#fff; }
+  .fbr-mystery{ background:#0b0a12; border:2px dashed #333; align-items:center; justify-content:center; }
+  .fbc-q{ font-size:34px; font-weight:900; color:#333; }
+  /* animasi reveal kartu terbaik */
+  .fbc-anim .fbc-pos, .fbc-anim .fbc-country, .fbc-anim .fbc-ovr, .fbc-anim .fbc-face, .fbc-anim .fbc-name, .fbc-anim .fbc-rar{ opacity:0; transform:translateY(6px); transition:all .4s ease; }
+  .fbc-anim.st-pos .fbc-pos{ opacity:1; transform:none; }
+  .fbc-anim.st-country .fbc-country{ opacity:1; transform:none; }
+  .fbc-anim.st-ovr .fbc-ovr{ opacity:1; transform:none; }
+  .fbc-anim.st-full .fbc-face, .fbc-anim.st-full .fbc-name, .fbc-anim.st-full .fbc-rar{ opacity:1; transform:none; }
+  .fbc-in{ animation:fbcIn .5s cubic-bezier(.2,.9,.3,1.2) both; }
+  @keyframes fbcIn{ from{ transform:scale(.6) rotateY(80deg); opacity:0; } to{ transform:none; opacity:1; } }
+  /* formasi */
+  .fb-formgrid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:12px; max-width:520px; margin:0 auto 16px; }
+  .fb-formcard{ background:var(--panel-2); border:2px solid var(--line); border-radius:14px; padding:10px; text-align:center; cursor:pointer; }
+  .fb-formcard:hover{ border-color:#c084fc; }
+  .fb-formcard b{ display:block; margin-top:6px; color:var(--text); font-size:13px; }
+  .fb-formsvg{ width:100%; border-radius:8px; }
+  /* builder */
+  .fb-build{ display:flex; gap:10px; align-items:flex-start; }
+  .fb-build-left{ flex:0 0 150px; }
+  .fb-build-right{ flex:1; min-width:0; }
+  .fb-panel{ background:var(--panel-2); border:2px solid var(--line); border-radius:14px; padding:12px; display:flex; flex-direction:column; gap:8px; }
+  .fb-row{ display:flex; justify-content:space-between; font-size:11px; }
+  .fb-row span{ color:var(--muted); } .fb-row b{ color:#c084fc; }
+  .fb-chem{ font-size:10px; }
+  .fb-chem span{ color:var(--muted); display:block; margin-bottom:3px; }
+  .fb-chembar{ height:14px; background:var(--bg); border-radius:8px; overflow:hidden; border:1px solid var(--line); }
+  .fb-chembar i{ display:block; height:100%; background:linear-gradient(90deg,#f59e0b,#34d399); transition:width .5s; }
+  .fb-chembar.big{ height:18px; }
+  .fb-chem b{ color:#34d399; font-size:11px; }
+  .fb-hint{ font-size:9.5px; color:var(--muted); line-height:1.5; }
+  .fb-pitch{ position:relative; width:100%; aspect-ratio:68/96; background:linear-gradient(180deg,#1e8c46,#17693a);
+    border:2px solid #0b0a12; border-radius:12px; overflow:hidden; }
+  .fb-pitch:before{ content:''; position:absolute; left:3%; right:3%; top:50%; height:2px; background:#ffffff44; }
+  .fb-slot{ position:absolute; width:17%; transform:translate(-50%,-50%); text-align:center; cursor:pointer; }
+  .fb-plus{ width:30px; height:30px; margin:0 auto; border-radius:50%; background:rgba(0,0,0,.45); border:2px dashed #ffffff88;
+    color:#fff; font-size:18px; font-weight:900; line-height:26px; }
+  .fb-slotpos{ font-size:8.5px; color:#fffa; font-weight:800; margin-top:2px; text-shadow:0 1px 2px #000; }
+  .fb-mini{ background:linear-gradient(160deg,#f5d76e,#b8912e); border:2px solid #0b0a12; border-radius:8px; padding:3px 2px; }
+  .fb-mini b{ display:block; font-size:13px; color:#3d2c05; }
+  .fb-mini span{ display:block; font-size:7px; color:#3d2c05; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:700; }
+  .fb-mini i{ font-size:7px; color:#3d2c0599; font-style:normal; font-weight:800; }
+  .fb-bslot{ flex:0 0 48px; aspect-ratio:3/4; }
+  .fb-slot.sel .fb-mini, .tslot.sel .fb-mini{ outline:3px solid #c084fc; }
+  .tslot.badpos .fb-mini{ background:linear-gradient(160deg,#b91c1c,#7f1d1d); }
+  .tslot.badpos .fb-mini b, .tslot.badpos .fb-mini span, .tslot.badpos .fb-mini i{ color:#fecaca; }
+  .fb-bench-title{ font-size:10px; font-weight:800; color:var(--muted); margin:10px 0 6px; letter-spacing:1px; }
+  .fb-bench-row{ display:flex; gap:6px; }
+  .fb-confirm{ margin-top:12px; width:100%; padding:14px; border-radius:14px; border:3px solid #0b0a12;
+    background:linear-gradient(180deg,#6b7280,#4b5563); color:#ffffff88; font-weight:900; font-size:15px; cursor:not-allowed; box-shadow:0 4px 0 #0b0a12; }
+  .fb-confirm.ok{ background:linear-gradient(180deg,#34d399,#059669); color:#fff; cursor:pointer; box-shadow:0 4px 0 #0b0a12, 0 0 20px rgba(52,211,153,.5); }
+  /* index */
+  .fb-idx-tabs{ display:flex; gap:6px; overflow-x:auto; scrollbar-width:none; margin-bottom:12px; }
+  .fb-idx-tabs::-webkit-scrollbar{ display:none; }
+  .fb-idx-tab{ flex:0 0 auto; padding:8px 14px; border-radius:12px; background:var(--panel-2); border:2px solid var(--line); font-size:11px; font-weight:800; cursor:pointer; }
+  .fb-idx-tab span{ color:#c084fc; font-size:9px; margin-left:4px; }
+  .fb-idx-tab.on{ border-color:#c084fc; background:rgba(192,132,252,.12); }
+  .fb-idx-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(72px,1fr)); gap:8px; margin-bottom:14px; }
+  /* play menu */
+  .fb-playmenu{ max-width:420px; margin:0 auto; }
+  .fb-playcards{ display:flex; flex-direction:column; gap:10px; margin-bottom:14px; }
+  .fb-playcard{ background:var(--panel-2); border:2px solid var(--line); border-radius:16px; padding:18px; cursor:pointer; }
+  .fb-playcard:hover{ border-color:#c084fc; }
+  .fb-playcard b{ display:block; font-size:17px; color:#fff; margin-bottom:4px; }
+  .fb-playcard span{ font-size:11px; color:var(--muted); }
+  .fb-search{ display:flex; flex-direction:column; align-items:center; gap:14px; padding:26px 0; }
+  .fb-spinner{ width:44px; height:44px; border-radius:50%; border:5px solid var(--line); border-top-color:#c084fc; animation:fbspin 1s linear infinite; }
+  @keyframes fbspin{ to{ transform:rotate(360deg); } }
+  .fb-search span{ font-size:12px; color:var(--muted); font-family:'JetBrains Mono',monospace; }
+  .fb-btnrow{ display:flex; flex-direction:column; gap:8px; margin-bottom:12px; }
+  .fb-input{ background:var(--bg); border:2px solid var(--line); border-radius:12px; padding:12px; color:var(--text); font-size:14px; text-align:center; font-family:'JetBrains Mono',monospace; letter-spacing:3px; }
+  .fb-input:focus{ outline:none; border-color:#c084fc; }
+  .fb-roomstatus{ text-align:center; font-size:13px; color:var(--text); padding:10px; }
+  .fb-roomstatus b{ color:#c084fc; }
+  /* match */
+  .fb-match{ max-width:760px; margin:0 auto; position:relative; }
+  .fb-mscore{ display:flex; align-items:center; justify-content:center; gap:14px; padding:4px 0; font-size:13px; }
+  .fb-mscore b{ color:var(--text); font-size:12px; max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .fb-mscore span{ font-size:22px; font-weight:900; color:#fff; font-family:'Chakra Petch',sans-serif; }
+  .fb-mtimer{ height:8px; background:var(--bg); border-radius:6px; overflow:hidden; margin:6px 0; position:relative; border:1px solid var(--line); }
+  .fb-mtimer i{ display:block; height:100%; width:0%; background:linear-gradient(90deg,#34d399,#fbbf24,#ef4444); }
+  .fb-mtimer span{ position:absolute; right:6px; top:-2px; font-size:9px; font-weight:900; color:#fff; text-shadow:0 1px 2px #000; }
+  #fbMCanvas{ width:100%; border:2px solid #0b0a12; border-radius:12px; background:#1e8c46; }
+  .fb-mctrl{ display:flex; align-items:center; gap:10px; margin-top:8px; }
+  .fb-mctrl .fb-btn{ width:auto; padding:10px 18px; }
+  #fbMTacNow{ font-size:12px; font-weight:800; color:#c084fc; }
+  .fb-mcd{ font-size:10px; color:var(--muted); font-family:'JetBrains Mono',monospace; }
+  .fb-moverlay{ position:absolute; inset:0; z-index:5; display:none; align-items:center; justify-content:center; background:rgba(5,6,10,.82); border-radius:12px; }
+  .fb-moverlay.show{ display:flex; }
+  .fb-ovl-card{ background:var(--panel); border:2px solid var(--line); border-radius:16px; padding:18px; width:min(88%,380px); text-align:center; }
+  .fb-ovl-card.big{ width:min(94%,440px); }
+  .fb-ovl-card h3{ color:#c084fc; font-size:16px; margin-bottom:10px; }
+  .fb-ovl-card p{ font-size:12px; color:var(--text); margin-bottom:12px; }
+  .fb-stats{ margin:10px 0; }
+  .fb-stat{ display:flex; justify-content:space-between; align-items:center; padding:6px 4px; border-bottom:1px solid var(--line); font-size:13px; }
+  .fb-stat b{ width:50px; text-align:center; color:#fff; }
+  .fb-stat b:first-child{ text-align:left; } .fb-stat b:last-child{ text-align:right; }
+  .fb-stat span{ flex:1; color:var(--muted); font-size:10.5px; }
+  .fb-subcols{ display:flex; gap:10px; text-align:left; }
+  .fb-subcols > div{ flex:1; max-height:180px; overflow-y:auto; }
+  .fb-subtitle{ font-size:9px; font-weight:800; color:#c084fc; letter-spacing:1px; margin-bottom:4px; }
+  .fb-subrow{ display:flex; gap:6px; align-items:center; font-size:10.5px; padding:6px 8px; border:1px solid var(--line); border-radius:8px; margin-bottom:4px; cursor:pointer; color:var(--text); }
+  .fb-subrow b{ color:#f5d76e; }
+  .fb-subrow i{ margin-left:auto; color:var(--muted); font-style:normal; font-size:9px; }
+  .fb-subrow.sel{ border-color:#c084fc; background:rgba(192,132,252,.12); }
+  .fb-tacopt{ text-align:left; padding:10px 12px; border:2px solid var(--line); border-radius:12px; margin-bottom:6px; cursor:pointer; }
+  .fb-tacopt b{ display:block; color:var(--text); font-size:13px; }
+  .fb-tacopt span{ font-size:10px; color:var(--muted); }
+  .fb-tacopt.on{ border-color:#c084fc; background:rgba(192,132,252,.1); }
+  .fb-cf-ovr{ text-align:center; font-size:42px; font-weight:900; color:#f5d76e; font-family:'Chakra Petch',sans-serif; text-shadow:0 3px 0 #0b0a12; }
+  .fb-cf-cards{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; max-width:520px; margin:14px auto; }
+  .fb-cf-cards .fbc{ aspect-ratio:3/4.2; cursor:default; }
+  @media (max-width:480px){ .fb-build{ flex-direction:column-reverse; } .fb-build-left{ flex:none; width:100%; } .fb-cards{ grid-template-columns:repeat(2,1fr); } .fb-cf-cards{ grid-template-columns:repeat(3,1fr); } }
+
   /* ═══ STUDIO (AI video + image) ═══ */
   #viewStudio .viewpage{ padding-bottom:40px; }
   .st-chips{ display:flex; gap:8px; margin-bottom:14px; }
@@ -727,6 +899,19 @@
 
   <!-- ⚙️ PANEL PLUGIN -->
 
+  <!-- ═══ VIEW: FOOTBALL ═══ -->
+  <div class="view" id="viewFootball">
+    <div class="head">
+      <button type="button" class="burgerbtn" id="burgerBtn5" onclick="openDrawer()"><span></span><span></span><span></span></button>
+      <div class="avatar"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 2a8 8 0 0 1 5.29 2L12 8.9 8.5 6.4 9.4 4.2A8 8 0 0 1 12 4zM4.26 11.06l3.36 2.36-1.28 3.94A8 8 0 0 1 4 12c0-.32.02-.63.07-.94zm2.94 8.02 3.28-2.42 3.34 2.42-.9 1.72a8.05 8.05 0 0 1-4.82 0l-.9-1.72zm7.6-.14-.02-.02.84-1.6 3.32 2.3a8 8 0 0 1-4.14 1.36v-2.04zm5.05-2.53-3.4-2.36 1.3-4A8 8 0 0 1 19.85 16.4z"/></svg><div class="dot"></div></div>
+      <div class="head-info">
+        <div class="head-name">ifzrq fc <span class="head-tag">MANAGER</span></div>
+        <div class="head-sub">draft · squad · index · match</div>
+      </div>
+    </div>
+    <div class="viewpage" id="fbPage"><div id="fbRoot"></div></div>
+  </div>
+
 </div><!-- /app -->
 
 <!-- ═══ OVERLAY LAYER — anak langsung body ═══ -->
@@ -745,6 +930,7 @@
   <div class="drawer-nav on" data-view="viewChat"><svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor"><path d="M20 2H4a2 2 0 0 0-2 2v18l4-4h14a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/></svg><span>AI Chat</span></div>
   <div class="drawer-nav" data-view="viewGames"><svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor"><path d="M21 6H3a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2zM11 13H8v3H6v-3H3v-2h3V8h2v3h3v2zm4.5 2a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm4-3a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/></svg><span>Games</span></div>
   <div class="drawer-nav" data-view="viewStudio"><svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor"><path d="M12 2l1.9 5.7L19.6 9.6l-5.7 1.9L12 17.2l-1.9-5.7L4.4 9.6l5.7-1.9L12 2zm7 12l.9 2.6 2.6.9-2.6.9L19 21l-.9-2.6-2.6-.9 2.6-.9L19 14zM5 14l.7 2 2 .7-2 .7L5 19.4l-.7-2-2-.7 2-.7L5 14z"/></svg><span>Studio</span></div>
+            <div class="drawer-nav" data-view="viewFootball"><svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 2a8 8 0 0 1 5.29 2L12 8.9 8.5 6.4 9.4 4.2A8 8 0 0 1 12 4zM4.26 11.06l3.36 2.36-1.28 3.94A8 8 0 0 1 4 12c0-.32.02-.63.07-.94zm2.94 8.02 3.28-2.42 3.34 2.42-.9 1.72a8.05 8.05 0 0 1-4.82 0l-.9-1.72zm7.6-.14-.02-.02.84-1.6 3.32 2.3a8 8 0 0 1-4.14 1.36v-2.04zm5.05-2.53-3.4-2.36 1.3-4A8 8 0 0 1 19.85 16.4z"/></svg><span>IFZRQ FC</span></div>
             <div class="drawer-nav" data-view="viewMusic"><svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg><span>Music Player</span></div>
   <div class="drawer-section">sesi chat</div>
   <div id="sessList"></div>
@@ -2280,6 +2466,7 @@ function switchView(id){
   if (id === 'viewGames' && !$('gamesPage').dataset.loaded) renderGamesGrid();
   if (id === 'viewMusic') musicView();
   if (id === 'viewStudio' && !stCatalog) studioLoad();
+  if (id === 'viewFootball' && !window.__fbLoaded) { window.__fbLoaded = true; try { FB.init(); } catch(e) { console.error('FB init', e); } }
   /* mini player jangan ganggu view lain (input chat dll) */
   if (id !== 'viewMusic') $('nowBar').classList.remove('show');
   else if (typeof mIndex !== 'undefined' && mIndex >= 0) $('nowBar').classList.add('show');
@@ -3170,6 +3357,1125 @@ document.addEventListener('click', (e) => {
   if (img && img.src) { e.preventDefault(); lbxOpen(img.src, false, img.alt || ''); }
   else if (vid && vid.src) { e.preventDefault(); lbxOpen(vid.src, true, ''); }
 });
+
+/* ═══════════════════════════════════════════════════════════════════
+   IFZRQ FC — Football Team Manager (draft · squad · index · match 2D)
+   UI style: roblox-ish (chunky, tebal, playful)
+   ═══════════════════════════════════════════════════════════════════ */
+window.FB = (function(){
+'use strict';
+
+/* ─────────── UTIL ─────────── */
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+function mulberry(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+const rnd = Math.random;
+const pick = (arr) => arr[Math.floor(rnd()*arr.length)];
+
+/* ─────────── RARITY ─────────── */
+const RAR = {
+  bronze: { label:'Perunggu', cls:'fbr-bronze' },
+  silver: { label:'Perak',    cls:'fbr-silver' },
+  gold:   { label:'Emas',     cls:'fbr-gold' },
+  legend: { label:'Legenda',  cls:'fbr-legend' },
+  icon:   { label:'Ikon',     cls:'fbr-icon' },
+};
+function rarityOf(p){ return p.r; } // tersimpen eksplisit
+
+/* ─────────── DATABASE PEMAIN (±500) ───────────
+   format: Nama|POS|Negara|OVR|rarity   (icon & legend = pensiun/legendaris) */
+const DB_RAW = [
+/* ═══ IKON (hitam, efek) ═══ */
+"Pelé|ST|Brasil|98|icon","Diego Maradona|CAM|Argentina|97|icon","Johan Cruyff|CF|Belanda|96|icon","Zinedine Zidane|CAM|Prancis|96|icon","Alfredo Di Stéfano|ST|Spanyol|96|icon","Ronaldo Nazário|ST|Brasil|96|icon","Ferenc Puskás|ST|Hongaria|96|icon","Franz Beckenbauer|CB|Jerman|95|icon","Garrincha|RW|Brasil|95|icon","Lev Yashin|GK|Rusia|95|icon","Eusébio|ST|Portugal|95|icon","Michel Platini|CAM|Prancis|95|icon","Ronaldinho|LW|Brasil|95|icon","Marco van Basten|ST|Belanda|94|icon","Gerd Müller|ST|Jerman|94|icon","Romário|ST|Brasil|94|icon","Thierry Henry|ST|Prancis|94|icon","Paolo Maldini|CB|Italia|94|icon","Franco Baresi|CB|Italia|94|icon","Lothar Matthäus|CM|Jerman|94|icon","Zico|CAM|Brasil|94|icon","Roberto Baggio|CF|Italia|93|icon","Cafu|RB|Brasil|93|icon","Xavi|CM|Spanyol|93|icon","Luís Figo|RW|Portugal|93|icon","Kaká|CAM|Brasil|93|icon","Andrés Iniesta|CM|Spanyol|94|icon","Iker Casillas|GK|Spanyol|93|icon","Oliver Kahn|GK|Jerman|93|icon","Bobby Charlton|CM|Inggris|93|icon","George Best|RW|Irlandia Utara|93|icon","Andriy Shevchenko|ST|Ukraina|93|icon","Cannavaro|CB|Italia|93|icon","Rivaldo|LW|Brasil|92|icon","Roberto Carlos|LB|Brasil|92|icon","Francesco Totti|CAM|Italia|92|icon","Raúl|ST|Spanyol|92|icon","Didier Drogba|ST|Pantai Gading|92|icon","Samuel Eto'o|ST|Kamerun|92|icon","Bobby Moore|CB|Inggris|92|icon","Peter Schmeichel|GK|Denmark|91|icon","Sergio Ramos|CB|Spanyol|92|icon","Pavel Nedvěd|LW|Ceko|91|icon","Alessandro Del Piero|ST|Italia|91|icon","Filippo Inzaghi|ST|Italia|90|icon","David Beckham|RM|Inggris|90|icon","Steven Gerrard|CM|Inggris|91|icon","Frank Lampard|CM|Inggris|91|icon","Ruud van Nistelrooy|ST|Belanda|91|icon","Gabriel Batistuta|ST|Argentina|91|icon","Carlos Puyol|CB|Spanyol|91|icon","Dennis Bergkamp|CF|Belanda|91|icon","Wayne Rooney|ST|Inggris|91|icon","Kenny Dalglish|CF|Skotlandia|92|icon",
+/* ═══ LEGENDA (emas-putih, pensiun) ═══ */
+"Gianluigi Buffon|GK|Italia|95|legend","Zlatan Ibrahimović|ST|Swedia|92|legend","Luka Modrić|CM|Kroasia|91|legend","Toni Kroos|CM|Jerman|91|legend","Manuel Neuer|GK|Jerman|92|legend","Philipp Lahm|RB|Jerman|92|legend","Petr Čech|GK|Ceko|92|legend","Luis Suárez|ST|Uruguay|91|legend","Arjen Robben|RW|Belanda|91|legend","Franck Ribéry|LW|Prancis|91|legend","Gareth Bale|RW|Wales|91|legend","Sergio Agüero|ST|Argentina|91|legend","David Villa|ST|Spanyol|91|legend","David Silva|CAM|Spanyol|91|legend","Xabi Alonso|CDM|Spanyol|91|legend","Yaya Touré|CM|Pantai Gading|91|legend","Miroslav Klose|ST|Jerman|91|legend","Bastian Schweinsteiger|CM|Jerman|91|legend","Ángel Di María|LW|Argentina|91|legend","Karim Adeyemi×0|—|—|0|x", // placeholder (dibuang)
+"Fernando Torres|ST|Spanyol|90|legend","Robin van Persie|ST|Belanda|90|legend","Carlos Tévez|ST|Argentina|90|legend","Javier Mascherano|CB|Argentina|90|legend","Gerard Piqué|CB|Spanyol|90|legend","Giorgio Chiellini|CB|Italia|90|legend","Leonardo Bonucci|CB|Italia|90|legend","Vincent Kompany|CB|Belgia|90|legend","Diego Godín|CB|Uruguay|90|legend","Sergio Busquets|CDM|Spanyol|90|legend","Thomas Müller|CAM|Jerman|90|legend","Mesut Özil|CAM|Jerman|90|legend","Radamel Falcao|ST|Kolombia|90|legend","Diego Forlán|ST|Uruguay|90|legend","Andrea Pirlo|CM|Italia|92|icon",
+/* ═══ EMAS (aktif 75-89) ═══ */
+"Kylian Mbappé|ST|Prancis|89|gold","Erling Haaland|ST|Norwegia|89|gold","Jude Bellingham|CAM|Inggris|88|gold","Vinícius Júnior|LW|Brasil|88|gold","Mohamed Salah|RW|Mesir|88|gold","Harry Kane|ST|Inggris|88|gold","Rodri|CDM|Spanyol|88|gold","Lamine Yamal|RW|Spanyol|88|gold","Kevin De Bruyne|CAM|Belgia|87|gold","Robert Lewandowski|ST|Polandia|87|gold","Julian Álvarez|ST|Argentina|87|gold","Cole Palmer|CAM|Inggris|87|gold","Lautaro Martínez|ST|Argentina|87|gold","Thibaut Courtois|GK|Belgia|87|gold","Gianluigi Donnarumma|GK|Italia|87|gold","Marc-André ter Stegen|GK|Jerman|87|gold","Hakan Çalhanoğlu|CM|Turki|87|gold","Virgil van Dijk|CB|Belanda|87|gold","Florian Wirtz|CAM|Jerman|87|gold","Bernardo Silva|CAM|Portugal|87|gold","Raphinha|LW|Brasil|86|gold","Federico Valverde|CM|Uruguay|86|gold","Antoine Griezmann|ST|Prancis|86|gold","Son Heung-min|LW|Korea Selatan|86|gold","Ousmane Dembélé|RW|Prancis|86|gold","Bruno Fernandes|CAM|Portugal|86|gold","Phil Foden|CAM|Inggris|86|gold","Florian Wirtz×0|—|—|0|x","Bukayo Saka|RW|Inggris|86|gold","Pedri|CM|Spanyol|86|gold","Jamal Musiala|CAM|Jerman|86|gold","Nicolò Barella|CM|Italia|86|gold","Rúben Dias|CB|Portugal|86|gold","William Saliba|CB|Prancis|86|gold","Joško Gvardiol|CB|Kroasia|84|gold","Alisson|GK|Brasil|86|gold","Ederson|GK|Brasil|86|gold","Trent Alexander-Arnold|RB|Inggris|86|gold","Joshua Kimmich|CM|Jerman|86|gold","Paulo Dybala|CAM|Argentina|86|gold","Kvicha Kvaratskhelia|LW|Georgia|86|gold","Declan Rice|CM|Inggris|86|gold","Rodrygo|RW|Brasil|85|gold","Rafael Leão|LW|Portugal|85|gold","Marcus Thuram|ST|Prancis|85|gold","Mike Maignan|GK|Prancis|85|gold","Achraf Hakimi|RB|Maroko|86|gold","Nico Williams|LW|Spanyol|85|gold","Michael Olise|RW|Prancis|85|gold","Alexis Mac Allister|CM|Argentina|85|gold","Victor Osimhen|ST|Nigeria|85|gold","Alexander Isak|ST|Swedia|85|gold","Viktor Gyökeres|ST|Swedia|85|gold","Emiliano Martínez|GK|Argentina|85|gold","Antonio Rüdiger|CB|Jerman|85|gold","Dayot Upamecano|CB|Prancis|83|gold","Aleksandar Pavlović|CDM|Jerman|81|gold","Christian Pulisic|RW|Amerika Serikat|84|gold","Jules Koundé|RB|Prancis|85|gold","Pau Cubarsí|CB|Spanyol|84|gold","Ronald Araújo|CB|Uruguay|84|gold","Frenkie de Jong|CM|Belanda|85|gold","Gavi|CM|Spanyol|84|gold","Dani Olmo|CAM|Spanyol|84|gold","Theo Hernández|LB|Prancis|85|gold","Alessandro Bastoni|CB|Italia|85|gold","Sandro Tonali|CM|Italia|84|gold","Nicolò Fagioli|CM|Italia|78|gold","Federico Chiesa|RW|Italia|82|gold","Álvaro Morata|ST|Spanyol|81|gold","Kenan Yıldız|CAM|Turki|83|gold","Dušan Vlahović|ST|Serbia|84|gold","Gleison Bremer|CB|Brasil|84|gold","Wesley|RB|Brasil|79|gold","Mickey van de Ven|CB|Belanda|83|gold","Micky..|—|—|0|x","Gregor Kobel|GK|Swiss|85|gold","Serhou Guirassy|ST|Guinea|84|gold","Karim Adeyemi|LW|Jerman|83|gold","Jonathan Tah|CB|Jerman|84|gold","Romelu Lukaku|ST|Belgia|84|gold","Kevin Danso|CB|Austria|73|silver","Jarrod Bowen|RW|Inggris|82|gold","Eberechi Eze|CAM|Inggris|82|gold","Dominik Szoboszlai|CAM|Hongaria|83|gold","Ryan Gravenberch|CM|Belanda|83|gold","Ibrahima Konaté|CB|Prancis|84|gold","André Onana|GK|Kamerun|82|gold","Marcus Rashford|LW|Inggris|83|gold","Casemiro|CDM|Brasil|83|gold","Éder Militão|CB|Brasil|83|gold","Andrew Robertson|LB|Skotlandia|84|gold","João Cancelo|RB|Portugal|84|gold","Ruben Neves|CDM|Portugal|83|gold","João Félix|ST|Portugal|83|gold","Rafael Guerreiro|LB|Portugal|80|gold","Nuno Mendes|LB|Portugal|84|gold","Warren Zaïre-Emery|CM|Prancis|82|gold","Lucas Hernandez|CB|Prancis|82|gold","Kingsley Coman|LW|Prancis|82|gold","Leroy Sané|RW|Jerman|84|gold","Serge Gnabry|RW|Jerman|83|gold","Leon Goretzka|CM|Jerman|83|gold","Kang-in Lee|CAM|Korea Selatan|80|gold","Min-jae Kim|CB|Korea Selatan|84|gold","Takumi Minamino|CAM|Jepang|79|gold","Kaoru Mitoma|LW|Jepang|82|gold","Takefusa Kubo|RW|Jepang|82|gold","Wataru Endo|CDM|Jepang|79|gold","Daichi Kamada|CAM|Jepang|79|gold","Ritsu Doan|RW|Jepang|79|gold","Jude Bellingham×0|—|—|0|x","Brahim Díaz|CAM|Spanyol|81|gold","Endrick|ST|Brasil|79|gold","Arda Güler|CAM|Turki|82|gold","Fermín López|CM|Spanyol|81|gold","Ferran Torres|ST|Spanyol|81|gold","Dani Carvajal|RB|Spanyol|84|gold","David Alaba|CB|Austria|84|gold","Ferland Mendy|LB|Prancis|82|gold","Éder|GK|Brasil|82|gold","Ederson×0|—|—|0|x","Angelo Stiller|CM|Jerman|80|gold","Nick Woltemade|ST|Jerman|79|gold","Maximilian Beier|ST|Jerman|78|gold","Jonathan Burkardt|ST|Jerman|78|gold","Deniz Undav|ST|Jerman|78|gold","Robert Andrich|CDM|Jerman|79|gold","Aleksandar Pavlović×0|—|—|0|x","Granit Xhaka|CM|Swiss|82|gold","Elias Chair|CAM|Maroko|76|gold","Sofyan Amrabat|CDM|Maroko|79|gold","Azzedine Ounahi|CM|Maroko|77|gold","Yassine Bounou|GK|Maroko|83|gold","Noussair Mazraoui|RB|Maroko|80|gold","Nayef Aguerd|CB|Maroko|79|gold","Romain Saiss|CB|Maroko|76|gold","Ismael Bennacer|CM|Aljazair|80|gold","Riyad Mahrez|RW|Aljazair|83|gold","Amine Gouiri|ST|Aljazair|78|gold","Houssem Aouar|CAM|Aljazair|76|gold","Thomas Partey|CDM|Ghana|80|gold","Mohammed Kudus|CAM|Ghana|82|gold","Iñaki Williams|ST|Ghana|79|gold","Nicolas Jackson|ST|Senegal|81|gold","Ismaïla Sarr|RW|Senegal|79|gold","Pape Matar Sarr|CM|Senegal|79|gold","Édouard Mendy|GK|Senegal|80|gold","Kalidou Koulibaly|CB|Senegal|82|gold","Sadio Mané|LW|Senegal|84|gold","Ademola Lookman|LW|Nigeria|82|gold","Victor Boniface|ST|Nigeria|82|gold","Samuel Chukwueze|RW|Nigeria|78|gold","Alex Iwobi|CM|Nigeria|77|gold","Wilfred Ndidi|CDM|Nigeria|78|gold","Taiwo Awoniyi|ST|Nigeria|76|gold","Clément Lenglet|CB|Prancis|77|gold","Jules Koundé×0|—|—|0|x","Matt O'Riley|CM|Skotlandia|77|gold","Scott McTominay|CM|Skotlandia|81|gold","Billy Gilmour|CM|Skotlandia|76|gold","Aaron Hickey|RB|Skotlandia|75|gold","John McGinn|CM|Skotlandia|80|gold","Dominic Calvert-Lewin|ST|Inggris|77|gold","Ivan Toney|ST|Inggris|80|gold","Dominic Solanke|ST|Inggris|80|gold","Anthony Gordon|LW|Inggris|81|gold","Levi Colwill|CB|Inggris|80|gold","Conor Gallagher|CM|Inggris|81|gold","Reece James|RB|Inggris|83|gold","Ben Chilwell|LB|Inggris|74|silver","Mason Mount|CAM|Inggris|81|gold","Christopher Nkunku|CAM|Prancis|84|gold","Nicolas Fofana|CM|Prancis|76|gold","Ousmane Diomandé|CB|Pantai Gading|78|gold","Evan Ferguson|ST|Irlandia|76|gold","Chiedozie Ogbene|RW|Irlandia|74|silver","Sasha Kalajdzic|ST|Austria|73|silver","Marcel Sabitzer|CM|Austria|80|gold","Konrad Laimer|CM|Austria|80|gold","Christoph Baumgartner|CAM|Austria|77|gold","Patrick Pentz|GK|Austria|72|silver","Xavi Simons|CAM|Belanda|82|gold","Jerdy Schouten|CDM|Belanda|79|gold","Mats Wieffer|CM|Belanda|78|gold","Lutsharel Geertruida|RB|Belanda|77|gold","Bart Verbruggen|GK|Belanda|79|gold","Micky van de Ven×0|—|—|0|x","Sven Botman|CB|Belanda|77|gold","Tijjani Reijnders|CM|Belanda|83|gold","Teun Koopmeiners|CM|Belanda|82|gold","Cody Gakpo|LW|Belanda|82|gold","Wout Weghorst|ST|Belanda|76|gold","Donyell Malen|ST|Belanda|77|gold","Xavi Simons×0|—|—|0|x","Mattia Zaccagni|LW|Italia|82|gold","Giacomo Raspadori|ST|Italia|77|gold","Moise Kean|ST|Italia|80|gold","Riccardo Calafiori|CB|Italia|80|gold","Alessandro Buongiorno|CB|Italia|79|gold","Giovanni Di Lorenzo|RB|Italia|81|gold","Federico Dimarco|LB|Italia|82|gold","Matteo Darmian|RB|Italia|75|gold","Andrea Belotti|ST|Italia|75|gold","Gianluca Scamacca|ST|Italia|77|gold","Sandro Tonali×0|—|—|0|x","Nicolò Zaniolo|CAM|Italia|76|gold","Weston McKennie|CM|Amerika Serikat|76|gold","Tyler Adams|CDM|Amerika Serikat|75|gold","Folarin Balogun|ST|Amerika Serikat|76|gold","Yunus Musah|CM|Amerika Serikat|75|gold","Sergiño Dest|RB|Amerika Serikat|74|silver","Antonee Robinson|LB|Amerika Serikat|77|gold","Chris Richards|CB|Amerika Serikat|75|gold","Matt Turner|GK|Amerika Serikat|73|silver","Gabriel Martinelli|LW|Brasil|80|gold","Gabriel Magalhães|CB|Brasil|84|gold","Gabriel Jesus|ST|Brasil|79|gold","Lucas Paquetá|CAM|Brasil|80|gold","Bruno Guimarães|CM|Brasil|83|gold","Danilo|CB|Brasil|78|gold","Éverton Ribeiro|CAM|Brasil|75|gold","Richarlison|ST|Brasil|78|gold","Matheus Cunha|ST|Brasil|79|gold","João Gomes|CM|Brasil|78|gold","Wesley França|RB|Brasil|75|gold","Lucas Beraldo|CB|Brasil|74|silver","Endrick×0|—|—|0|x","Matheus Nunes|CM|Portugal|79|gold","Gonçalo Ramos|ST|Portugal|80|gold","João Neves|CM|Portugal|83|gold","Diogo Jota|ST|Portugal|83|gold","Rafael Leão×0|—|—|0|x","Vitinha|CM|Portugal|83|gold","Otávio|CM|Portugal|77|gold","Diogo Dalot|RB|Portugal|80|gold","Gonçalo Inácio|CB|Portugal|79|gold","António Silva|CB|Portugal|78|gold","Rúben Neves×0|—|—|0|x",
+/* ═══ PERAK (65-74) ═══ */
+"Ben Chilwell×0|—|—|0|x","Yves Bissouma|CDM|Mali|74|silver","Wesley Fofana|CB|Prancis|74|silver","Archie Gray|CM|Inggris|71|silver","Lucas Bergvall|CM|Swedia|72|silver","Jean-Clair Todibo|CB|Prancis|73|silver","Benoît Badiashile|CB|Prancis|73|silver","Elye Wahi|ST|Prancis|72|silver","Bradley Barcola|LW|Prancis|73|silver","Khephren Thuram|CM|Prancis|73|silver","Youssouf Fofana|CM|Prancis|72|silver","Randal Kolo Muani|ST|Prancis|74|silver","Iliman Ndiaye|CAM|Senegal|72|silver","Boubacar Kamara|CDM|Prancis|73|silver","Mohammed Bayo|ST|Guinea|69|silver","Serhou Guirassy×0|—|—|0|x","Caglar Söyüncü|CB|Turki|70|silver","Merih Demiral|CB|Turki|72|silver","Hakan Calhanoglu×0|—|—|0|x","Ozan Kabak|CB|Turki|69|silver","Çağlar|—|—|0|x","Kerem Aktürkoğlu|LW|Turki|72|silver","Barış Alper Yılmaz|RW|Turki|71|silver","Orkun Kökçü|CM|Turki|73|silver","Altay Bayındır|GK|Turki|70|silver","Uğurcan Çakır|GK|Turki|72|silver","Enes Ünal|ST|Turki|70|silver","Bertuğ Yıldırım|ST|Turki|68|silver","Jonas Hofmann|CAM|Jerman|70|silver","Robin Koch|CB|Jerman|71|silver","Nico Schlotterbeck|CB|Jerman|73|silver","David Raum|LB|Jerman|72|silver","Felix Nmecha|CM|Jerman|70|silver","Julian Brandt|CAM|Jerman|72|silver","Kevin Schade|LW|Jerman|70|silver","Fabian Rieder|CAM|Swiss|70|silver","Silvan Widmer|RB|Swiss|68|silver","Remo Freuler|CM|Swiss|70|silver","Zeki Amdouni|ST|Swiss|69|silver","Kwadwo Duah|ST|Swiss|67|silver","Yvon Mvogo|GK|Swiss|68|silver","Lorenzo Pellegrini|CAM|Italia|73|silver","Riccardo Orsolini|RW|Italia|73|silver","Matteo Politano|RW|Italia|71|silver","Manuel Locatelli|CM|Italia|72|silver","Andrea Cambiaso|LB|Italia|72|silver","Michele Cerri|ST|Italia|65|silver","Simone Verdi|CAM|Italia|66|silver","Alessio Zerbin|LW|Italia|65|silver","Federico Gatti|CB|Italia|70|silver","Josep Martínez|GK|Spanyol|68|silver","Marcos Llorente|CM|Spanyol|73|silver","Stefan Savić|CB|Montenegro|71|silver","Nahuel Molina|RB|Argentina|71|silver","Exequiel Palacios|CM|Argentina|72|silver","Nicolás Domínguez|CM|Argentina|70|silver","Leandro Paredes|CDM|Argentina|71|silver","Germán Pezzella|CB|Argentina|69|silver","Nicolás Tagliafico|LB|Argentina|71|silver","Franco Armani|GK|Argentina|70|silver","Julián Serrano|RB|Argentina|65|silver","Matías Soulé|RW|Argentina|72|silver","Valentín Carboni|CAM|Argentina|69|silver","Alejandro Garnacho|LW|Argentina|73|silver","Facundo Medina|CB|Argentina|70|silver","Thiago Almada|CAM|Argentina|71|silver","Lucas Beltrán|ST|Argentina|70|silver","Cristian Romero|CB|Argentina|73|silver","Nahitan Nández|CM|Uruguay|70|silver","Maximiliano Araújo|LW|Uruguay|70|silver","Brian Rodríguez|RW|Uruguay|68|silver","Sebastián Cáceres|CB|Uruguay|69|silver","Matías Vecino|CM|Uruguay|69|silver","Felipe Carballo|CM|Uruguay|68|silver","Darwin Núñez|ST|Uruguay|73|silver","Facundo Pellistri|RW|Uruguay|69|silver","Rodrigo Bentancur|CM|Uruguay|73|silver","Emiliano Martínez×0|—|—|0|x","Gonzalo Plata|RW|Ekuador|70|silver","Moisés Caicedo|CDM|Ekuador|73|silver","Pervis Estupiñán|LB|Ekuador|72|silver","Piero Hincapié|CB|Ekuador|72|silver","Kendry Páez|CAM|Ekuador|68|silver","Jeremy Sarmiento|LW|Ekuador|68|silver","Jhon Durán|ST|Kolombia|72|silver","Luis Sinisterra|LW|Kolombia|70|silver","Johan Mojica|LB|Kolombia|68|silver","Yerry Mina|CB|Kolombia|69|silver","Camilo Vargas|GK|Kolombia|69|silver","Jefferson Lerma|CM|Kolombia|70|silver","Rafael Santos Borré|ST|Kolombia|69|silver","Richard Ríos|CM|Kolombia|70|silver","Daniel Muñoz|RB|Kolombia|71|silver","Jorge Carrascal|CAM|Kolombia|69|silver","Kevin Castaño|CM|Kolombia|68|silver","Santiago Arias|RB|Kolombia|66|silver","Alonso Zambrano|CB|Kolombia|65|silver","Devis Vásquez|GK|Kolombia|65|silver","Éderson×0|—|—|0|x",
+/* ═══ PERUNGGU (<65) — sebagian generated di bawah ═══ */
+"Marc Guiu|ST|Spanyol|64|bronze","Hugo Félix|CAM|Portugal|63|bronze","Roony Bardghji|RW|Swedia|62|bronze","Arda Güler×0|—|—|0|x","Kenan Yıldız×0|—|—|0|x","Diego Kochen|GK|Amerika Serikat|61|bronze","Maksymilian Rosłan|LB|Polandia|60|bronze","Kacper Kozłowski|CM|Polandia|63|bronze","Jakub Kiwior|CB|Polandia|64|bronze","Sebastian Walukiewicz|CB|Polandia|62|bronze","Karol Świderski|ST|Polandia|64|bronze","Mattia Viti|CB|Italia|62|bronze","Alessandro Riccio|CM|Italia|60|bronze","Tommaso Baldanzi|CAM|Italia|64|bronze","Cesare Casadei|CM|Italia|63|bronze","Matteo Cancellieri|LW|Italia|62|bronze","Simone Pafundi|CAM|Italia|61|bronze","Luca D'Andrea|CB|Italia|59|bronze","Nikola Šutalo|CB|Kroasia|61|bronze","Martin Baturina|CAM|Kroasia|64|bronze","Petar Sučić|CM|Kroasia|63|bronze","Luka Vušković|CB|Kroasia|62|bronze","Hrvoje Smolčić|CB|Kroasia|60|bronze","Ivan Bašić|GK|Kroasia|58|bronze",
+];
+
+/* generator pemain tambahan biar total ±500 (deterministik biar ID stabil) */
+const GEN_FIRST = { Inggris:['Harry','Jack','Callum','Lewis','Owen','Reece','Tyler','Jake','Connor','Mason','Declan','Kyle','Liam','Aaron','Charlie'], Spanyol:['Álvaro','Pablo','Iker','Sergio','Adrián','Hugo','Nico','Dani','Marco','Raúl','Iván','Javi','Unai','Aitor','Gonzalo'], Prancis:['Enzo','Théo','Hugo','Lucas','Enzo','Mathis','Rayan','Yanis','Kylian','Noah','Ethan','Tom','Adam','Nolan','Mattéo'], Brasil:['Vitor','Gabriel','Lucas','Matheus','João','Pedro','Rafael','Thiago','Bruno','Igor','Caio','Felipe','Douglas','Everton','Wesley'], Argentina:['Nicolás','Tomás','Facundo','Franco','Lautaro','Julián','Agustín','Ezequiel','Emiliano','Ignacio','Bautista','Thiago','Valentín','Ramiro','Mateo'], Jerman:['Niklas','Jonas','Finn','Leon','Noah','Luca','Erik','Tim','Maximilian','Paul','Felix','Jan','Moritz','Luca','David'], Italia:['Riccardo','Lorenzo','Alessandro','Matteo','Federico','Nicolò','Davide','Simone','Andrea','Marco','Tommaso','Edoardo','Samuele','Giacomo','Filippo'], Belanda:['Daan','Sem','Milan','Levi','Ruben','Bram','Jesse','Thijs','Sven','Lars','Timo','Koen','Joris','Niels','Stijn'], Portugal:['Diogo','Tiago','Rúben','André','Gonçalo','Vasco','Francisco','Afonso','Rodrigo','Duarte','Nuno','Miguel','Bernardo','Vitinha','Rafael'] };
+const GEN_LAST  = { Inggris:['Smith','Johnson','Walker','Wright','Barnes','Hughes','Turner','Clarke','Davies','Bennett','Foster','Palmer','Barnes','Reid','Wood'], Spanyol:['García','Torres','Navarro','Moreno','Ramos','Ortega','Vega','Serrano','Iglesias','Herrera','Castro','Molina','Delgado','Vidal','Cortés'], Prancis:['Martin','Bernard','Dubois','Moreau','Laurent','Girard','Roux','Fontaine','Chevalier','Lambert','Mercier','Renard','Leclerc','Perrin','Marchand'], Brasil:['Silva','Santos','Oliveira','Souza','Pereira','Costa','Almeida','Ferreira','Ribeiro','Carvalho','Gomes','Martins','Rocha','Barbosa','Teixeira'], Argentina:['González','Rodríguez','Fernández','López','Martínez','Díaz','Álvarez','Romero','Molina','Acuña','Paredes','Correa','Sosa','Vera','Aguirre'], Jerman:['Müller','Schmidt','Schneider','Fischer','Weber','Wagner','Becker','Hoffmann','Schulz','Koch','Bauer','Richter','Klein','Wolf','Schröder'], Italia:['Rossi','Russo','Ferrari','Esposito','Bianchi','Romano','Colombo','Ricci','Marino','Greco','Bruno','Gallo','Conti','DeLuca','Costa'], Belanda:['DeJong','Jansen','DeVries','Bakker','Visser','Smit','Meijer','Mulder','Bos','Vos','Peters','Hendriks','Dekker','Dijkstra','Brouwer'], Portugal:['Silva','Costa','Ferreira','Pereira','Oliveira','Sousa','Rodrigues','Martins','Fernandes','Gonçalves','Lopes','Marques','Alves','Ribeiro','Pinto'] };
+const GEN_COUNTRIES = Object.keys(GEN_FIRST);
+const GEN_POS = ['GK','CB','CB','LB','RB','CDM','CM','CM','CAM','LM','RM','LW','RW','ST','ST'];
+function buildDB(){
+  const out = [];
+  const seen = new Set();
+  for (const line of DB_RAW) {
+    const parts = line.split('|');
+    if (parts.length < 5 || parts[4] === 'x') continue;
+    const [name, pos, country, ovr, r] = parts;
+    if (seen.has(name)) continue;
+    seen.add(name);
+    out.push({ id: out.length, name, pos, country, ovr: +ovr, r });
+  }
+  /* generated: dari 350-an target 500 */
+  const g = mulberry(20260922);
+  let guard = 0;
+  while (out.length < 500 && guard < 3000) {
+    guard++;
+    const c = GEN_COUNTRIES[Math.floor(g() * GEN_COUNTRIES.length)];
+    let name = GEN_FIRST[c][Math.floor(g() * 15)] + ' ' + GEN_LAST[c][Math.floor(g() * 15)];
+    if (g() < 0.25) name += ' Junior';
+    if (seen.has(name)) continue;
+    seen.add(name);
+    const ovr = 48 + Math.floor(g() * 17); // 48-64 = perunggu
+    out.push({ id: out.length, name, pos: GEN_POS[Math.floor(g() * GEN_POS.length)], country: c, ovr, r: 'bronze' });
+  }
+  return out;
+}
+const PLAYERS = buildDB();
+const byId = (id) => PLAYERS[id];
+
+/* ─────────── FORMASI ─────────── */
+const FORMATIONS = {
+  '433-attack':  { label:'4-3-3 Attack',  slots:['GK','LB','CB','CB','RB','CM','CM','CAM','LW','ST','RW'] },
+  '433-holding': { label:'4-3-3 Holding', slots:['GK','LB','CB','CB','RB','CDM','CM','CM','LW','ST','RW'] },
+  '442':         { label:'4-4-2',         slots:['GK','LB','CB','CB','RB','LM','CM','CM','RM','ST','ST'] },
+  '4123':        { label:'4-1-2-3',       slots:['GK','LB','CB','CB','RB','CDM','CM','CM','LW','ST','RW'] },
+  '4231':        { label:'4-2-3-1',       slots:['GK','LB','CB','CB','RB','CDM','CDM','CAM','LM','RM','ST'] },
+  '352':         { label:'3-5-2',         slots:['GK','CB','CB','CB','LWB','CM','CM','CM','RWB','ST','ST'] },
+};
+/* posisi layout (x: 0=gawang sendiri→100 gawang lawan, y: 0-100) */
+const POSXY = { GK:[5,50], CB:[20,50], LB:[22,15], RB:[22,85], LWB:[35,12], RWB:[35,88], CDM:[35,50], CM:[45,50], CAM:[58,50], LM:[50,15], RM:[50,85], LW:[68,15], RW:[68,85], ST:[75,50] };
+const POSGROUP = { GK:'GK', CB:'DEF', LB:'DEF', RB:'DEF', LWB:'DEF', RWB:'DEF', CDM:'MID', CM:'MID', CAM:'MID', LM:'MID', RM:'MID', LW:'ATT', RW:'ATT', ST:'ATT' };
+
+function posPenalty(playerPos, slotPos){
+  if (playerPos === slotPos) return 0;
+  const pg = POSGROUP[playerPos], sg = POSGROUP[slotPos];
+  if (sg === 'GK' || pg === 'GK') return -25;
+  if (pg === sg) return -6;
+  return -12;
+}
+function effOVR(p, slotPos){ return Math.max(30, p.ovr + posPenalty(p.pos, slotPos)); }
+function squadOVR(squad){
+  if (!squad) return 0;
+  const slots = FORMATIONS[squad.formation].slots;
+  let s = 0, n = 0;
+  squad.players.forEach((pid, i) => { if (pid != null && byId(pid)) { s += effOVR(byId(pid), slots[i]); n++; } });
+  return n ? Math.round(s / n) : 0;
+}
+function squadChem(squad){
+  if (!squad) return 0;
+  const slots = FORMATIONS[squad.formation].slots;
+  let pts = 0;
+  squad.players.forEach((pid, i) => {
+    const p = pid != null ? byId(pid) : null;
+    if (!p) return;
+    if (squad.players.some((pid2, j) => j !== i && pid2 != null && byId(pid2) && byId(pid2).country === p.country)) pts++;
+    if (p.pos === slots[i]) pts++;
+  });
+  return Math.min(100, Math.round(pts / 22 * 100));
+}
+
+/* ─────────── KARTU ─────────── */
+const FACE_SVG = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><rect width="80" height="80" fill="#7d8590"/><circle cx="40" cy="30" r="14" fill="#aab2bd"/><path d="M12 78 Q14 52 40 52 Q66 52 68 78 Z" fill="#aab2bd"/></svg>');
+function cardHTML(p, opts){
+  opts = opts || {};
+  if (opts.mystery) return '<div class="fbc fbr-mystery' + (opts.cls || '') + '"><div class="fbc-q">?</div></div>';
+  const r = RAR[p.r];
+  return '<div class="fbc ' + r.cls + (opts.cls || '') + '" data-pid="' + p.id + '">' +
+    '<div class="fbc-ovr">' + p.ovr + '</div>' +
+    '<div class="fbc-pos">' + esc(p.pos) + '</div>' +
+    '<img class="fbc-face" src="' + FACE_SVG + '" alt="">' +
+    '<div class="fbc-name">' + esc(p.name) + '</div>' +
+    '<div class="fbc-country">' + esc(p.country) + '</div>' +
+    '<div class="fbc-rar">' + r.label + '</div>' +
+    '</div>';
+}
+
+/* ─────────── STATE ─────────── */
+const FB_TOKEN = () => localStorage.getItem('ifxrq_token') || '';
+let state = null; // {division, points, matches, w,d,l, rating, squad, index, history}
+let myName = 'Player';
+async function fbPost(body){
+  const r = await fetch('/api/football', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ ...body, token: FB_TOKEN() }) });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(d?.error?.message || d?.error || 'gagal');
+  return d;
+}
+let myUid = '';
+async function fbRefresh(){
+  const d = await fbPost({ action:'state' });
+  state = d.state; myName = d.name || 'Player'; myUid = d.uid || '';
+}
+
+/* ─────────── SCREEN ROUTER ─────────── */
+let pollTimer = null;
+function screen(name, html){
+  clearInterval(pollTimer);
+  $('fbRoot').innerHTML = html;
+  $('fbRoot').dataset.screen = name;
+}
+function showLobby(){
+  fbRefresh().then(renderLobby).catch((e) => { $('fbRoot').innerHTML = '<div class="fb-empty">' + esc(e.message) + '</div>'; });
+}
+function renderLobby(){
+  const total = state.w + state.d + state.l;
+  const wr = total ? Math.round(state.w / total * 100) : 0;
+  screen('lobby', `
+    <div class="fb-lobby">
+      <button type="button" class="fb-profile" id="fbProfile">
+        <img src="${FACE_SVG}" alt="">
+        <div><b>${esc(myName)}</b><span>ID: ${esc(String((state.squad && state.squad.createdBy) || 'guest').slice(0, 8))}</span></div>
+      </button>
+      <div class="fb-side">
+        <button type="button" class="fb-bigbtn fb-bn-draft" id="fbBtnDraft"><span>DRAFT</span></button>
+        <button type="button" class="fb-bigbtn fb-bn-team" id="fbBtnTeam"><span>TEAM</span></button>
+        <button type="button" class="fb-bigbtn fb-bn-index" id="fbBtnIndex"><span>INDEX</span></button>
+      </div>
+      <div class="fb-lobby-mid">
+        <div class="fb-lobby-title">IFZRQ FC</div>
+        <div class="fb-lobby-sub">Divisi ${state.division} · ${state.division >= 4 ? state.points + ' poin (' + state.matches + '/10 match)' : state.rating + ' rating'}</div>
+        <button type="button" class="fb-play" id="fbBtnPlay"><span>PLAY</span></button>
+      </div>
+    </div>`);
+  $('fbProfile').onclick = () => {
+    $('fbRoot').insertAdjacentHTML('beforeend', `
+      <div class="fb-modal" id="fbProfModal">
+        <div class="fb-modal-card">
+          <h3>PROFIL</h3>
+          <div class="fb-prof-row"><span>Nama</span><b>${esc(myName)}</b></div>
+          <div class="fb-prof-row"><span>ID Akun</span><b>${esc(uid8())}</b></div>
+          <div class="fb-prof-row"><span>Total Match</span><b>${total}</b></div>
+          <div class="fb-prof-row"><span>W / D / L</span><b>${state.w} / ${state.d} / ${state.l}</b></div>
+          <div class="fb-prof-row"><span>Win Rate</span><b>${wr}%</b></div>
+          <div class="fb-winbar"><i style="width:${wr}%"></i></div>
+          <button type="button" class="fb-btn" id="fbProfClose">Tutup</button>
+        </div>
+      </div>`);
+    $('fbProfClose').onclick = () => $('fbProfModal').remove();
+  };
+  $('fbBtnDraft').onclick = startDraft;
+  $('fbBtnTeam').onclick = showTeam;
+  $('fbBtnIndex').onclick = showIndex;
+  $('fbBtnPlay').onclick = showPlay;
+}
+function uid8(){ try { const t = JSON.parse(atob((FB_TOKEN() || '').split('.')[0])); return String(t.uid || '').slice(0, 8); } catch(e){ return 'guest'; } }
+
+/* ─────────── DRAFT ─────────── */
+let draft = null;
+function startDraft(){
+  draft = { phase:'captain', formation:null, players:Array(11).fill(null), bench:Array(5).fill(null) };
+  drawCards(null, 'PILIH KAPTEN TIM ANDA', true);
+}
+function draw4(forPos){
+  /* 4 kandidat: rarity-weighted; kalau slot posisi → filter pemain posisi itu (fallback grup) */
+  let pool = PLAYERS;
+  if (forPos) {
+    const exact = PLAYERS.filter((p) => p.pos === forPos);
+    if (exact.length >= 4) pool = exact;
+    else pool = PLAYERS.filter((p) => POSGROUP[p.pos] === POSGROUP[forPos]);
+  }
+  const out = [];
+  const w = (p) => p.r === 'icon' ? 0.5 : p.r === 'legend' ? 1 : p.r === 'gold' ? 4 : p.r === 'silver' ? 8 : 14;
+  let guard = 0;
+  while (out.length < 4 && guard < 500) {
+    guard++;
+    const p = pool[Math.floor(rnd() * pool.length)];
+    if (out.includes(p)) continue;
+    if (rnd() * 30 < w(p)) out.push(p);
+    else if (guard > 300 && !out.includes(p)) out.push(p);
+  }
+  return out;
+}
+function drawCards(forPos, title, isCaptain){
+  const cands = draw4(forPos);
+  const best = cands.reduce((a, b) => (b.ovr > a.ovr ? b : a));
+  const bestIdx = cands.indexOf(best);
+  const years = [2008,2010,2012,2014,2016,2018,2019,2020,2021,2022,2023,2024,2025,2026];
+  screen('draft', `
+    <div class="fb-draft">
+      <div class="fb-draft-title">${esc(title || 'PILIH PEMAIN')}</div>
+      ${forPos ? '<div class="fb-draft-pos">POSISI: <b>' + esc(forPos) + '</b></div>' : ''}
+      <div class="fb-cards" id="fbCards">
+        ${cands.map((p, i) => `
+          <div class="fb-cardwrap" data-i="${i}">
+            <div class="fbc fb-back" id="fbBack${i}"><div class="fb-year" id="fbYear${i}">20??</div></div>
+            <div class="fb-front" id="fbFront${i}" style="display:none"></div>
+          </div>`).join('')}
+      </div>
+      <button type="button" class="fb-btn fb-ghost" id="fbDraftExit">Exit</button>
+    </div>`);
+  $('fbDraftExit').onclick = showLobby;
+  /* animasi tahun acak */
+  const spin = {};
+  cands.forEach((_, i) => {
+    spin[i] = setInterval(() => { const y = $('fbYear' + i); if (y) y.textContent = pick(years); }, 70);
+  });
+  const settleYears = cands.map(() => pick(years));
+  setTimeout(() => {
+    Object.values(spin).forEach(clearInterval);
+    cands.forEach((_, i) => { $('fbYear' + i).textContent = settleYears[i]; });
+    /* reveal — kartu terbaik dapat animasi urutan posisi→negara→ovr (kalo gold+) */
+    cands.forEach((p, i) => {
+      const front = $('fbFront' + i);
+      const isBest = i === bestIdx;
+      const animated = isBest && (p.r === 'gold' || p.r === 'legend' || p.r === 'icon');
+      setTimeout(() => {
+        $('fbBack' + i).style.display = 'none';
+        front.style.display = '';
+        if (!animated) { front.innerHTML = cardHTML(p, { cls:' fbc-in' }); return; }
+        /* animasi berurutan: posisi → negara → ovr → full */
+        front.innerHTML = cardHTML(p, { cls:' fbc-anim fbc-in' });
+        const card = front.querySelector('.fbc');
+        const seq = [
+          [400, () => card.classList.add('st-pos')],
+          [1000, () => card.classList.add('st-country')],
+          [1600, () => card.classList.add('st-ovr')],
+          [2300, () => card.classList.add('st-full')],
+        ];
+        seq.forEach(([d, fn]) => setTimeout(fn, d));
+      }, 600 + i * 250);
+    });
+    /* klik pilih */
+    cands.forEach((p, i) => {
+      $('fbCards').children[i].onclick = () => {
+        if (isCaptain) { draft.captain = p.id; showFormationSelect(); }
+        else pickForSlot(p);
+      };
+    });
+  }, 1400);
+}
+function showFormationSelect(){
+  screen('form', `
+    <div class="fb-draft">
+      <div class="fb-draft-title">PILIH FORMASI</div>
+      <div class="fb-formgrid">
+        ${Object.entries(FORMATIONS).map(([k, f]) => `
+          <div class="fb-formcard" data-f="${k}">
+            ${formationSVG(k)}
+            <b>${f.label}</b>
+          </div>`).join('')}
+      </div>
+      <button type="button" class="fb-btn fb-ghost" id="fbFormBack">← Ulang pilih kapten</button>
+    </div>`);
+  $('fbFormBack').onclick = startDraft;
+  document.querySelectorAll('.fb-formcard').forEach((el) => {
+    el.onclick = () => { draft.formation = el.dataset.f; showBuilder(); };
+  });
+}
+function formationSVG(key){
+  const f = FORMATIONS[key];
+  const counts = {};
+  const dots = f.slots.map((s, i) => {
+    const [x, y] = POSXY[s];
+    const cy = counts[s] ? (y === 50 ? 50 + (counts[s] * 16) : y + counts[s] * 6) : y;
+    counts[s] = (counts[s] || 0) + 1;
+    const yy = s === 'ST' || s === 'CAM' || s === 'CM' || s === 'CDM' || s === 'CB' ? (50 + (i - 5.5) * 5) : cy;
+    return `<circle cx="${x}" cy="${Math.max(8, Math.min(92, yy))}" r="4" fill="#fff" stroke="#222" stroke-width="1.2"/><text x="${x}" y="${Math.max(8, Math.min(92, yy)) - 7}" font-size="5" text-anchor="middle" fill="#fff">${s}</text>`;
+  }).join('');
+  return `<svg viewBox="0 0 100 100" class="fb-formsvg"><rect x="2" y="2" width="96" height="96" rx="6" fill="#1c7c3c"/><rect x="2" y="45" width="96" height="1.5" fill="#ffffff55"/>${dots}</svg>`;
+}
+let currentSlot = null;
+function showBuilder(){
+  const f = FORMATIONS[draft.formation];
+  const benchDone = draft.bench.filter((x) => x != null).length;
+  const allDone = draft.players.every((x) => x != null) && benchDone === 5;
+  screen('build', `
+    <div class="fb-build">
+      <div class="fb-build-left">
+        <div class="fb-panel">
+          <div class="fb-row"><span>Formasi</span><b>${f.label}</b></div>
+          <div class="fb-row"><span>OVR Tim</span><b id="fbBOvr">${squadOVR(tmpSquad())}</b></div>
+          <div class="fb-chem"><span>Chemistry</span><div class="fb-chembar"><i id="fbBChem" style="width:${squadChem(tmpSquad())}%"></i></div><b id="fbBChemN">${squadChem(tmpSquad())}%</b></div>
+          <button type="button" class="fb-btn fb-warn" id="fbRestart">Restart</button>
+          <button type="button" class="fb-btn fb-ghost" id="fbExit">Exit</button>
+        </div>
+      </div>
+      <div class="fb-build-right">
+        <div class="fb-pitch" id="fbPitch">${pitchSlotsHTML()}</div>
+        <div class="fb-bench">
+          <div class="fb-bench-title">CADANGAN (${benchDone}/5)</div>
+          <div class="fb-bench-row" id="fbBenchRow">${benchHTML()}</div>
+        </div>
+        <button type="button" class="fb-confirm ${allDone ? 'ok' : ''}" id="fbConfirm">${allDone ? 'CONFIRM' : 'CONFIRM'}</button>
+      </div>
+    </div>`);
+  $('fbRestart').onclick = startDraft;
+  $('fbExit').onclick = showLobby;
+  $('fbConfirm').onclick = () => { if (allDone) confirmDraft(); };
+  document.querySelectorAll('.fb-slot').forEach((el) => {
+    el.onclick = () => {
+      const idx = +el.dataset.i;
+      if (draft.players[idx] != null) return; /* udah keisi = terkunci */
+      currentSlot = { type:'main', idx };
+      drawCards(FORMATIONS[draft.formation].slots[idx], 'PILIH ' + FORMATIONS[draft.formation].slots[idx]);
+    };
+  });
+  document.querySelectorAll('.fb-bslot').forEach((el) => {
+    el.onclick = () => {
+      const idx = +el.dataset.i;
+      if (draft.bench[idx] != null) return;
+      currentSlot = { type:'bench', idx };
+      drawCards(null, 'PILIH CADANGAN');
+    };
+  });
+}
+function tmpSquad(){ return { formation: draft.formation, players: draft.players, bench: draft.bench }; }
+function pitchSlotsHTML(){
+  const f = FORMATIONS[draft.formation];
+  const counts = {};
+  return f.slots.map((s, i) => {
+    const [x, y] = POSXY[s];
+    counts[s] = (counts[s] || 0) + 1;
+    const spread = { 1: 0, 2: -14 }[ /* duplikat ST/CB */ (f.slots.filter(z => z === s).length) ] || 0;
+    const off = f.slots.filter((z, j) => j < i && z === s).length * 28;
+    const pid = draft.players[i];
+    const p = pid != null ? byId(pid) : null;
+    const left = (x / 100 * 92 + 2), top = (y === 50 && ['ST','CB','CM','CDM','CAM'].includes(s) ? 50 + off - ((f.slots.filter(z=>z===s).length - 1) * 14) : y) / 100 * 92 + 4;
+    return `<div class="fb-slot ${p ? 'filled' : ''}" data-i="${i}" style="left:${left}%;top:${top}%">
+      ${p ? miniCard(p, s) : '<div class="fb-plus">+</div><div class="fb-slotpos">' + s + '</div>'}
+    </div>`;
+  }).join('');
+}
+function miniCard(p, slot){
+  const eff = effOVR(p, slot);
+  return `<div class="fb-mini ${RAR[p.r].cls}"><b>${eff}</b><span>${esc(p.name.split(' ').slice(-1)[0])}</span><i>${slot}</i></div>`;
+}
+function benchHTML(){
+  return draft.bench.map((pid, i) => {
+    const p = pid != null ? byId(pid) : null;
+    return `<div class="fb-bslot ${p ? 'filled' : ''}" data-i="${i}">${p ? miniCard(p, 'CAD') : '<div class="fb-plus">+</div>'}</div>`;
+  }).join('');
+}
+function pickForSlot(p){
+  if (currentSlot.type === 'main') draft.players[currentSlot.idx] = p.id;
+  else draft.bench[currentSlot.idx] = p.id;
+  showBuilder();
+}
+function confirmDraft(){
+  const squad = { formation: draft.formation, players: draft.players, bench: draft.bench, captain: draft.captain, createdBy: uid8() };
+  const indexAdd = [...squad.players, ...squad.bench].filter((x) => x != null);
+  const ovr = squadOVR(squad), chem = squadChem(squad);
+  /* layar animasi confirm: ovr & chemistry count-up, kartu muncul satu-satu dari ovr terkecil */
+  const order = squad.players.map((pid, i) => ({ pid, slot: FORMATIONS[squad.formation].slots[i] }))
+    .sort((a, b) => effOVR(byId(a.pid), a.slot) - effOVR(byId(b.pid), b.slot));
+  screen('confirm', `
+    <div class="fb-confirm-scr">
+      <div class="fb-draft-title">TIM KONFIRMASI</div>
+      <div class="fb-cf-ovr" id="fbCfOvr">OVR 0</div>
+      <div class="fb-chem"><span>Chemistry</span><div class="fb-chembar big"><i id="fbCfChem" style="width:0%"></i></div><b id="fbCfChemN">0%</b></div>
+      <div class="fb-cf-cards" id="fbCfCards"></div>
+      <button type="button" class="fb-btn fb-ghost" id="fbCfDone" style="visibility:hidden">Selesai → Lobby</button>
+    </div>`);
+  let o = 0; const t1 = setInterval(() => { o++; $('fbCfOvr').textContent = 'OVR ' + o; if (o >= ovr) { clearInterval(t1); $('fbCfOvr').textContent = 'OVR ' + ovr; } }, 25);
+  let c = 0; const t2 = setInterval(() => { c++; $('fbCfChem').style.width = Math.min(c, chem) + '%'; $('fbCfChemN').textContent = Math.min(c, chem) + '%'; if (c >= chem) clearInterval(t2); }, 18);
+  order.forEach((o2, i) => {
+    setTimeout(() => {
+      $('fbCfCards').insertAdjacentHTML('beforeend', cardHTML(byId(o2.pid), { cls: ' fbc-in' }));
+    }, 900 + i * 260);
+  });
+  setTimeout(() => { $('fbCfDone').style.visibility = ''; }, 1400 + order.length * 260);
+  $('fbCfDone').onclick = async () => {
+    try {
+      const d = await fbPost({ action:'saveSquad', squad, indexAdd });
+      state = d.state;
+      showLobby();
+    } catch (e) { alert('gagal simpen: ' + e.message); }
+  };
+}
+
+/* ─────────── TEAM (atur posisi) ─────────── */
+let swapSel = null;
+function showTeam(){
+  if (!state.squad) { alert('belum ada tim — draft dulu'); return; }
+  const sq = state.squad;
+  const f = FORMATIONS[sq.formation];
+  swapSel = null;
+  screen('team', `
+    <div class="fb-build">
+      <div class="fb-build-left">
+        <div class="fb-panel">
+          <div class="fb-row"><span>Formasi</span><b>${f.label}</b></div>
+          <div class="fb-row"><span>OVR Efektif</span><b id="fbTOvr">${squadOVR(sq)}</b></div>
+          <div class="fb-chem"><span>Chemistry</span><div class="fb-chembar"><i style="width:${squadChem(sq)}%"></i></div><b>${squadChem(sq)}%</b></div>
+          <div class="fb-hint">tap 2 pemain buat tukar posisi. posisi gak ideal = OVR turun</div>
+          <button type="button" class="fb-btn fb-ghost" id="fbTBack">← Lobby</button>
+        </div>
+      </div>
+      <div class="fb-build-right">
+        <div class="fb-pitch" id="fbPitch">${teamPitchHTML()}</div>
+      </div>
+    </div>`);
+  $('fbTBack').onclick = showLobby;
+  renderTeamBinds();
+}
+function teamPitchHTML(){
+  const sq = state.squad;
+  const f = FORMATIONS[sq.formation];
+  return f.slots.map((s, i) => {
+    const [x, y] = POSXY[s];
+    const off = f.slots.filter((z, j) => j < i && z === s).length * 28;
+    const top = (y === 50 && ['ST','CB','CM','CDM','CAM'].includes(s) ? 50 + off - ((f.slots.filter(z=>z===s).length - 1) * 14) : y) / 100 * 92 + 4;
+    const p = sq.players[i] != null ? byId(sq.players[i]) : null;
+    return `<div class="fb-slot tslot filled ${p && p.pos !== s ? 'badpos' : ''}" data-i="${i}" style="left:${x / 100 * 92 + 2}%;top:${top}%">
+      ${p ? miniCard(p, s) : ''}
+    </div>`;
+  }).join('');
+}
+function renderTeamBinds(){
+  document.querySelectorAll('.tslot').forEach((el) => {
+    el.onclick = () => {
+      const i = +el.dataset.i;
+      if (swapSel == null) { swapSel = i; el.classList.add('sel'); return; }
+      if (swapSel === i) { el.classList.remove('sel'); swapSel = null; return; }
+      /* tukar */
+      const sq = state.squad;
+      const tmp = sq.players[swapSel];
+      sq.players[swapSel] = sq.players[i];
+      sq.players[i] = tmp;
+      swapSel = null;
+      fbPost({ action:'saveSquad', squad: sq }).then((d) => { state = d.state; }).catch(() => {});
+      showTeam();
+    };
+  });
+}
+
+/* ─────────── INDEX (koleksi) ─────────── */
+function showIndex(){
+  fbRefresh().then(() => {
+    const owned = new Set(state.index || []);
+    const rars = ['icon','legend','gold','silver','bronze'];
+    screen('index', `
+      <div class="fb-index">
+        <div class="fb-draft-title">INDEX PEMAIN</div>
+        <div class="fb-idx-tabs" id="fbIdxTabs">
+          ${rars.map((r, i) => `<div class="fb-idx-tab ${i === 0 ? 'on' : ''}" data-r="${r}">${RAR[r].label} <span>${PLAYERS.filter((p) => p.r === r && owned.has(p.id)).length}/${PLAYERS.filter((p) => p.r === r).length}</span></div>`).join('')}
+        </div>
+        <div class="fb-idx-grid" id="fbIdxGrid"></div>
+        <button type="button" class="fb-btn fb-ghost" id="fbIdxBack">← Lobby</button>
+      </div>`);
+    $('fbIdxBack').onclick = showLobby;
+    const renderGrid = (r) => {
+      $('fbIdxGrid').innerHTML = PLAYERS.filter((p) => p.r === r).map((p) => owned.has(p.id) ? cardHTML(p) : cardHTML(p, { mystery:true })).join('');
+    };
+    renderGrid('icon');
+    document.querySelectorAll('.fb-idx-tab').forEach((el) => {
+      el.onclick = () => {
+        document.querySelectorAll('.fb-idx-tab').forEach((x) => x.classList.remove('on'));
+        el.classList.add('on');
+        renderGrid(el.dataset.r);
+      };
+    });
+  });
+}
+
+/* ─────────── PLAY MENU ─────────── */
+function showPlay(){
+  if (!state.squad) { alert('draft tim dulu sebelum main'); return; }
+  screen('play', `
+    <div class="fb-playmenu">
+      <div class="fb-draft-title">PLAY</div>
+      <div class="fb-playcards">
+        <div class="fb-playcard" id="fbPvAI">
+          <b>VS AI</b><span>lawan AI sesuai divisi lu (divisi ${state.division})</span>
+        </div>
+        <div class="fb-playcard" id="fbPvP">
+          <b>PVP</b><span>cari lawan beneran yang lagi nyari match</span>
+        </div>
+        <div class="fb-playcard" id="fbFriend">
+          <b>LAGA TEMAN</b><span>bikin room / masuk pakai ID — by1 bareng temen</span>
+        </div>
+      </div>
+      <button type="button" class="fb-btn fb-ghost" id="fbPlayBack">← Lobby</button>
+    </div>`);
+  $('fbPlayBack').onclick = showLobby;
+  $('fbPvAI').onclick = playVsAI;
+  $('fbPvP').onclick = playPvp;
+  $('fbFriend').onclick = showFriendMenu;
+}
+
+/* ─────────── VS AI ─────────── */
+const DIV_OVR = { 10:62, 9:65, 8:68, 7:71, 6:74, 5:77, 4:80, 3:84, 2:87, 1:90 };
+function genAITeam(div){
+  const g = mulberry(Date.now() % 100000 + div * 77);
+  const fk = Object.keys(FORMATIONS);
+  const fk2 = fk[Math.floor(g() * fk.length)];
+  const slots = FORMATIONS[fk2].slots;
+  const target = DIV_OVR[div] || 65;
+  const players = slots.map((s) => {
+    const pool = PLAYERS.filter((p) => POSGROUP[p.pos] === POSGROUP[s]);
+    return pool[Math.floor(g() * pool.length)].id;
+  });
+  const bench = Array.from({ length: 5 }, () => {
+    const pool = PLAYERS.filter((p) => p.ovr >= target - 12 && p.ovr <= target + 4);
+    const pool2 = pool.length ? pool : PLAYERS;
+    return pool2[Math.floor(g() * pool2.length)].id;
+  });
+  return { formation: fk2, players, bench, name: 'AI Divisi ' + div, boost: target };
+}
+function playVsAI(){
+  const ai = genAITeam(state.division);
+  startMatch({ mode:'ai', mySquad: state.squad, oppSquad: ai, oppName: 'AI Divisi ' + state.division });
+}
+
+/* ─────────── PVP (matchmaking) ─────────── */
+let pvpTimer = null;
+function playPvp(){
+  screen('pvp', `
+    <div class="fb-playmenu">
+      <div class="fb-draft-title">MENCARI LAWAN...</div>
+      <div class="fb-search"><div class="fb-spinner"></div><span id="fbPvpInfo">nyari player yang lagi nyari match juga...</span></div>
+      <div class="fb-btnrow">
+        <button type="button" class="fb-btn fb-warn" id="fbPvpCancel">Batalkan</button>
+      </div>
+    </div>`);
+  fbPost({ action:'queueJoin', name: myName, squad: state.squad }).catch(() => {});
+  let secs = 0;
+  pvpTimer = setInterval(async () => {
+    secs++;
+    try {
+      const d = await fbPost({ action:'queuePoll' });
+      if (d.match) {
+        clearInterval(pvpTimer);
+        const m = d.match;
+        const imA = m.a.uid === myUid || m.a.name === myName;
+        const me = imA ? m.a : m.b, opp = imA ? m.b : m.a;
+        startMatch({ mode:'pvp', mySquad: me.squad || state.squad, oppSquad: opp.squad || genAITeam(state.division), oppName: opp.name, mid: m.mid, seed: m.seed });
+      } else if (secs > 30) {
+        clearInterval(pvpTimer);
+        fbPost({ action:'queueLeave' }).catch(() => {});
+        alert('gak ada player yang nyari match — pencarian dibatalkan');
+        showPlay();
+      } else {
+        $('fbPvpInfo').textContent = 'nyari player... (' + secs + '/30 dtk)';
+      }
+    } catch (e) {}
+  }, 2000);
+  $('fbPvpCancel').onclick = () => {
+    clearInterval(pvpTimer);
+    fbPost({ action:'queueLeave' }).catch(() => {});
+    showPlay();
+  };
+}
+
+/* ─────────── LAGA TEMAN ─────────── */
+let roomTimer = null;
+function showFriendMenu(){
+  screen('friend', `
+    <div class="fb-playmenu">
+      <div class="fb-draft-title">LAGA TEMAN</div>
+      <div class="fb-btnrow">
+        <button type="button" class="fb-btn" id="fbRoomCreate">Bikin Room</button>
+        <input id="fbRoomId" class="fb-input" placeholder="ID ROOM (misal 3FA2B1)" maxlength="6" autocomplete="off">
+        <button type="button" class="fb-btn fb-alt" id="fbRoomJoin">Masuk Room</button>
+      </div>
+      <div id="fbRoomStatus"></div>
+      <button type="button" class="fb-btn fb-ghost" id="fbFriendBack">← Lobby</button>
+    </div>`);
+  $('fbFriendBack').onclick = () => { clearInterval(roomTimer); showPlay(); };
+  $('fbRoomCreate').onclick = async () => {
+    try {
+      const d = await fbPost({ action:'roomCreate', name: myName, squad: state.squad });
+      friendLobby(d.roomId, true);
+    } catch (e) { alert(e.message); }
+  };
+  $('fbRoomJoin').onclick = async () => {
+    const rid = $('fbRoomId').value.trim().toUpperCase();
+    if (!rid) return;
+    try {
+      const d = await fbPost({ action:'roomJoin', roomId: rid, name: myName, squad: state.squad });
+      if (d.alreadyHost) { friendLobby(rid, true); return; }
+      friendLobby(rid, false);
+    } catch (e) { alert('room gak ketemu / udah mulai'); }
+  };
+}
+function friendLobby(roomId, isHost){
+  screen('room', `
+    <div class="fb-playmenu">
+      <div class="fb-draft-title">ROOM ${esc(roomId)}</div>
+      <div class="fb-roomstatus" id="fbRoomStat">nunggu pemain...</div>
+      <div class="fb-btnrow">
+        ${isHost ? '<button type="button" class="fb-btn" id="fbRoomStart" style="display:none">Mulai Match</button>' : ''}
+        <button type="button" class="fb-btn fb-warn" id="fbRoomLeave">Keluar Room</button>
+      </div>
+    </div>`);
+  $('fbRoomLeave').onclick = () => { clearInterval(roomTimer); fbPost({ action:'roomLeave', roomId }).catch(()=>{}); showFriendMenu(); };
+  roomTimer = setInterval(async () => {
+    try {
+      const d = await fbPost({ action:'roomPoll', roomId });
+      const r = d.room;
+      if (r.status === 'ready' && !$('fbRoomStart') && r.guest) {
+        $('fbRoomStat').innerHTML = 'lawan: <b>' + esc(r.guest.name) + '</b> — siap!';
+        if ($('fbRoomStart')) $('fbRoomStart').style.display = '';
+      } else if (r.status === 'waiting') {
+        $('fbRoomStat').innerHTML = 'bagikan ID <b>' + esc(roomId) + '</b> ke temen lu';
+      } else if (r.status === 'playing') {
+        clearInterval(roomTimer);
+        const imHost = r.host.uid === myUid || r.host.name === myName;
+        const me = imHost ? r.host : r.guest, opp = imHost ? r.guest : r.host;
+        startMatch({ mode:'friend', mySquad: me.squad || state.squad, oppSquad: opp.squad || genAITeam(5), oppName: opp.name, roomId, seed: r.seed });
+        return;
+      }
+      if ($('fbRoomStart')) {
+        $('fbRoomStart').onclick = () => fbPost({ action:'roomStart', roomId }).catch(()=>{});
+        if (r.status === 'ready') $('fbRoomStart').style.display = '';
+      }
+    } catch (e) { clearInterval(roomTimer); alert('room closed'); showFriendMenu(); }
+  }, 2000);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   MATCH ENGINE 2D — marble football
+   ═══════════════════════════════════════════════════════════════ */
+const TACTICS = {
+  balance:   { label:'Balance',          short:'pass mix, normal' },
+  tikitaka:  { label:'Tiki Taka',        short:'umpan pendek terus' },
+  bus:       { label:'Parking the Bus',  short:'mid mundur defend' },
+  counter:   { label:'Counter Attack',   short:' rebut → serang balik cepet' },
+  longball:  { label:'Long Ball',        short:'umpan jauh ke sayap/ST' },
+};
+let M = null; // match state aktif
+
+function startMatch(cfg){
+  const R = cfg.seed != null ? mulberry(cfg.seed) : mulberry(Date.now() & 0x7fffffff);
+  const mkTeam = (squad, side, isAI, boost) => {
+    const f = FORMATIONS[squad.formation] || FORMATIONS['433-attack'];
+    const slots = f.slots;
+    const ps = squad.players.map((pid, i) => {
+      const p = byId(pid) || { name:'?', pos:slots[i], country:'?', ovr:60, r:'bronze' };
+      const eff = effOVR(p, slots[i]) + (boost ? Math.max(-6, Math.min(6, boost - squadOVR(squad))) : 0);
+      return { name: p.name, pos: slots[i], ovr: Math.round(eff), slot: slots[i] };
+    });
+    return { squad, side, isAI, tactic: 'balance', players: ps, onField: ps.map((_, i) => i), bench: (squad.bench || []).map((pid) => byId(pid)).filter(Boolean) };
+  };
+  M = {
+    cfg,
+    R,
+    t: 0, min: 0, half: 1, added: 2 + Math.floor(R() * 3),
+    score: [0, 0],
+    stats: { shots:[0,0], sot:[0,0], saves:[0,0], tackles:[0,0], off:[0,0], poss:[0,0] },
+    teams: [ mkTeam(cfg.mySquad, 0, false, 0), mkTeam(cfg.oppSquad, 1, true, cfg.mode === 'ai' ? (DIV_OVR[state.division]||65) : 0) ],
+    ents: [], ball: { x:50, y:50, vx:0, vy:0, owner:null },
+    paused: true, over: false, waitingHT: false, tacticCD: 0, lastTouch: null,
+    spd: 1, raf: null, lastTs: 0, decisionT: 0,
+  };
+  buildEnts();
+  screen('match', `
+    <div class="fb-match">
+      <div class="fb-mscore">
+        <b id="fbMHome">${esc(myName)}</b>
+        <span id="fbMScore">0 - 0</span>
+        <b id="fbMAway">${esc(cfg.oppName)}</b>
+      </div>
+      <div class="fb-mtimer"><i id="fbMTimeBar"></i><span id="fbMMin">0'</span></div>
+      <canvas id="fbMCanvas" width="760" height="480"></canvas>
+      <div class="fb-mctrl">
+        <button type="button" class="fb-btn fb-alt" id="fbMTactic">TACTICS</button>
+        <span id="fbMTacNow">Balance</span>
+        <span class="fb-mcd" id="fbMCD"></span>
+        <button type="button" class="fb-btn fb-ghost" id="fbMSkip">Skip ⏩</button>
+      </div>
+      <div class="fb-moverlay" id="fbMOverlay"></div>
+    </div>`);
+  $('fbMTactic').onclick = openTactics;
+  $('fbMSkip').onclick = () => { M.spd = 30; };
+  showOverlay('KICK OFF', esc(myName) + ' vs ' + esc(cfg.oppName), [{ label:'MULAI', fn: () => { hideOverlay(); M.paused = false; loop(performance.now()); } }]);
+}
+function buildEnts(){
+  M.ents = [];
+  M.teams.forEach((team, ti) => {
+    team.onField.forEach((pi, k) => {
+      const p = team.players[pi];
+      const [hx, hy] = POSXY[p.slot];
+      const x = ti === 0 ? hx : 100 - hx;
+      const y = ti === 0 ? hy : 100 - hy;
+      M.ents.push({
+        team: ti, idx: k, name: p.name, ovr: p.ovr, isGK: p.slot === 'GK',
+        x, y, hx, hy, vx: 0, vy: 0, r: 2.4,
+        spd: 5.2 + (p.ovr - 60) / 12, skill: p.ovr,
+      });
+    });
+  });
+}
+/* field helpers: tim 0 serang ke x=100, tim 1 serang ke x=0 */
+const goalX = (ti) => (ti === 0 ? 98 : 2);
+function tacticsOffset(team, ent){
+  const tac = M.teams[team].tactic;
+  const slot = ent.slotName || '';
+  let dx = 0;
+  if (tac === 'bus' && (slot === 'CM' || slot === 'CDM' || slot === 'CAM')) dx = -10;
+  if (tac === 'counter' && M.ball.ownerTeam === team && (slot === 'CM' || slot === 'CAM')) dx = 12;
+  if (tac === 'longball' && (slot === 'LW' || slot === 'RW' || slot === 'LM' || slot === 'RM')) dx = 8;
+  return dx;
+}
+function loop(ts){
+  if (!M || M.over) return;
+  if (M.lastTs) {
+    const dt = Math.min(0.05, (ts - M.lastTs) / 1000) * M.spd;
+    if (!M.paused) simTick(dt);
+  }
+  M.lastTs = ts;
+  draw();
+  M.raf = requestAnimationFrame(loop);
+}
+function simTick(dt){
+  M.t += dt;
+  /* 1 detik real = 2 menit game */
+  const prevMin = M.min;
+  M.min = Math.min(90 + M.added, M.t * 2);
+  if (M.tacticCD > 0) M.tacticCD = Math.max(0, M.tacticCD - dt);
+  if (M.half === 1 && M.min >= 45) { M.half = 2; M.t = 22.5; halftime(); return; }
+  if (M.min >= 90 + M.added) { fulltime(); return; }
+  /* possession */
+  const b = M.ball;
+  b.x += b.vx * dt * 10; b.y += b.vy * dt * 10;
+  b.vx *= 0.985; b.vy *= 0.985;
+  if (b.y < 2) { b.y = 2; b.vy = Math.abs(b.vy) * 0.6; }
+  if (b.y > 98) { b.y = 98; b.vy = -Math.abs(b.vy) * 0.6; }
+  if (b.x < 1.5 || b.x > 98.5) {
+    /* gol? */
+    if (b.y > 38 && b.y < 62 && (b.x < 1.5 || b.x > 98.5)) { goal(b.x > 98.5 ? 0 : 1); return; }
+    b.x = Math.max(1.5, Math.min(98.5, b.x)); b.vx *= -0.6;
+  }
+  /* pemain */
+  M.decisionT += dt;
+  const decide = M.decisionT > 0.22;
+  if (decide) M.decisionT = 0;
+  let chaser = [null, null];
+  M.ents.forEach((e) => {
+    const team = e.team;
+    /* slotName: dari squad players */
+    if (!e.slotName) {
+      const p = M.teams[team].players[M.teams[team].onField[e.idx]];
+      e.slotName = p ? p.slot : '';
+    }
+    if (e.isGK) {
+      /* kiper: jagain garis */
+      const gx = team === 0 ? 4 : 96;
+      const ty = 50 + (b.y - 50) * 0.35;
+      e.x += (gx - e.x) * dt * 3; e.y += (ty - e.y) * dt * 3;
+      /* tangkep bola deket */
+      if (dist(e, b) < 2.6 && Math.hypot(b.vx, b.vy) > 0.4) { trySave(e); }
+      else if (dist(e, b) < 1.6 && !b.owner) { b.owner = e; b.ownerTeam = team; }
+      return;
+    }
+    /* siapa ngejar bola */
+    if (!chaser[team] || dist(e, b) < dist(chaser[team], b)) chaser[team] = e;
+  });
+  M.ents.forEach((e) => {
+    if (e.isGK) return;
+    const b = M.ball;
+    const iChase = chaser[e.team] === e;
+    let tx, ty;
+    if (b.owner === e) {
+      /* bawa bola: maju ke gawang lawan */
+      const gx = goalX(e.team);
+      tx = e.x + (gx - e.x) * 0.2; ty = e.y + (50 - e.y) * 0.08;
+    } else if (iChase && !b.owner) {
+      tx = b.x; ty = b.y;
+    } else if (iChase && b.owner && b.ownerTeam !== e.team) {
+      tx = b.owner.x; ty = b.owner.y; /* press */
+    } else {
+      /* posisi formasi + taktik + ikut bola */
+      const shift = (b.x - 50) * 0.15 * (e.team === 0 ? 1 : -1);
+      const tac = tacticsOffset(e.team, e);
+      let hx = e.hx + shift + tac, hy = e.hy;
+      if (e.team === 1) hx = 100 - (e.hx + shift) + tac;
+      tx = Math.max(3, Math.min(97, hx)); ty = Math.max(5, Math.min(95, hy));
+    }
+    const dx = tx - e.x, dy = ty - e.y, d = Math.hypot(dx, dy);
+    const sp = e.spd * (b.owner === e ? 0.85 : 1) * (M.teams[e.team].tactic === 'counter' && b.ownerTeam === e.team ? 1.2 : 1);
+    if (d > 0.4) { e.x += dx / d * sp * dt; e.y += dy / d * sp * dt; }
+    /* rebut bola */
+    if (b.owner && b.ownerTeam !== e.team && dist(e, b.owner) < 1.6) {
+      const chance = dt * (0.5 + e.skill / 220) * (M.teams[e.team].tactic === 'bus' ? 1.5 : 1);
+      if (M.R() < chance) {
+        M.stats.tackles[e.team]++;
+        b.owner = e; b.ownerTeam = e.team;
+      }
+    }
+    /* terima bola bebas + ofside */
+    if (!b.owner && dist(e, b) < 1.5) {
+      if (b.offsideFlag && b.passTarget === e) {
+        M.stats.off[e.team]++;
+        b.offsideFlag = false; b.passTarget = null;
+        b.vx *= -0.25; b.vy *= -0.25; /* bola lepas ke lawan */
+      } else {
+        b.owner = e; b.ownerTeam = e.team; M.lastTouch = e;
+        b.offsideFlag = false; b.passTarget = null;
+      }
+    }
+  });
+  /* keputusan pembawa bola */
+  if (b.owner && decide) decideAction(b.owner);
+  /* statistik possession */
+  if (b.ownerTeam != null) M.stats.poss[b.ownerTeam] += dt;
+  /* UI (di-guard: layar bisa aja udah ganti) */
+  const _sc = $('fbMScore');
+  if (!_sc) return;
+  _sc.textContent = M.score[0] + ' - ' + M.score[1];
+  $('fbMMin').textContent = Math.floor(M.min) + "'";
+  $('fbMTimeBar').style.width = Math.min(100, M.min / (90 + M.added) * 100) + '%';
+  $('fbMCD').textContent = M.tacticCD > 0 ? 'taktik: ' + Math.ceil(M.tacticCD) + 's' : '';
+}
+function dist(a, b2){ return Math.hypot(a.x - b2.x, a.y - b2.y); }
+function ballSpeed(){ const b = M.ball; return Math.hypot(b.vx, b.vy); }
+function decideAction(e){
+  const b = M.ball;
+  const team = M.teams[e.team];
+  const gx = goalX(e.team);
+  const dGoal = Math.hypot(gx - e.x, 50 - e.y);
+  const pressure = M.ents.some((o) => o.team !== e.team && !o.isGK && dist(o, e) < 3);
+  /* SHOOT */
+  const shootUrge = dGoal < 18 ? 0.5 + e.skill / 300 : dGoal < 30 ? 0.12 : 0;
+  if (M.R() < shootUrge) { shoot(e); return; }
+  /* PASS */
+  const mates = M.ents.filter((o) => o.team === e.team && o !== e && !o.isGK);
+  const tac = team.tactic;
+  let targets = mates;
+  if (tac === 'tikitaka') targets = mates.sort((a2, b2) => dist(e, a2) - dist(e, b2)).slice(0, 4);
+  else if (tac === 'longball') {
+    const fwd = e.team === 0 ? 1 : -1;
+    targets = mates.sort((a2, b2) => (b2.x - a2.x) * fwd).slice(0, 4); /* paling maju */
+  } else if (tac === 'counter') {
+    const fwd = e.team === 0 ? 1 : -1;
+    targets = mates.sort((a2, b2) => (b2.x - a2.x) * fwd).slice(0, 5);
+  } else {
+    targets = mates.filter((m2) => dist(e, m2) < 40);
+    if (!targets.length) targets = mates;
+  }
+  const t2 = targets[Math.floor(M.R() * targets.length)];
+  if (pressure || M.R() < 0.55) { pass(e, t2); return; }
+  /* dribble (biarkan loop yang gerakin) */
+}
+function pass(from, to){
+  const b = M.ball;
+  b.owner = null; b.ownerTeam = null;
+  const acc = from.skill / 100;
+  const err = (1 - acc) * 14 * (M.R() - 0.5) * 2;
+  const dx = to.x - b.x + err, dy = to.y - b.y + err * 0.6;
+  const d = Math.hypot(dx, dy) || 1;
+  const pow = 2.2 + d * 0.05;
+  b.vx = dx / d * pow; b.vy = dy / d * pow;
+  b.passTarget = to; b.passFrom = from;
+  /* offside check: penerima di depan bek terakhir lawan pas umpan */
+  const opps = M.ents.filter((o) => o.team !== from.team && !o.isGK);
+  if (opps.length) {
+    const lastX = from.team === 0 ? Math.max(...opps.map((o) => o.x)) : Math.min(...opps.map((o) => o.x));
+    const ahead = from.team === 0 ? to.x > lastX + 0.5 && to.x > 50 : to.x < lastX - 0.5 && to.x < 50;
+    b.offsideFlag = ahead;
+  }
+}
+function shoot(e){
+  const b = M.ball;
+  b.owner = null; b.ownerTeam = null;
+  const gx = goalX(e.team);
+  const acc = e.skill / 100;
+  const ty = 50 + (M.R() - 0.5) * 30 * (1.15 - acc);
+  const dx = gx - b.x, dy = ty - b.y;
+  const d = Math.hypot(dx, dy) || 1;
+  const pow = 4.5 + acc * 3;
+  b.vx = dx / d * pow; b.vy = dy / d * pow;
+  b.shotBy = e;
+  M.stats.shots[e.team]++;
+  /* on target? */
+  const t = (gx - b.x) / (b.vx || 0.001);
+  const yAt = b.y + b.vy * t;
+  if (yAt > 38 && yAt < 62) M.stats.sot[e.team]++;
+}
+function trySave(gk){
+  const b = M.ball;
+  const shooter = b.shotBy;
+  const saveP = 0.35 + (gk.skill - (shooter ? shooter.skill : 70)) / 200;
+  if (M.R() < saveP) {
+    M.stats.saves[gk.team]++;
+    b.vx = 0; b.vy = 0; b.shotBy = null;
+    b.owner = gk; b.ownerTeam = gk.team;
+    b.x = gk.x; b.y = gk.y;
+  }
+  /* gagal save → bola lanjut, gol kehitung di garis */
+}
+function goal(ti){
+  M.score[ti]++;
+  M.stats.sot[ti]++;
+  showOverlay('GOOOAL!', esc(ti === 0 ? myName : M.cfg.oppName) + ' mencetak gol! ' + M.score[0] + '-' + M.score[1], [{ label:'LANJUT', fn: () => { hideOverlay(); resetKickoff(ti === 0 ? 1 : 0); } }]);
+  M.paused = true;
+}
+function resetKickoff(kickTeam){
+  const b = M.ball;
+  b.x = 50; b.y = 50; b.vx = 0; b.vy = 0; b.owner = null; b.ownerTeam = null;
+  M.ents.forEach((e) => {
+    const [hx, hy] = [e.hx, e.hy];
+    e.x = e.team === 0 ? hx : 100 - hx; e.y = hy;
+  });
+  M.paused = false;
+}
+function halftime(){
+  M.paused = true;
+  /* layar ganti pemain: daftar pemain + bench, pilih 1-1 buat swap */
+  const t = M.teams[0];
+  const rows = t.onField.map((pi, k) => {
+    const p = t.players[pi];
+    return `<div class="fb-subrow" data-k="${k}"><b>${p.ovr}</b> ${esc(p.name)} <i>${p.slot}</i></div>`;
+  }).join('');
+  const bench = t.bench.map((p, i) => `<div class="fb-subrow bench" data-b="${i}"><b>${p.ovr}</b> ${esc(p.name)} <i>${p.pos}</i></div>`).join('');
+  $('fbMOverlay').innerHTML = `
+    <div class="fb-ovl-card big">
+      <h3>JEDA — GANTI PEMAIN</h3>
+      <div class="fb-subcols">
+        <div><div class="fb-subtitle">DI LAPANGAN</div>${rows}</div>
+        <div><div class="fb-subtitle">CADANGAN</div>${bench}</div>
+      </div>
+      <div class="fb-hint">tap 1 pemain lapangan + 1 cadangan buat tukar (opsional)</div>
+      <button type="button" class="fb-btn" id="fbHTGo">LANJUT</button>
+    </div>`;
+  $('fbMOverlay').classList.add('show');
+  let selA = null, selB = null;
+  document.querySelectorAll('.fb-subrow[data-k]').forEach((el) => el.onclick = () => {
+    document.querySelectorAll('.fb-subrow').forEach((x) => x.classList.remove('sel'));
+    el.classList.add('sel'); selA = +el.dataset.k;
+  });
+  document.querySelectorAll('.fb-subrow[data-b]').forEach((el) => el.onclick = () => {
+    if (selA == null) return;
+    document.querySelectorAll('.fb-subrow[data-b]').forEach((x) => x.classList.remove('sel'));
+    el.classList.add('sel'); selB = +el.dataset.b;
+  });
+  const go = () => {
+    if (selA != null && selB != null) {
+      const t2 = M.teams[0];
+      const onPi = t2.onField[selA];
+      const benchP = t2.bench[selB];
+      /* ganti data pemain di lapangan */
+      t2.players[onPi] = { name: benchP.name, pos: benchP.pos, ovr: benchP.ovr, slot: t2.players[onPi].slot };
+      t2.bench[selB] = { name: t2.players[onPi].name, pos: t2.players[onPi].slot, ovr: t2.players[onPi].ovr, r: 'bronze' };
+      /* update entitas */
+      const ent = M.ents.find((e) => e.team === 0 && e.idx === selA);
+      if (ent) { ent.name = benchP.name; ent.ovr = benchP.ovr; ent.spd = 5.2 + (benchP.ovr - 60) / 12; ent.skill = benchP.ovr; ent.slotName = t2.players[onPi].slot; }
+    }
+    hideOverlay();
+    if (M.cfg.mode !== 'ai' && M.cfg.mid) {
+      /* pvp: tunggu dua2nya siap (timeout 30 dtk) */
+      let waited = 0;
+      showOverlay('JEDA', 'nunggu lawan siap... (' + (30 - waited) + ')', []);
+      const tick = setInterval(async () => {
+        waited++;
+        try {
+          const d = await fbPost({ action: 'matchReady', mid: M.cfg.mid });
+          if (d.both || waited >= 30) {
+            clearInterval(tick);
+            hideOverlay(); resetKickoff(1); M.half = 2;
+          } else { showOverlay('JEDA', 'nunggu lawan siap... (' + (30 - waited) + ')', []); }
+        } catch (e) { clearInterval(tick); hideOverlay(); resetKickoff(1); M.half = 2; }
+      }, 1000);
+    } else { resetKickoff(1); M.half = 2; }
+  };
+  $('fbHTGo').onclick = go;
+}
+function fulltime(){
+  M.over = true; M.paused = true;
+  cancelAnimationFrame(M.raf);
+  const [a, b2] = M.score;
+  const outcome = a > b2 ? 'w' : a < b2 ? 'l' : 'd';
+  const poss = M.stats.poss[0] + M.stats.poss[1] || 1;
+  $('fbMOverlay').innerHTML = `
+    <div class="fb-ovl-card big">
+      <h3>FULL TIME — ${a} : ${b2}</h3>
+      <div class="fb-stats">
+        <div class="fb-stat"><b>${Math.round(M.stats.poss[0] / poss * 100)}%</b><span>Possession</span><b>${Math.round(M.stats.poss[1] / poss * 100)}%</b></div>
+        <div class="fb-stat"><b>${M.stats.shots[0]}</b><span>Shots</span><b>${M.stats.shots[1]}</b></div>
+        <div class="fb-stat"><b>${M.stats.sot[0]}</b><span>On Target</span><b>${M.stats.sot[1]}</b></div>
+        <div class="fb-stat"><b>${M.stats.saves[0]}</b><span>Saving</span><b>${M.stats.saves[1]}</b></div>
+        <div class="fb-stat"><b>${M.stats.tackles[0]}</b><span>Tackle</span><b>${M.stats.tackles[1]}</b></div>
+        <div class="fb-stat"><b>${M.stats.off[0]}</b><span>Offside</span><b>${M.stats.off[1]}</b></div>
+      </div>
+      <button type="button" class="fb-btn" id="fbFTNext">LANJUT</button>
+    </div>`;
+  $('fbMOverlay').classList.add('show');
+  $('fbFTNext').onclick = async () => {
+    try {
+      const d = await fbPost({ action:'report', mode: M.cfg.mode, outcome, my: a, opp: b2, oppName: M.cfg.oppName });
+      state = d.state;
+      if (d.promo === 'up') alert('🎉 PROMOSI! naik ke divisi ' + state.division);
+      else if (d.promo === 'down') alert('⚠️ DEGRADASI ke divisi ' + state.division);
+      if (M.cfg.mid) fbPost({ action:'matchDone', mid: M.cfg.mid }).catch(() => {});
+      if (M.cfg.roomId) fbPost({ action:'roomLeave', roomId: M.cfg.roomId }).catch(() => {});
+    } catch (e) { alert(e.message); }
+    M = null;
+    showLobby();
+  };
+}
+function openTactics(){
+  if (M.tacticCD > 0 || !M || M.paused || M.over) return;
+  $('fbMOverlay').innerHTML = `
+    <div class="fb-ovl-card">
+      <h3>TACTICS</h3>
+      ${Object.entries(TACTICS).map(([k, t]) => `<div class="fb-tacopt ${M.teams[0].tactic === k ? 'on' : ''}" data-t="${k}"><b>${t.label}</b><span>${t.short}</span></div>`).join('')}
+      <div class="fb-hint">taktik cuma bisa diganti tiap 20 detik</div>
+      <button type="button" class="fb-btn fb-ghost" id="fbTacClose">Tutup</button>
+    </div>`;
+  $('fbMOverlay').classList.add('show');
+  $('fbTacClose').onclick = () => $('fbMOverlay').classList.remove('show');
+  document.querySelectorAll('.fb-tacopt').forEach((el) => {
+    el.onclick = () => {
+      M.teams[0].tactic = el.dataset.t;
+      M.tacticCD = 20;
+      $('fbMTacNow').textContent = TACTICS[el.dataset.t].label;
+      $('fbMOverlay').classList.remove('show');
+    };
+  });
+}
+function showOverlay(title, sub, btns){
+  const ov = $('fbMOverlay');
+  ov.innerHTML = `<div class="fb-ovl-card"><h3>${title}</h3>${sub ? '<p>' + sub + '</p>' : ''}</div>` +
+    (btns || []).map((b3, i) => `<button type="button" class="fb-btn" data-ob="${i}">${b3.label}</button>`).join('');
+  ov.classList.add('show');
+  (btns || []).forEach((b3, i) => { ov.querySelector('[data-ob="' + i + '"]').onclick = b3.fn; });
+}
+function hideOverlay(){ const ov = $('fbMOverlay'); ov.classList.remove('show'); ov.innerHTML = ''; }
+
+/* ── render canvas ── */
+function draw(){
+  const cv = $('fbMCanvas'); if (!cv || !M) return;
+  const x = cv.getContext('2d');
+  const W = cv.width, H = cv.height;
+  const px = (v) => v / 100 * W, py = (v) => v / 100 * H;
+  /* lapangan */
+  x.fillStyle = '#1e8c46'; x.fillRect(0, 0, W, H);
+  x.fillStyle = '#1a7f40';
+  for (let i = 0; i < 10; i++) if (i % 2) x.fillRect(i * W / 10, 0, W / 10, H);
+  x.strokeStyle = '#ffffffcc'; x.lineWidth = 2;
+  x.strokeRect(px(2), py(4), px(96), py(92));
+  x.beginPath(); x.moveTo(px(50), py(4)); x.lineTo(px(50), py(96)); x.stroke();
+  x.beginPath(); x.arc(px(50), py(50), px(8), 0, 7); x.stroke();
+  x.strokeRect(px(2), py(30), px(12), py(40)); x.strokeRect(px(86), py(30), px(12), py(40));
+  /* gawang */
+  x.fillStyle = '#ffffffdd';
+  x.fillRect(px(0.5), py(38), px(1.5), py(24)); x.fillRect(px(98), py(38), px(1.5), py(24));
+  /* pemain */
+  if (M) M.ents.forEach((e) => {
+    const X = px(e.x), Y = py(e.y);
+    const grad = e.team === 0 ? '#c084fc' : '#f87171';
+    x.beginPath(); x.arc(X, Y, e.isGK ? 13 : 12, 0, 7);
+    x.fillStyle = e.isGK ? (e.team === 0 ? '#fbbf24' : '#22d3ee') : grad;
+    x.fill(); x.lineWidth = 2.5; x.strokeStyle = '#0b0a12'; x.stroke();
+    x.fillStyle = '#fff'; x.font = 'bold 10px Inter, sans-serif'; x.textAlign = 'center';
+    x.fillText(e.ovr, X, Y + 3.5);
+    x.font = '600 8px Inter, sans-serif'; x.fillStyle = '#ffffffd0';
+    x.fillText(e.name.split(' ').slice(-1)[0].slice(0, 10), X, Y - 17);
+  });
+  /* bola */
+  if (M) {
+    const b = M.ball;
+    x.beginPath(); x.arc(px(b.x), py(b.y), 6, 0, 7);
+    x.fillStyle = '#fff'; x.fill(); x.strokeStyle = '#222'; x.lineWidth = 1.5; x.stroke();
+  }
+}
+
+/* ─────────── INIT ─────────── */
+async function init(){
+  if (!document.getElementById('fbRoot')) return;
+  try { await fbRefresh(); renderLobby(); }
+  catch (e) { $('fbRoot').innerHTML = '<div class="fb-empty">' + esc(e.message) + '</div>'; }
+}
+return { init, showLobby, get M(){ return M; }, PLAYERS, FORMATIONS, state: () => state, _startMatch: startMatch, _draw4: draw4, _squadOVR: squadOVR };
+})();
 
 /* ─────────── BOOT ─────────── */
 ensureSess();

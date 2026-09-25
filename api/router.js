@@ -15,6 +15,7 @@ const ROUTES = {
   '/api/play': require('../lib/routes/play'),
   '/api/run': require('../lib/routes/run'),
   '/api/studio': require('../lib/routes/studio'),
+  '/api/football': require('../lib/routes/football'),
   '/api/search': require('../lib/routes/search'),
   '/api/uhd': require('../lib/routes/uhd'),
   '/api/upload': require('../lib/routes/upload'),
