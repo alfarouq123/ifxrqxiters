@@ -3606,7 +3606,7 @@ function drawCards(forPos, title, isCaptain){
   /* animasi tahun acak */
   const spin = {};
   cands.forEach((_, i) => {
-    spin[i] = setInterval(() => { const y = $('fbYear' + i); if (y) y.textContent = pick(years); }, 70);
+    spin[i] = setInterval(() => { const y = $('fbYear' + i); if (!y) { clearInterval(spin[i]); return; } y.textContent = pick(years); }, 70);
   });
   const settleYears = cands.map(() => pick(years));
   setTimeout(() => {
@@ -3618,7 +3618,9 @@ function drawCards(forPos, title, isCaptain){
       const isBest = i === bestIdx;
       const animated = isBest && (p.r === 'gold' || p.r === 'legend' || p.r === 'icon');
       setTimeout(() => {
-        $('fbBack' + i).style.display = 'none';
+        const bk = $('fbBack' + i);
+        if (!bk || !document.body.contains(front)) return; /* layar udah ganti */
+        bk.style.display = 'none';
         front.style.display = '';
         if (!animated) { front.innerHTML = cardHTML(p, { cls:' fbc-in' }); return; }
         /* animasi berurutan: posisi → negara → ovr → full */
