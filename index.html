@@ -4038,11 +4038,17 @@ function simTick(dt){
   /* keputusan */
   M.decT += dt; const decide = M.decT>0.24; if (decide) M.decT=0;
   /* chaser per tim */
+  /* chaser per tim + cover (presser kedua) */
   const chaser = [null,null];
-  M.ents.forEach((e)=>{ if(e.isGK) return; if(!chaser[e.team] || dist(e,b)<dist(chaser[e.team],b)) chaser[e.team]=e; });
+  const cover = [null,null];
+  M.ents.forEach((e)=>{ if(e.isGK) return;
+    const d = dist(e,b);
+    if(!chaser[e.team] || d<dist(chaser[e.team],b)) { cover[e.team]=chaser[e.team]; chaser[e.team]=e; }
+    else if(!cover[e.team] || d<dist(cover[e.team],b)) cover[e.team]=e;
+  });
   M.ents.forEach((e)=>{
     if (e.isGK) { gkMove(e,dt); return; }
-    moveAI(e,dt,chaser,decide);
+    moveAI(e,dt,chaser,cover,decide);
     /* rebut / tackle / foul (kiper gak boleh tekel keluar kotak) */
     if (b.owner && b.ownerTeam!==e.team && !e.isGK && dist(e,b.owner)<2.9 && (b.owner.stealProt||0)<=0) {
       const o = b.owner;
@@ -4194,11 +4200,13 @@ function trySave(gk){
   }
 }
 /* ── AI gerak + keputusan ── */
-function moveAI(e,dt,chaser,decide){
+function moveAI(e,dt,chaser,cover,decide){
   const b = M.ball; const team = M.teams[e.team];
   if (b.owner===e) return;
-  const iChase = chaser[e.team]===e; const fwd = fwdDir(e.team);
+  const iChase = chaser[e.team]===e; const iCover = cover[e.team]===e;
+  const fwd = fwdDir(e.team); const og = ownGoal(e.team);
   let tx,ty; const myGroup = POSGROUP[e.slotName];
+  const wide = (e.slotName==='LB'||e.slotName==='RB'||e.slotName==='LWB'||e.slotName==='RWB');
   /* penerima umpan: lari jemput bola, jangan diem aja */
   if (!b.owner && b.passTarget===e) {
     tx = b.x + b.vx*0.35; ty = b.y + b.vy*0.35;
@@ -4211,11 +4219,51 @@ function moveAI(e,dt,chaser,decide){
     if (myGroup==='ATT') { tx = ownWorldX(e.team, e.hx+18); ty = e.hy + (b.y>50? -8:8)*(e.slotName==='ST'?0.5:1);
       if (team.tactic==='longball' && (e.slotName==='LW'||e.slotName==='RW')) tx = ownWorldX(e.team, 84);
     } else if (myGroup==='MID') { tx = b.x + fwd*10; ty = b.y + (e.hy>50? -10:10); if (team.tactic==='bus') tx = b.x - fwd*8; }
-    else { const push = (team.tactic==='counter')?14 : (team.tactic==='longball'?6:0); tx = ownWorldX(e.team, e.hx+push); ty = e.hy; }
-    if (team.tactic==='counter' && b.ownerTeam===e.team) tx += fwd*8;
-  } else {
-    if (iChase) { tx = b.owner? b.owner.x : b.x; ty = b.owner? b.owner.y : b.y; }
     else {
+      /* PERAN BEK pas nyerang */
+      if (wide) {
+        /* OVERLAP: bek sayap maju bantu serangan, kasih lebar + opsi umpan */
+        const deep = team.tactic==='longball'?34 : (team.tactic==='counter'?30:26);
+        tx = ownWorldX(e.team, Math.min(88, e.hx+deep));
+        ty = e.hy + (b.y-e.hy)*0.28; /* ikutin aliran bola dikit */
+      } else if (e.slotName==='CDM') {
+        /* PIVOT: stay di belakang bola jadi opsi umpan aman */
+        tx = b.x - fwd*9; ty = b.y + (50-b.y)*0.3 + (e.hy>50?5:-5);
+      } else {
+        /* CB: naikin garis pertahanan buat build-up, gak usah jauh2 */
+        tx = ownWorldX(e.team, e.hx+9); ty = e.hy + (b.y-e.hy)*0.16;
+        if (team.tactic==='counter') tx += fwd*5;
+      }
+      if (team.tactic==='bus' && myGroup==='DEF') tx = ownWorldX(e.team, e.hx); /* bus: bek gak maju */
+    }
+    if (team.tactic==='counter' && b.ownerTeam===e.team && myGroup!=='DEF') tx += fwd*8;
+  } else {
+    /* lagi bertahan */
+    const carrier = b.owner || b;
+    if (iChase) {
+      /* PRESS: kejar pembawa bola */
+      tx = carrier.x; ty = carrier.y;
+    } else if (iCover && b.owner) {
+      /* COVER: tutup jalur tembak — berdiri antara carrier dan gawang sendiri */
+      tx = carrier.x + (og - carrier.x)*0.28;
+      ty = carrier.y + (50 - carrier.y)*0.28;
+    } else if (myGroup==='DEF') {
+      /* MARKING: kawal lawan terdekat di zona lu, berdiri di sisi gawang (goal-side) */
+      const opps = M.ents.filter((o)=>o.team!==e.team && !o.isGK);
+      let mark=null, bd=1e9;
+      for (const o of opps){ const dd = Math.hypot(o.x-e.x,o.y-e.y) + Math.abs(o.y-e.hy)*0.25; if (dd<bd){ bd=dd; mark=o; } }
+      const aggro = 26 + e.per.aggr*14; /* bek agresif ngejar lebih jauh */
+      if (mark && bd<aggro) {
+        tx = mark.x + (og===2? -2.2:2.2); ty = mark.y;
+      } else {
+        /* jaga garis pertahanan */
+        const homeX = ownWorldX(e.team, e.hx);
+        tx = homeX + (b.x-50)*0.22*fwd;
+        ty = e.hy + (b.y-50)*0.18;
+      }
+      if (team.tactic==='bus') { tx = ownWorldX(e.team, e.hx) + (og===2? -2:2); ty = e.hy + (b.y-50)*0.15; }
+    } else {
+      /* MID/ATT: geser ngikutin bola */
       const homeX = ownWorldX(e.team, e.hx);
       const shift = (b.x-50)*0.22*fwd;
       tx = homeX + shift + (team.tactic==='bus' && myGroup==='MID'? -8*fwd:0);
@@ -4225,7 +4273,7 @@ function moveAI(e,dt,chaser,decide){
   }
   tx = Math.max(3,Math.min(97,tx)); ty = Math.max(5,Math.min(95,ty));
   const dx=tx-e.x, dy=ty-e.y, d=Math.hypot(dx,dy);
-  const pressing = iChase && b.owner && b.ownerTeam!==e.team; /* lagi ngepress pembawa bola */
+  const pressing = (iChase||iCover) && b.owner && b.ownerTeam!==e.team; /* press + cover lari lebih cepet */
   const sp = e.spd*(team.tactic==='counter'&&b.ownerTeam===e.team?1.2:1)*(pressing?1.18:1);
   if (d>0.4){ e.x += dx/d*sp*dt; e.y += dy/d*sp*dt; }
 }
