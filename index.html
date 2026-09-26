@@ -4004,6 +4004,7 @@ function simTick(dt){
   const b = M.ball;
   /* bola fisik */
   b.x += b.vx*dt*10; b.y += b.vy*dt*10; b.vx*=0.985; b.vy*=0.985;
+  if (b.fly>0) b.fly -= dt; /* proteksi umpan biar gak langsung disentuh */
   /* keluar garis samping → LEMPARAN KE DALAM buat lawan dari yang nyentuh terakhir */
   if (b.y<2 || b.y>98) {
     const outTop = b.y<2;
@@ -4028,20 +4029,22 @@ function simTick(dt){
     if (e.isGK) { gkMove(e,dt); return; }
     moveAI(e,dt,chaser,decide);
     /* rebut / tackle / foul (kiper gak boleh tekel keluar kotak) */
-    if (b.owner && b.ownerTeam!==e.team && !e.isGK && dist(e,b.owner)<2.6) {
+    if (b.owner && b.ownerTeam!==e.team && !e.isGK && dist(e,b.owner)<2.9) {
       const o = b.owner;
-      const steal = dt*(0.28 + e.per.def*0.38 - o.per.drib*0.22);
-      if (M.R()<steal) { b.owner=e; b.ownerTeam=e.team; b.passTarget=null; M.stats.tackles[e.team]++; touch(e.team,e); M.assistBy=null; e.ctrl=0.6; e.dribA=null; }
-      else if (dist(e,o)<2.2 && M.R() < dt*(0.08 + e.per.aggr*0.40 + (e.trait==='bruiser'?0.12:0))) { foul(e,o); return; }
+      const steal = dt*(0.35 + e.per.def*0.45 - o.per.drib*0.2);
+      if (M.R()<steal) { b.owner=e; b.ownerTeam=e.team; b.passTarget=null; b.fly=0; M.stats.tackles[e.team]++; touch(e.team,e); M.assistBy=null; e.ctrl=0.6; e.dribA=null; e.gotFrom=null; }
+      else if (dist(e,o)<2.5 && M.R() < dt*(0.08 + e.per.aggr*0.40 + (e.trait==='bruiser'?0.12:0))) { foul(e,o); return; }
     }
     /* ambil bola bebas + offside */
     if (!b.owner && dist(e,b)<1.5) {
+      if ((b.fly||0)>0 && b.passTarget!==e) return; /* umpan lagi terbang: cuma target yg boleh nyentuh */
       if (M.pendingOff && M.pendingOff.receiver===e) { const po = M.pendingOff; M.pendingOff=null; if (!po.onside) { M.phase='var'; M.varInfo = { ...po, t:2.2 }; M.stats.off[e.team]++; M.cam.shake=2; return; } }
       if ((e.touchCd||0)>0) return; // lagi cooldown sentuh
       const bspd = Math.hypot(b.vx,b.vy);
       const ctrlP = 0.5 + (e.st? (e.st.dri+e.st.def)/200 : 0.35) - Math.min(0.25, bspd*0.04);
       if (M.R() < ctrlP) {
-        b.owner=e; b.ownerTeam=e.team; b.passTarget=null; touch(e.team,e); e.dribA=null;
+        b.owner=e; b.ownerTeam=e.team; b.passTarget=null; b.fly=0; touch(e.team,e); e.dribA=null;
+        e.gotFrom = b.from||null; /* inget siapa yang ngumpan, biar gak ping-pong balik */
         /* FIRST TOUCH: bola di-trap & dikontrol dulu, gak langsung ditendang */
         e.ctrl = 0.55 + Math.min(0.45, bspd*0.08);
         b.vx*=0.1; b.vy*=0.1;
@@ -4138,7 +4141,8 @@ function moveAI(e,dt,chaser,decide){
   }
   tx = Math.max(3,Math.min(97,tx)); ty = Math.max(5,Math.min(95,ty));
   const dx=tx-e.x, dy=ty-e.y, d=Math.hypot(dx,dy);
-  const sp = e.spd*(team.tactic==='counter'&&b.ownerTeam===e.team?1.2:1);
+  const pressing = iChase && b.owner && b.ownerTeam!==e.team; /* lagi ngepress pembawa bola */
+  const sp = e.spd*(team.tactic==='counter'&&b.ownerTeam===e.team?1.2:1)*(pressing?1.18:1);
   if (d>0.4){ e.x += dx/d*sp*dt; e.y += dy/d*sp*dt; }
 }
 function onBall(e, dt){
@@ -4188,6 +4192,8 @@ function onBall(e, dt){
     const mFwd = (m2.x - e.x)*fwd;
     const mSpace = !M.ents.some((o)=>o.team!==e.team && dist(o,m2)<4);
     let s = (mFwd>0? mFwd*0.02 : -0.15) + (mSpace?0.4:0) + (team.tactic==='tikitaka'? (dist(e,m2)<16?0.4:0):0) + (team.tactic==='longball'? (mFwd>20?0.5:0):0);
+    if (e.gotFrom===m2) s -= 0.7; /* jangan langsung balikin ke yg barusan ngumpan (anti loop 2 org) */
+    if (pressD>3 && dist(e,m2)<7) s -= 0.4; /* gak di-press? jangan umpan pendek2 ke sebelah */
     if (!pm || s>pm.s) pm = { m:m2, s };
   }
   const passS = pm? (0.3 + pm.s*0.6)*(0.5+e.per.pass*0.5) : 0;
@@ -4226,8 +4232,8 @@ function doPass(from, to){
   const ok = M.R() < acc;
   const err = ok? 0 : (0.5-M.R())*10;
   const dx = to.x-from.x + (ok?0:err), dy = to.y-from.y + (ok?0:err*0.6);
-  const d = Math.hypot(dx,dy)||1; const pow = 2.2 + d*0.05;
-  b.vx = dx/d*pow; b.vy = dy/d*pow; b.passTarget = ok? to : null; b.from = from;
+  const d = Math.hypot(dx,dy)||1; const pow = 2.4 + d*0.055;
+  b.vx = dx/d*pow; b.vy = dy/d*pow; b.passTarget = ok? to : null; b.from = from; b.fly = 0.16; /* bola terbang dulu, gak langsung nyangkut di org depan */
   /* offside check */
   const opps = M.ents.filter((o)=>o.team!==from.team && !o.isGK);
   if (opps.length) {
@@ -4311,6 +4317,17 @@ function startFreeKick(atkT, x, y){
   } else { M.wall = []; }
   const shooter = M.ents.filter((e)=>e.team===atkT && !e.isGK).sort((a,b2)=>b2.skill-a.skill)[0];
   if (shooter){ shooter.x = x - Math.cos(ang)*2; shooter.y = y - Math.sin(ang)*2; shooter.dribA=null; }
+  /* BERSIHKAN area sekitar bola: gak boleh ada yg berdiri nempel/depan bola (semua POV, dua half) */
+  M.ents.forEach((en)=>{
+    if (en===shooter || M.wall.indexOf(en)>=0) return;
+    const dd = Math.hypot(en.x-b.x, en.y-b.y);
+    if (dd<7){
+      const a2 = dd>0.3? Math.atan2(en.y-b.y, en.x-b.x) : ang+Math.PI;
+      en.x = Math.max(3,Math.min(97, b.x + Math.cos(a2)*7));
+      en.y = Math.max(5,Math.min(95, b.y + Math.sin(a2)*7));
+      if (en.isGK){ const bx=gkBox(en.team); en.x=Math.max(bx.x0,Math.min(bx.x1,en.x)); en.y=Math.max(bx.y0,Math.min(bx.y1,en.y)); }
+    }
+  });
   const gkD = M.ents.find((q)=>q.team===defT && q.isGK);
   if (gkD){ const g2 = ownGoal(defT); gkD.x = g2===2? 4:96; gkD.y = Math.max(40,Math.min(60,y)); }
   M.setpiece = { type:'fk', atkT, shooter, t:1.2 };
