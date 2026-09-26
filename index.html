@@ -3909,7 +3909,14 @@ function genAITeam(div){
   const fk2 = fk[Math.floor(g()*fk.length)]; // formasi acak buat AI
   const slots = FORMATIONS[fk2].slots;
   const target = DIV_OVR[div] || 65;
-  const players = slots.map((s) => { const pool = PLAYERS.filter((p) => POSGROUP[p.pos] === POSGROUP[s]); return pool[Math.floor(g()*pool.length)].id; });
+  /* pemain INTI harus sesuai level divisi (dulu random total → divisi 4 bisa dapet ovr 50) */
+  const players = slots.map((s) => {
+    let pool = PLAYERS.filter((p) => POSGROUP[p.pos] === POSGROUP[s] && p.ovr >= target-6 && p.ovr <= target+4);
+    if (!pool.length) pool = PLAYERS.filter((p) => POSGROUP[p.pos] === POSGROUP[s] && p.ovr >= target-12);
+    if (!pool.length) pool = PLAYERS.filter((p) => POSGROUP[p.pos] === POSGROUP[s]);
+    if (!pool.length) pool = PLAYERS;
+    return pool[Math.floor(g()*pool.length)].id;
+  });
   const bench = Array.from({ length:5 }, () => { const pool = PLAYERS.filter((p) => p.ovr >= target-12 && p.ovr <= target+4); return (pool.length?pool:PLAYERS)[Math.floor(g()*(pool.length?pool.length:PLAYERS.length))].id; });
   return { formation: fk2, players, bench };
 }
@@ -4273,7 +4280,7 @@ function simTick(dt){
   if (M.phase==='var') { M.varInfo.t -= dt; if (M.varInfo.t<=0) applyVar(); updCam(dt, M.ball.x, M.ball.y, 1.3); return; }
   if (M.phase==='setpiece') { M.setpiece.t -= dt; if (M.setpiece.t<=0) runSetPiece(); updCam(dt, M.ball.x, M.ball.y, 1.2); return; }
   if (M.phase!=='play') return;
-  M.t += dt; M.min = Math.min(90+M.added, M.t*1);
+  M.t += dt; M.min = Math.min(90+M.added, M.t*0.5); /* 90 menit = 180 detik real */
   if (M.tacticCD>0) M.tacticCD = Math.max(0, M.tacticCD-dt);
   if (M.half===1 && M.min>=45) { M.half=2; halftime(); return; }
   if (M.min>=90+M.added) { fulltime(); return; }
@@ -4816,8 +4823,13 @@ function shoot(e){
   const dx = gx-b.x, dy = ty-b.y; const d = Math.hypot(dx,dy)||1;
   const pow = 4.5 + acc*3;
   b.vx = dx/d*pow; b.vy = dy/d*pow; M.shotBy = e; e.dribA=null;
-  /* CURVE SHOT: lengkung ke arah GAWANG (pojok yg dibidik), belokan max 80° */
-  if (elite) { b.curve = Math.min(0.9, 0.5+(shoStat-80)*0.03); b.bendTarget = { x:gx, y:ty }; b.bent = 0; }
+  /* CURVE SHOT: lengkung ke arah GAWANG (pojok yg dibidik), belokan max 80°.
+     Syarat curve: SHO 80+. Tendangan dari SAMPING (sudut sempit) lengkungnya lebih gede. */
+  if (elite) {
+    const sideF = Math.min(1, Math.abs(b.y-50)/30); /* 0=tengah, 1=dari samping */
+    b.curve = Math.min(1.1, (0.5+(shoStat-80)*0.03) * (1 + sideF*0.7));
+    b.bendTarget = { x:gx, y:ty }; b.bent = 0;
+  }
   else { b.curve = 0; b.bendTarget = null; }
   SFX.play('kick', 0.35); /* suara tendangan */
   M.shotN=(M.shotN||0)+1; b.shotId=M.shotN; /* id tembakan biar kiper cuma roll 1x */
@@ -5174,6 +5186,7 @@ function halftime(){
 }
 function fulltime(){
   M.over=true; M.paused=true; M.phase='ft'; cancelAnimationFrame(M.raf);
+  SFX.ambStop(); /* pertandingan selesai → suara ultras/ambience BERHENTI */
   SFX.play('whistle', 0.9, 3200); /* PLUIT PANJANG tanda pertandingan selesai */
   const [a,b2]=M.score; const outcome = a>b2?'w':a<b2?'l':'d';
   const poss = M.stats.poss[0]+M.stats.poss[1]||1;
