@@ -4004,9 +4004,13 @@ function simTick(dt){
     /* ambil bola bebas + offside */
     if (!b.owner && dist(e,b)<1.5) {
       if (M.pendingOff && M.pendingOff.receiver===e) { const po = M.pendingOff; M.pendingOff=null; if (!po.onside) { M.phase='var'; M.varInfo = { ...po, t:2.2 }; M.stats.off[e.team]++; M.cam.shake=2; return; } }
-      b.owner=e; b.ownerTeam=e.team; M.lastTouchBy[e.team]=e;
+      if ((e.touchCd||0)>0) return; // lagi cooldown sentuh
+      const ctrl = 0.55 + (e.st? (e.st.dri+e.st.def)/200 : 0.4);
+      if (M.R() < ctrl) { b.owner=e; b.ownerTeam=e.team; M.lastTouchBy[e.team]=e; e.ctrl=0.35; }
+      else { e.touchCd=0.25; b.vx=(M.R()-0.5)*2.5; b.vy=(M.R()-0.5)*2.5; }
     }
   });
+  M.ents.forEach((en)=>{ if(en.ctrl>0)en.ctrl-=dt; if(en.touchCd>0)en.touchCd-=dt; });
   if (b.owner && decide) onBall(b.owner);
   separate();
   if (b.ownerTeam!=null) M.stats.poss[b.ownerTeam]+=dt;
@@ -4049,7 +4053,7 @@ function moveAI(e,dt,chaser,decide){
     if (myGroup==='ATT') { tx = ownWorldX(e.team, e.hx+18); ty = e.hy + (b.y>50? -8:8)*(e.slotName==='ST'?0.5:1);
       if (team.tactic==='longball' && (e.slotName==='LW'||e.slotName==='RW')) tx = ownWorldX(e.team, 84);
     } else if (myGroup==='MID') { tx = b.x + fwd*10; ty = b.y + (e.hy>50? -10:10); if (team.tactic==='bus') tx = b.x - fwd*8; }
-    else { tx = ownWorldX(e.team, e.hx+16); ty = e.hy; }
+    else { const push = (team.tactic==='counter')?14 : (team.tactic==='longball'?6:0); tx = ownWorldX(e.team, e.hx+push); ty = e.hy; }
     if (team.tactic==='counter' && b.ownerTeam===e.team) tx += fwd*8;
   } else {
     if (iChase) { tx = b.owner? b.owner.x : b.x; ty = b.owner? b.owner.y : b.y; }
@@ -4073,7 +4077,8 @@ function onBall(e){
   const press = nearestOpp(e, 6); const pressD = press? dist(e,press):99;
   /* opsi skor */
   let best = null;
-  const shootS = dGoal<24 ? (0.5 + e.skill/260 - dGoal/70) : (dGoal<32? 0.1:0);
+  let shootS = dGoal<24 ? (0.5 + e.skill/260 - dGoal/70) : (dGoal<32? 0.1:0);
+  if (team.tactic==='bus') shootS *= 0.4; /* bus: jangan asal tembak */
   best = { t:'shoot', s: shootS };
   /* dribble kalo ada ruang */
   const fwd = fwdDir(e.team);
@@ -4093,14 +4098,17 @@ function onBall(e){
   if (passS > best.s) best = { t:'pass', s: passS, m: pm.m };
   /* tahan kalo ditekan & gak ada opsi */
   if (pressD<2.5 && best.s<0.3) best = { t:'hold', s:1 };
-  if (M.R() < 0.75) { /* kadang tahan biar gak ganti2 */ }
+  if ((e.ctrl||0)>0) best = { t:'drib', s:1 }; /* first touch: bawa dulu, jangan langsung umpan */
   if (best.t==='shoot') shoot(e);
   else if (best.t==='pass') doPass(e, best.m);
-  else if (best.t==='drib') { /* dribble: bola nempel depan, gerak maju zigzag */
-    const ang = Math.atan2(50-e.y, gx-e.x) + Math.sin(M.t*6+e.idx)*0.25;
-    const sp = e.spd*0.8;
-    e.x += Math.cos(ang)*sp*0.016; e.y += Math.sin(ang)*sp*0.016;
-    b.x = e.x + Math.cos(ang)*1.6; b.y = e.y + Math.sin(ang)*1.6;
+  else if (best.t==='drib') { /* dribble smooth + cepet */
+    if (e.dribA==null) e.dribA = Math.atan2((50-e.y)*0.3, (atkGoal(e.team)-e.x));
+    e.dribA += Math.sin(M.t*2.2+e.idx)*0.02;
+    const sp = e.spd*1.05;
+    e.x += Math.cos(e.dribA)*sp*dt; e.y += Math.sin(e.dribA)*sp*dt*0.55;
+    const fx = e.x + Math.cos(e.dribA)*1.3, fy = e.y + Math.sin(e.dribA)*1.3;
+    b.x += (fx-b.x)*Math.min(1, dt*14); b.y += (fy-b.y)*Math.min(1, dt*14);
+    b.vx=0; b.vy=0;
   }
   else { /* hold */ }
 }
@@ -4162,14 +4170,14 @@ function startFreeKick(atkT, x, y){
   const b = M.ball; b.owner=null;b.ownerTeam=null; b.vx=0;b.vy=0;
   x = Math.max(14, Math.min(86, x)); y = Math.max(8, Math.min(92,y));
   b.x=x; b.y=y;
-  /* pagar: 3 bek bertahan antara bola & gawang */
+  /* pagar cuma kalo free kick di AREA LAWAN (POV tim penendang), simetris kedua tim */
   const defT = atkT===0?1:0; const gx = atkGoal(atkT);
-  const wallE = M.ents.filter((e)=>e.team===defT && !e.isGK).sort((a,b2)=>dist(a,b)-dist(b2,b)).slice(0,3);
+  const inAtkHalf = (gx===98)? (x>50) : (x<50);
   const ang = Math.atan2(50-y, gx-x);
-  M.wall = wallE.map((e,i)=>{ e.x = x + Math.cos(ang)*8; e.y = y + Math.sin(ang)*8 + (i-1)*3; return e; });
-  const inAtkHalf = (atkGoal(atkT)===98)? (x>50) : (x<50);
-  if (inAtkHalf) { M.wall.forEach((w2)=>{ /* udah diposisi di atas */ }); }
-  else { M.wall = []; }
+  if (inAtkHalf) {
+    const wallE = M.ents.filter((e)=>e.team===defT && !e.isGK).sort((a,b2)=>dist(a,b)-dist(b2,b)).slice(0,3);
+    M.wall = wallE.map((e,i)=>{ e.x = x + Math.cos(ang)*8; e.y = y + Math.sin(ang)*8 + (i-1)*3; return e; });
+  } else { M.wall = []; }
   const shooter = M.ents.filter((e)=>e.team===atkT && !e.isGK).sort((a,b2)=>b2.skill-a.skill)[0];
   shooter.x = x - Math.cos(ang)*2; shooter.y = y - Math.sin(ang)*2;
   M.setpiece = { type:'fk', atkT, shooter, t:1.2 };
