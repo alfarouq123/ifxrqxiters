@@ -3577,9 +3577,15 @@ function drawCards(forPos, title, capSlot){
   $('fbDrReroll').onclick = () => drawCards(lastDraw.forPos, lastDraw.title);
   $('fbDraftExit').onclick = showBuilder;
   const spin = {};
+  const settleYears = cands.map(()=>pick(years));
   cands.forEach((_,i) => { spin[i] = setInterval(() => { const y = $('fbYear'+i); if (!y) { clearInterval(spin[i]); return; } y.textContent = pick(years); }, 70); });
+  /* fase 1: acak tahun, lalu KUNCI tahun (card BELUM muncul) */
   setTimeout(() => {
     Object.values(spin).forEach(clearInterval);
+    cands.forEach((_,i) => { const y = $('fbYear'+i); if (y) y.textContent = settleYears[i]; });
+  }, 1200);
+  /* fase 2: JEDA dulu (~0.8 dtk) setelah tahun dapet, baru munculin card */
+  setTimeout(() => {
     cands.forEach((p,i) => {
       const bk = $('fbBack'+i), front = $('fbFront'+i);
       if (!bk || !front || !document.body.contains(front)) return;
@@ -3594,9 +3600,9 @@ function drawCards(forPos, title, capSlot){
     });
     cands.forEach((p,i) => {
       const wrap = $('fbCards').children[i];
-      if (wrap) wrap.onclick = () => { if (capSlot === 'captain') { draft.captain = p.id; showFormationSelect(); } else pickForSlot(p); };
+      if (wrap) wrap.onclick = () => { pickForSlot(p); };
     });
-  }, 1400);
+  }, 2000);
 }
 function showFormationSelect(){
   screen('form', '<div class="fb-draft"><div class="fb-draft-top">PILIH FORMASI</div><div class="fb-formgrid">'
