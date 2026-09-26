@@ -5416,9 +5416,22 @@ function runSetPiece(){
     else if (gk) { M.stats.saves[gk.team]++; SFX.play('cheer', 0.8); b.owner=gk; b.ownerTeam=gk.team; b.x=gk.x;b.y=gk.y; b.vx=0;b.vy=0; touch(gk.team,gk); matchMsg('🧤 PENALTI DITEPIS '+gk.name+'!!','pk'); }
     return;
   }
-  if (sp.type==='gk') { /* kiper ambil bola terus distribusi */
+  if (sp.type==='gk') { /* GOAL KICK: kiper LANGSUNG umpan jauh LAMBUNG ke pemain PALING JAUH */
     const gk = M.ents.find((e)=>e.team===sp.atkT&&e.isGK);
-    if (gk){ b.owner=gk; b.ownerTeam=sp.atkT; b.x=gk.x;b.y=gk.y; touch(sp.atkT,gk); gk.ctrl=0.3; gk.dribA=null; }
+    if (!gk) return;
+    b.owner=null; b.ownerTeam=null; b.x=gk.x; b.y=gk.y; b.vx=0;b.vy=0;
+    const mates = M.ents.filter((o)=>o.team===sp.atkT && !o.isGK);
+    let tgt=null, bd=-1;
+    for (const m2 of mates){ const dd=dist(gk,m2); if(dd>bd){bd=dd;tgt=m2;} }
+    if (tgt){
+      const dx=tgt.x-gk.x, dy=tgt.y-gk.y, d=Math.hypot(dx,dy)||1;
+      const pow = 3.4 + d*0.05; /* jauh + kenceng */
+      b.vx=dx/d*pow; b.vy=dy/d*pow;
+      b.passTarget=tgt; b.from=gk;
+      b.fly = Math.max(0.7, Math.min(1.6, d*0.035)); /* LAMBUNG TINGGI: cuma target yg boleh nyentuh, pemain lain dilewatin */
+      b.curve=0; b.bendTarget=null;
+      touch(sp.atkT,gk); M.assistBy=gk; M.assistSnapId=M.snapId||0;
+    } else { b.owner=gk; b.ownerTeam=sp.atkT; touch(sp.atkT,gk); gk.ctrl=0.3; gk.dribA=null; }
     return;
   }
   if (sp.type==='ti') { /* lemparan ke dalam: LANGSUNG DIUMPAN ke temen terdekat (gak dibawa) */
