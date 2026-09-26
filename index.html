@@ -4548,6 +4548,19 @@ function trySave(gk){
       matchMsg('👋 TEPISAN '+gk.name+'! bola muntah', '');
     }
   }
+  saveReplay(); /* abis save → replay slowmo dari momen tembakan */
+}
+/* REPLAY SAVE: puter ulang slow-mo dari pas lawan nendang sampe bola diselametin */
+function saveReplay(){
+  if (M.shotSnapId==null) return;
+  if (M.phase!=='play' && M.phase!=='setpiece') return;
+  const lastI = Math.max(0, M.snaps.length-1);
+  let startI = M.snaps.findIndex((s)=>s.id===M.shotSnapId);
+  if (startI<0) return;
+  startI = Math.max(startI, lastI-120);
+  if (lastI - startI < 8) return; /* klip kependekan, skip */
+  M.replay = { i:startI, speed:0.5, mode:'save', resume:M.phase };
+  M.phase='replay';
 }
 /* ── AI gerak + keputusan ── */
 function moveAI(e,dt,chaser,cover,third,decide){
@@ -4727,18 +4740,30 @@ function onBall(e, dt){
   const space = !M.ents.some((o)=>o.team!==e.team && o.x*fwd> e.x*fwd && Math.abs(o.y-e.y)<6 && Math.abs(o.x-e.x)<8);
   const dribS = (space?0.5:0.12) * (0.4+e.per.drib) * (e.trait==='dribbler'?1.5:1) * (pressD<2.5?0.5:1);
   if (dribS > best.s) best = { t:'drib', s: dribS };
-  /* umpan terbaik */
+  /* umpan terbaik: PRIORITAS temen yg paling kosong (bukan maksa ke depan),
+     cek juga jalur umpan gak diblok lawan */
   const mates = M.ents.filter((o)=>o.team===e.team && o!==e && !o.isGK && dist(o,e)<42);
   let pm = null;
   for (const m2 of mates) {
     const mFwd = (m2.x - e.x)*fwd;
-    const mSpace = !M.ents.some((o)=>o.team!==e.team && dist(o,m2)<4);
-    let s = (mFwd>0? mFwd*0.026 : -0.15) + (mSpace?0.4:0)
-      + (T.poss>0.85? (dist(e,m2)<16?0.4:0):0)                                    /* possession: umpan pendek aman */
-      + (T.direct>0.85? (mFwd>20?0.5:0):0)                                        /* direct/long ball: umpan jauh ke depan */
+    /* seberapa kosong penerima: jarak dia ke lawan terdekat */
+    const no = nearestOpp(m2, 14);
+    const openF = no? Math.min(10, dist(m2,no))*0.08 : 0.8;
+    /* jalur umpan: ada lawan yg motong garis e→m2? */
+    let laneBlocked = false;
+    const sx=m2.x-e.x, sy=m2.y-e.y, L2=sx*sx+sy*sy;
+    if (L2>4) {
+      for (const o of M.ents){
+        if (o.team===e.team || o.isGK) continue;
+        let tt = ((o.x-e.x)*sx+(o.y-e.y)*sy)/L2; tt=Math.max(0.1,Math.min(0.9,tt));
+        if (Math.hypot(o.x-(e.x+sx*tt), o.y-(e.y+sy*tt))<2.6) { laneBlocked=true; break; }
+      }
+    }
+    let s = openF + (mFwd>0? mFwd*0.012 : -0.05) + (laneBlocked? -0.6:0)
+      + (T.poss>0.85? (dist(e,m2)<16?0.35:0):0)                                   /* possession: umpan pendek aman */
+      + (T.direct>0.85? (mFwd>20 && !laneBlocked?0.5:0):0)                        /* direct/long ball: umpan jauh ke depan */
       + (T.width>0.85 && (m2.slotName==='LW'||m2.slotName==='RW')? 0.3:0);        /* wing play: prioritas sayap */
-    if (e.gotFrom===m2) s -= 0.7; /* jangan langsung balikin ke yg barusan ngumpan (anti loop 2 org) */
-    if (pressD>3 && dist(e,m2)<7) s -= 0.4; /* gak di-press? jangan umpan pendek2 ke sebelah */
+    if (e.gotFrom===m2) s -= 0.6; /* jangan langsung balikin ke yg barusan ngumpan (anti loop) */
     if (!pm || s>pm.s) pm = { m:m2, s };
   }
   const passS = pm? (0.3 + pm.s*0.6)*(0.5+e.per.pass*0.5) : 0;
@@ -5059,8 +5084,10 @@ function tickReplay(dt){
   }
   if (r.i >= M.snaps.length-1) {
     const mode = r.mode||'goal';
+    const resume = r.resume;
     M.replay=null;
     if (mode==='var') applyVar(); /* abis replay offside → free kick */
+    else if (mode==='save') { M.phase = resume==='setpiece'? 'setpiece' : 'play'; } /* lanjutin match biasa */
     else resetKickoff(M.lastConceded==null? 0 : 1-M.lastConceded); /* yang kebobolan yg kickoff */
   }
 }
@@ -5326,6 +5353,11 @@ function draw(){
     x.fillStyle='rgba(0,0,0,.55)'; x.fillRect(0,0,W,30);
     x.fillStyle='#3bd0ff'; x.font='bold 14px Inter, sans-serif'; x.textAlign='center';
     x.fillText('🚩 OFFSIDE! VAR REVIEW (SLOW-MO)...', W/2, 20);
+  }
+  if (M.phase==='replay' && M.replay && M.replay.mode==='save') {
+    x.fillStyle='rgba(0,0,0,.55)'; x.fillRect(0,0,W,30);
+    x.fillStyle='#4ade80'; x.font='bold 14px Inter, sans-serif'; x.textAlign='center';
+    x.fillText('🧤 SAVE! REPLAY SLOW-MO...', W/2, 20);
   }
   if (M.phase==='celebration') {
     x.fillStyle='rgba(0,0,0,.4)'; x.fillRect(0,0,W,30);
