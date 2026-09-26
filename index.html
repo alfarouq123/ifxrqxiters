@@ -3919,7 +3919,7 @@ function startMatch(cfg){
     ents:[], ball:{ x:50,y:50,vx:0,vy:0,owner:null,ownerTeam:null },
     phase:'play', paused:true, over:false, spd:1, raf:null, lastTs:0, startKick:0,
     cam:{ x:50,y:50,z:1.08,shake:0 },
-    snaps:[], attackStart:0, varInfo:null, celeb:null, replay:null,
+    snaps:[], attackStart:0, varInfo:null, celeb:null, replay:null, shotSnapIdx:null,
     setpiece:null, pendingOff:null, wall:[], assistBy:null, lastTouchBy:[null,null], touchT:[-999,-999], lastConceded:null,
     tacticCD:0, decT:0,
   };
@@ -4032,19 +4032,27 @@ function simTick(dt){
     if (b.owner && b.ownerTeam!==e.team && !e.isGK && dist(e,b.owner)<2.9) {
       const o = b.owner;
       const steal = dt*(0.35 + e.per.def*0.45 - o.per.drib*0.2);
-      if (M.R()<steal) { b.owner=e; b.ownerTeam=e.team; b.passTarget=null; b.fly=0; M.stats.tackles[e.team]++; touch(e.team,e); M.assistBy=null; e.ctrl=0.6; e.dribA=null; e.gotFrom=null; }
+      if (M.R()<steal) { b.owner=e; b.ownerTeam=e.team; b.passTarget=null; b.fly=0; M.stats.tackles[e.team]++; touch(e.team,e); M.assistBy=null; e.ctrl=0.6; e.dribA=null; e.gotFrom=null; e.dribLock=0.7; }
       else if (dist(e,o)<2.5 && M.R() < dt*(0.08 + e.per.aggr*0.40 + (e.trait==='bruiser'?0.12:0))) { foul(e,o); return; }
     }
     /* ambil bola bebas + offside */
     if (!b.owner && dist(e,b)<1.5) {
       if ((b.fly||0)>0 && b.passTarget!==e) return; /* umpan lagi terbang: cuma target yg boleh nyentuh */
-      if (M.pendingOff && M.pendingOff.receiver===e) { const po = M.pendingOff; M.pendingOff=null; if (!po.onside) { M.phase='var'; M.varInfo = { ...po, t:2.2 }; M.stats.off[e.team]++; M.cam.shake=2; return; } }
+      if (M.pendingOff && M.pendingOff.receiver===e) { const po = M.pendingOff; M.pendingOff=null; if (!po.onside) {
+        /* OFFSIDE → replay SLOW-MO dari momen umpan sampe bola disentuh, baru free kick */
+        M.stats.off[e.team]++; M.cam.shake=2;
+        M.varInfo = { ...po };
+        const lastI = Math.max(0, M.snaps.length-1);
+        const startI = Math.max(0, Math.min(po.passIdx!=null? po.passIdx : lastI-90, lastI));
+        M.phase='replay'; M.replay = { i:startI, speed:0.5, mode:'var' };
+        return; } }
       if ((e.touchCd||0)>0) return; // lagi cooldown sentuh
       const bspd = Math.hypot(b.vx,b.vy);
       const ctrlP = 0.5 + (e.st? (e.st.dri+e.st.def)/200 : 0.35) - Math.min(0.25, bspd*0.04);
       if (M.R() < ctrlP) {
         b.owner=e; b.ownerTeam=e.team; b.passTarget=null; b.fly=0; touch(e.team,e); e.dribA=null;
         e.gotFrom = b.from||null; /* inget siapa yang ngumpan, biar gak ping-pong balik */
+        e.dribLock = 0.85 + M.R()*0.4; /* komitmen bawa lari dulu, jangan langsung umpan */
         /* FIRST TOUCH: bola di-trap & dikontrol dulu, gak langsung ditendang */
         e.ctrl = 0.55 + Math.min(0.45, bspd*0.08);
         b.vx*=0.1; b.vy*=0.1;
@@ -4053,8 +4061,33 @@ function simTick(dt){
       else { e.touchCd=0.3; b.vx=b.vx*0.55+(M.R()-0.5)*1.4; b.vy=b.vy*0.55+(M.R()-0.5)*1.4; }
     }
   });
-  M.ents.forEach((en)=>{ if(en.ctrl>0)en.ctrl-=dt; if(en.touchCd>0)en.touchCd-=dt; });
+  M.ents.forEach((en)=>{ if(en.ctrl>0)en.ctrl-=dt; if(en.touchCd>0)en.touchCd-=dt; if(en.dribLock>0)en.dribLock-=dt; });
   if (b.owner && decide) onBall(b.owner, dt);
+  /* BAWA BOLA: pemilik LARI terus ke arah serangan (bukan diem doang), steer hindarin lawan */
+  if (b.owner && !b.owner.isGK && !b.owner.kick && M.phase==='play') {
+    const o = b.owner;
+    const gx = atkGoal(o.team);
+    if (o.dribA==null) o.dribA = Math.atan2((50-o.y)*0.3, (gx-o.x)||0.001);
+    const ax = o.x + Math.cos(o.dribA)*5.5, ay = o.y + Math.sin(o.dribA)*5.5;
+    const blocker = M.ents.find((p)=>p.team!==o.team && !p.isGK && Math.hypot(p.x-ax,p.y-ay)<3);
+    if (blocker) {
+      const want = o.dribA + (blocker.y>o.y? -0.6:0.6);
+      o.dribA += (want-o.dribA)*Math.min(1,dt*5);
+    } else {
+      const want = Math.atan2((50-o.y)*0.3, (gx-o.x)||0.001);
+      let da=want-o.dribA; while(da>Math.PI)da-=2*Math.PI; while(da<-Math.PI)da+=2*Math.PI;
+      o.dribA += da*Math.min(1,dt*2.2);
+    }
+    /* first-touch: trap dulu bentar baru lari */
+    if ((o.ctrl||0)<=0) {
+      const sp = o.spd*(M.teams[o.team].tactic==='counter'?1.15:1.03);
+      o.x += Math.cos(o.dribA)*sp*dt; o.y += Math.sin(o.dribA)*sp*dt*0.6;
+      o.x=Math.max(2.5,Math.min(97.5,o.x)); o.y=Math.max(3,Math.min(97,o.y));
+      const fx=o.x+Math.cos(o.dribA)*1.2, fy=o.y+Math.sin(o.dribA)*0.72;
+      b.x += (fx-b.x)*Math.min(1,dt*16); b.y += (fy-b.y)*Math.min(1,dt*16);
+      b.vx=0; b.vy=0;
+    }
+  }
   /* bola selalu nempel di pemiliknya (kecuali pas ditendang) */
   if (b.owner && dist(b,b.owner)>2.0) { b.x += (b.owner.x-b.x)*Math.min(1,dt*10); b.y += (b.owner.y-b.y)*Math.min(1,dt*10); }
   separate();
@@ -4172,6 +4205,11 @@ function onBall(e, dt){
   }
   const gx = atkGoal(e.team);
   const dGoal = Math.hypot(gx-e.x, 50-e.y);
+  /* masih komitmen dribble: bawa lari terus (gerak di simTick), kecuali udah di mulut gawang */
+  if ((e.dribLock||0)>0) {
+    if (dGoal<15) shoot(e);
+    return;
+  }
   const press = nearestOpp(e, 6); const pressD = press? dist(e,press):99;
   /* opsi skor */
   let best = null;
@@ -4203,28 +4241,8 @@ function onBall(e, dt){
   if ((e.ctrl||0)>0) best = { t:'drib', s:1 }; /* first touch: bawa dulu, jangan langsung umpan */
   if (best.t==='shoot') shoot(e);
   else if (best.t==='pass') doPass(e, best.m);
-  else if (best.t==='drib') { /* dribble smooth + cepet, bola selalu kebawa */
-    if (e.dribA==null) e.dribA = Math.atan2((50-e.y)*0.3, (gx-e.x)||0.001); /* arah baru tiap pegang bola */
-    /* cek ada lawan ngalangin di depan? belok, kalo gak, arahin balik ke gawang */
-    const ax = e.x + Math.cos(e.dribA)*5.5, ay = e.y + Math.sin(e.dribA)*5.5;
-    const blocker = M.ents.find((o)=>o.team!==e.team && Math.hypot(o.x-ax,o.y-ay)<3);
-    if (blocker) {
-      const want = e.dribA + (blocker.y>e.y? -0.55:0.55);
-      e.dribA += (want-e.dribA)*Math.min(1,dt*6);
-    } else {
-      const want = Math.atan2((50-e.y)*0.3, (gx-e.x)||0.001);
-      let da = want-e.dribA; while(da>Math.PI)da-=2*Math.PI; while(da<-Math.PI)da+=2*Math.PI;
-      e.dribA += da*Math.min(1,dt*2.5);
-    }
-    e.dribA += Math.sin(M.t*2.2+e.idx)*0.015;
-    const sp = e.spd*1.08;
-    e.x += Math.cos(e.dribA)*sp*dt; e.y += Math.sin(e.dribA)*sp*dt*0.6;
-    e.x = Math.max(2.5,Math.min(97.5,e.x)); e.y = Math.max(3,Math.min(97,e.y));
-    const fx = e.x + Math.cos(e.dribA)*1.2, fy = e.y + Math.sin(e.dribA)*1.2*0.6;
-    b.x += (fx-b.x)*Math.min(1, dt*16); b.y += (fy-b.y)*Math.min(1, dt*16);
-    b.vx=0; b.vy=0;
-  }
-  else { /* hold */ }
+  else if (best.t==='drib') { /* lari bawa bola ditangani kontinu di simTick (biar gerak tiap frame, gak kaku) */ }
+  else { /* hold: tetep bawa lari jg */ }
 }
 function doPass(from, to){
   const b = M.ball; b.owner=null; b.ownerTeam=null;
@@ -4234,15 +4252,21 @@ function doPass(from, to){
   const dx = to.x-from.x + (ok?0:err), dy = to.y-from.y + (ok?0:err*0.6);
   const d = Math.hypot(dx,dy)||1; const pow = 2.4 + d*0.055;
   b.vx = dx/d*pow; b.vy = dy/d*pow; b.passTarget = ok? to : null; b.from = from; b.fly = 0.16; /* bola terbang dulu, gak langsung nyangkut di org depan */
-  /* offside check */
-  const opps = M.ents.filter((o)=>o.team!==from.team && !o.isGK);
-  if (opps.length) {
-    const lastX = from.team===0? Math.max(...opps.map((o)=>o.x)) : Math.min(...opps.map((o)=>o.x));
-    const inOppHalf = from.team===0? to.x>50 : to.x<50;
-    const beyondDef = from.team===0? to.x>lastX : to.x<lastX;
-    const beyondBall = from.team===0? to.x>b.x : to.x<b.x;
+  /* offside check — arah ikut fwdDir (bener setelah tukar sisi half 2);
+     syarat: penerima di PARUH LAWAN + lebih dekat ke gawang lawan dr bek kedua-terakhir + lebih depan dr bola.
+     Di paruh sendiri TIDAK PERNAH offside. */
+  const fwd = fwdDir(from.team);
+  const oppsAll = M.ents.filter((o)=>o.team!==from.team);
+  if (oppsAll.length) {
+    const defT = from.team===0?1:0;
+    const dGoalX = ownGoal(defT);
+    const sorted = oppsAll.slice().sort((p,q)=> Math.abs(p.x-dGoalX)-Math.abs(q.x-dGoalX));
+    const lineX = (sorted[1]||sorted[0]).x; /* bek kedua-terakhir (kiper biasanya yg terakhir) */
+    const inOppHalf = fwd>0? to.x>50 : to.x<50;
+    const beyondDef = fwd>0? to.x>lineX : to.x<lineX;
+    const beyondBall = fwd>0? to.x>b.x : to.x<b.x;
     const off = inOppHalf && beyondDef && beyondBall;
-    M.pendingOff = { receiver: to, lineX: lastX, onside: !off, margin: Math.abs(to.x-lastX) };
+    M.pendingOff = { receiver: to, lineX, onside: !off, margin: Math.abs(to.x-lineX), passIdx: M.snaps.length };
   }
   M.lastTouchBy[from.team] = from; M.touchT[from.team] = M.t; from.dribA=null;
   if (M.assistBy==null || M.assistBy.team!==from.team) M.assistBy = from;
@@ -4255,6 +4279,7 @@ function shoot(e){
   const dx = gx-b.x, dy = ty-b.y; const d = Math.hypot(dx,dy)||1;
   const pow = 4.5 + acc*3;
   b.vx = dx/d*pow; b.vy = dy/d*pow; M.shotBy = e; e.dribA=null;
+  M.shotSnapIdx = M.snaps.length; /* frame tendangan, buat slowmo di replay */
   M.stats.shots[e.team]++;
   const t = (gx-b.x)/(b.vx||0.001); const yAt = b.y + b.vy*t;
   if (yAt>38&&yAt<62) M.stats.sot[e.team]++;
@@ -4371,7 +4396,7 @@ function runSetPiece(){
     const gx = atkGoal(atkT);
     const gk = M.ents.find((e)=>e.team!==atkT&&e.isGK);
     M.stats.shots[atkT]++; M.stats.sot[atkT]++;
-    if (sp.shooter && M.R() < 0.72 + sp.shooter.skill/400) { b.vx = (gx===98?1:-1)*6; b.vy = (M.R()-0.5)*4; M.shotBy=sp.shooter; touch(atkT, sp.shooter); }
+    if (sp.shooter && M.R() < 0.72 + sp.shooter.skill/400) { b.vx = (gx===98?1:-1)*6; b.vy = (M.R()-0.5)*4; M.shotBy=sp.shooter; M.shotSnapIdx=M.snaps.length; touch(atkT, sp.shooter); }
     else if (gk) { M.stats.saves[gk.team]++; b.owner=gk; b.ownerTeam=gk.team; b.x=gk.x;b.y=gk.y; b.vx=0;b.vy=0; touch(gk.team,gk); }
     return;
   }
@@ -4392,7 +4417,7 @@ function runSetPiece(){
       const over = M.R() < 0.4 + skl/250;
       const ty = 50 + (M.R()-0.5)*20;
       const dx = gx-b.x, dy = ty-b.y; const dd = Math.hypot(dx,dy)||1;
-      b.vx = dx/dd*5.5; b.vy = dy/dd*5.5; M.shotBy=sp.shooter; M.stats.sot[atkT]++;
+      b.vx = dx/dd*5.5; b.vy = dy/dd*5.5; M.shotBy=sp.shooter; M.shotSnapIdx=M.snaps.length; M.stats.sot[atkT]++;
     } else { /* crossing */
       doCross(atkT, sp.shooter, gx, 50);
     }
@@ -4436,12 +4461,23 @@ function pushSnap(){
 }
 function startReplay(){
   M.phase='replay';
-  const from = Math.max(0, M.snaps.length-480);
-  M.replay = { i: from, speed: 2 };
+  let from = Math.max(0, M.snaps.length-480);
+  const lastI = M.snaps.length-1;
+  let slowAt = null;
+  if (M.shotSnapIdx!=null) {
+    slowAt = Math.max(0, Math.min(lastI, M.shotSnapIdx));
+    from = Math.max(0, Math.min(from, slowAt-30)); /* pastiin momen tendangan masuk klip */
+  }
+  M.replay = { i: from, mode:'goal', slowAt }; /* gak dipercepat: normal + slowmo pas nendang */
 }
 function tickReplay(dt){
   const r = M.replay;
-  r.i += 2; /* 2x */
+  let step = (r.speed!=null? r.speed : 1.0);
+  if (r.mode==='goal' && r.slowAt!=null) {
+    const dslow = Math.abs(r.i - r.slowAt);
+    step = dslow<28 ? 0.35 : 1.0; /* SLOWMO di momen tendangan */
+  }
+  r.i += step;
   const idx = Math.min(M.snaps.length-1, Math.floor(r.i));
   const s = M.snaps[idx];
   if (s) {
@@ -4450,16 +4486,21 @@ function tickReplay(dt){
     M.ball.x = s.b[0]; M.ball.y = s.b[1];
     updCam(dt, M.ball.x, M.ball.y, 1.5);
   }
-  if (r.i >= M.snaps.length-1) { M.replay=null; resetKickoff(M.lastConceded==null? 0 : 1-M.lastConceded); } /* yang kebobolan yg kickoff */
+  if (r.i >= M.snaps.length-1) {
+    const mode = r.mode||'goal';
+    M.replay=null;
+    if (mode==='var') applyVar(); /* abis replay offside → free kick */
+    else resetKickoff(M.lastConceded==null? 0 : 1-M.lastConceded); /* yang kebobolan yg kickoff */
+  }
 }
 function resetKickoff(kick, keepPause){
   const b = M.ball; b.x=50;b.y=50;b.vx=0;b.vy=0;b.owner=null;b.ownerTeam=null;
   M.touchT = [-999,-999];
-  M.ents.forEach((e)=>{ e.x = ownWorldX(e.team, e.hx*0.5); e.y = e.hy; e.celeb=0; e.dribA=null; e.ctrl=0; e.touchCd=0; });
+  M.ents.forEach((e)=>{ e.x = ownWorldX(e.team, e.hx*0.5); e.y = e.hy; e.celeb=0; e.dribA=null; e.ctrl=0; e.touchCd=0; e.kick=false; e.dribT=0; e.dribLock=0; });
   const kickers = M.ents.filter(e=>e.team===kick && !e.isGK).sort((a,b2)=> ((POSGROUP[b2.slotName]==='ATT')?1:0)-((POSGROUP[a.slotName]==='ATT')?1:0));
   const kk = kickers[0];
-  if (kk){ kk.x = ownWorldX(kick, 49); kk.y = 50; b.owner = kk; b.ownerTeam = kick; kk.ctrl=0.35; kk.dribA=null; touch(kick,kk); }
-  M.snaps=[]; M.attackStart=0; M.pendingOff=null; M.wall=[]; M.shotBy=null; M.assistBy=null;
+  if (kk){ kk.x = ownWorldX(kick, 49); kk.y = 50; b.owner = kk; b.ownerTeam = kick; kk.dribA=null; kk.kick=true; touch(kick,kk); }
+  M.snaps=[]; M.attackStart=0; M.pendingOff=null; M.wall=[]; M.shotBy=null; M.assistBy=null; M.shotSnapIdx=null;
   M.lastConceded=null;
   M.phase='play'; M.paused = !!keepPause;
 }
@@ -4579,8 +4620,8 @@ function draw(){
   x.beginPath(); x.arc(px(13),py(50),2,0,7); x.fill();
   x.beginPath(); x.arc(px(87),py(50),2,0,7); x.fill();
   x.fillStyle = '#ffffffdd'; x.fillRect(px(0.5),py(38),px(1.5),py(24)); x.fillRect(px(98),py(38),px(1.5),py(24));
-  /* VAR line */
-  if (M.phase==='var' && M.varInfo) {
+  /* VAR line (pas fase var atau replay offside) */
+  if (M.varInfo && (M.phase==='var' || (M.phase==='replay'&&M.replay&&M.replay.mode==='var'))) {
     x.strokeStyle = '#ff3b3b'; x.lineWidth = 2.5; x.setLineDash([6,4]);
     x.beginPath(); x.moveTo(px(M.varInfo.lineX),py(0)); x.lineTo(px(M.varInfo.lineX),py(100)); x.stroke();
     x.strokeStyle = '#3bd0ff'; x.beginPath(); x.moveTo(px(M.varInfo.receiver.x),py(0)); x.lineTo(px(M.varInfo.receiver.x),py(100)); x.stroke();
@@ -4628,10 +4669,10 @@ function draw(){
     x.fillStyle='#fff'; x.font='bold 12px Inter, sans-serif'; x.textAlign='left'; x.fillText('REPLAY', 26, 17);
     if (M.assistBy) { x.fillStyle='#ffd75e'; x.textAlign='right'; x.fillText('assist: '+M.assistBy.name, W-10, 17); }
   }
-  if (M.phase==='var' && M.varInfo) {
+  if (M.varInfo && (M.phase==='var' || (M.phase==='replay'&&M.replay&&M.replay.mode==='var'))) {
     x.fillStyle='rgba(0,0,0,.55)'; x.fillRect(0,0,W,30);
     x.fillStyle='#3bd0ff'; x.font='bold 14px Inter, sans-serif'; x.textAlign='center';
-    x.fillText('VAR MEMERIKSA OFFSIDE...', W/2, 20);
+    x.fillText('🚩 OFFSIDE! VAR REVIEW (SLOW-MO)...', W/2, 20);
   }
   if (M.phase==='celebration') {
     x.fillStyle='rgba(0,0,0,.4)'; x.fillRect(0,0,W,30);
