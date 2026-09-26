@@ -592,6 +592,26 @@
   .fb-playcard:hover{ border-color:#c084fc; }
   .fb-playcard b{ display:block; font-size:17px; color:#fff; margin-bottom:4px; }
   .fb-playcard span{ font-size:11px; color:#8a93a3; }
+  /* division progress (poin / rating) ala eFootball */
+  .fb-divbox{ background:linear-gradient(135deg,#1a2332,#141b26); border:2px solid #2e3d52; border-radius:16px; padding:14px; margin-bottom:14px; }
+  .fb-divrow{ display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+  .fb-divrow span{ font-size:13px; color:#c9d4e3; font-weight:700; letter-spacing:.5px; }
+  .fb-divrow b{ font-size:15px; color:#ffd75e; }
+  .fb-divbar{ height:12px; background:#0a0f16; border-radius:8px; overflow:hidden; border:1px solid #263140; }
+  .fb-divbar i{ display:block; height:100%; background:linear-gradient(90deg,#22c55e,#86efac); border-radius:8px; transition:width .5s ease; }
+  .fb-divsub{ font-size:10.5px; color:#8a93a3; margin-top:7px; }
+  /* leaderboard */
+  .fb-lbwrap{ background:#10161f; border:2px solid #263140; border-radius:16px; padding:12px; margin-bottom:14px; }
+  .fb-lbhead{ font-size:14px; font-weight:800; color:#ffd75e; margin-bottom:8px; letter-spacing:.5px; }
+  .fb-lbtabs{ display:flex; gap:6px; margin-bottom:8px; }
+  .fb-lbtab{ flex:1; background:#0a0f16; border:1px solid #263140; color:#8a93a3; border-radius:8px; padding:6px; font-size:11px; font-weight:700; cursor:pointer; }
+  .fb-lbtab.on{ background:#1f2a3a; color:#ffd75e; border-color:#ffd75e; }
+  .fb-lblist{ max-height:200px; overflow-y:auto; display:flex; flex-direction:column; gap:4px; }
+  .fb-lbrow{ display:flex; align-items:center; gap:8px; background:#0a0f16; border-radius:8px; padding:6px 9px; font-size:12px; }
+  .fb-lbrow span{ color:#8a93a3; width:26px; font-weight:700; }
+  .fb-lbrow b{ color:#eef2f7; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .fb-lbrow i{ color:#8a93a3; font-style:normal; font-size:10px; }
+  .fb-lbval{ color:#ffd75e !important; flex:0 0 auto !important; }
   .fb-search{ display:flex; flex-direction:column; align-items:center; gap:14px; padding:26px 0; }
   .fb-spinner{ width:44px; height:44px; border-radius:50%; border:5px solid #263140; border-top-color:#c084fc; animation:fbspin 1s linear infinite; }
   @keyframes fbspin{ to{ transform:rotate(360deg); } }
@@ -3947,17 +3967,55 @@ function showIndex(){
 }
 
 /* ── PLAY ── */
+/* progress divisi: bar poin (div 10-4) atau rating (div 3-1) ala eFootball */
+const DIV_TARGET = {10:12,9:14,8:16,7:18,6:20,5:22,4:24};
+const DIV_STAY   = {10:6,9:8,8:10,7:12,6:14,5:16,4:18};
+const DIV_RATEUP = {3:1500,2:1800};
+const DIV_FLOOR  = {3:1000,2:1500,1:1800};
+function divProgressHTML(){
+  const d = state.division;
+  if (d>=4){
+    const target = DIV_TARGET[d]||20, stay = DIV_STAY[d]||10;
+    const pct = Math.min(100, Math.max(0, Math.round((state.points||0)/target*100)));
+    return '<div class="fb-divbox"><div class="fb-divrow"><span>🏅 DIVISI '+d+'</span><b>'+(state.points||0)+' / '+target+' poin</b></div>'
+      + '<div class="fb-divbar"><i style="width:'+pct+'%"></i></div>'
+      + '<div class="fb-divsub">match '+(state.matches||0)+'/10 · sentuh '+target+' = PROMOSI · stay ≥'+stay+' poin · W+3 S+1</div></div>';
+  } else {
+    const upAt = DIV_RATEUP[d], floor = DIV_FLOOR[d]||1000;
+    const r = state.rating||1000;
+    const pct = upAt? Math.min(100, Math.max(0, Math.round((r-floor)/(upAt-floor)*100))) : 100;
+    return '<div class="fb-divbox"><div class="fb-divrow"><span>🏅 DIVISI '+d+' · RATING</span><b>'+r+'</b></div>'
+      + '<div class="fb-divbar"><i style="width:'+pct+'%"></i></div>'
+      + '<div class="fb-divsub">'+(upAt? r+' / '+upAt+' buat naik ke divisi '+(d-1) : 'divisi tertinggi! rating '+r)+'</div></div>';
+  }
+}
 function showPlay(){
   if (!state.squad) { alert('draft tim dulu sebelum main'); return; }
-  screen('play', '<div class="fb-playmenu"><div class="fb-draft-top">PLAY</div><div class="fb-playcards">'
-    + '<div class="fb-playcard" id="fbPvAI"><b>VS AI</b><span>lawan AI sesuai divisi lu (divisi '+state.division+')</span></div>'
-    + '<div class="fb-playcard" id="fbPvP"><b>PVP</b><span>cari lawan beneran yang lagi nyari match</span></div>'
+  screen('play', '<div class="fb-playmenu"><div class="fb-draft-top">PLAY</div>'
+    + divProgressHTML()
+    + '<div class="fb-playcards">'
+    + '<div class="fb-playcard" id="fbPvAI"><b>VS AI</b><span>lawan AI sesuai divisi lu — langsung nemu lawan</span></div>'
+    + '<div class="fb-playcard" id="fbPvP"><b>PVP</b><span>lawan ORANG ASLI — matchmaking beneran</span></div>'
     + '<div class="fb-playcard" id="fbFriend"><b>LAGA TEMAN</b><span>bikin room / masuk pakai ID — by1 bareng temen</span></div>'
-    + '</div><button type="button" class="fb-btn fb-ghost" id="fbPlayBack">← Lobby</button></div>');
+    + '</div>'
+    + '<div class="fb-lbwrap"><div class="fb-lbhead">🏆 TOP GLOBAL</div>'
+    + '<div class="fb-lbtabs"><button type="button" class="fb-lbtab on" data-lb="points">POIN</button><button type="button" class="fb-lbtab" data-lb="rating">RATING</button><button type="button" class="fb-lbtab" data-lb="wins">MENANG</button></div>'
+    + '<div class="fb-lblist" id="fbLbList">loading...</div></div>'
+    + '<button type="button" class="fb-btn fb-ghost" id="fbPlayBack">← Lobby</button></div>');
   $('fbPlayBack').onclick = showLobby;
   $('fbPvAI').onclick = playVsAI;
   $('fbPvP').onclick = playPvp;
   $('fbFriend').onclick = showFriendMenu;
+  let lbData=null;
+  function renderLb(kind){
+    const el=$('fbLbList'); if(!el)return;
+    if(!lbData){ el.textContent='loading...'; return; }
+    const arr = kind==='points'? lbData.points : kind==='rating'? lbData.rating : lbData.wins;
+    if(!arr || !arr.length){ el.innerHTML='<div class="fb-hint">belum ada data — main dulu!</div>'; return; }
+    el.innerHTML = arr.map((e,i)=>'<div class="fb-lbrow"><span>#'+(i+1)+'</span><b>'+esc(e.name)+'</b><i>div '+e.division+'</i><b class="fb-lbval">'+(kind==='rating'? e.rating : kind==='wins'? e.w+' W' : e.points+' pt')+'</b></div>').join('');
+  }
+  fbPost({action:'leaderboard'}).then(d=>{ lbData=d; renderLb('points'); }).catch(()=>{ const el=$('fbLbList'); if(el)el.textContent='gagal load leaderboard'; });
+  document.querySelectorAll('.fb-lbtab').forEach(t=>{ t.onclick=()=>{ document.querySelectorAll('.fb-lbtab').forEach(x=>x.classList.remove('on')); t.classList.add('on'); renderLb(t.dataset.lb); }; });
 }
 const DIV_OVR = { 10:62, 9:65, 8:68, 7:71, 6:74, 5:77, 4:80, 3:84, 2:87, 1:90 };
 function genAITeam(div){
@@ -4009,6 +4067,7 @@ function showPreMatch(cfg){
       + '<div class="fb-build-main"><div class="fb-pitch v" id="fbPMPitch">'+slotsHTML()+'</div>'
       + '<div class="fb-bench"><div class="fb-bench-title">CADANGAN</div><div class="fb-bench-row">'+benchHTML()+'</div></div></div>'
       + '<div class="fb-panel fb-sidepanel">'
+      + divProgressHTML()
       + '<div class="fb-row"><span>Formasi</span><select id="fbPMForm" class="fb-input">'+Object.entries(FORMATIONS).map(([k,v])=>'<option value="'+k+'"'+(k===pm.squad.formation?' selected':'')+'>'+v.label+'</option>').join('')+'</select></div>'
       + '<div class="fb-row"><span>Taktik Default</span><select id="fbPMTac" class="fb-input">'+Object.entries(TACTICS).map(([k,v])=>'<option value="'+k+'"'+(k===pm.tactic?' selected':'')+'>'+v.label+'</option>').join('')+'</select></div>'
       + '<div class="fb-row"><span>OVR Efektif</span><b>'+squadOVR(pm.squad)+'</b></div>'
@@ -4017,7 +4076,7 @@ function showPreMatch(cfg){
       + '<button type="button" class="fb-btn fb-alt" id="fbPMOpp">👁 LIHAT LINEUP LAWAN</button>'
       + '<button type="button" class="fb-btn fb-ghost" id="fbPMBack">← Batal</button>'
       + '</div></div>'
-      + '<button type="button" class="fb-btn fb-ready" id="fbPMReady">SIAP ▶</button>'
+      + '<button type="button" class="fb-btn fb-ready" id="fbPMReady">MAIN ▶</button>'
       + '</div>');
     $('fbPMForm').onchange = () => { pm.squad.formation = $('fbPMForm').value; pm.sel=null; render(); };
     $('fbPMTac').onchange = () => { pm.tactic = $('fbPMTac').value; state.defTactic = pm.tactic; try{ localStorage.setItem('fbDefTactic', pm.tactic); }catch(e){} };
@@ -4049,7 +4108,7 @@ function showPreMatch(cfg){
     state.squad = pm.squad; state.defTactic = pm.tactic;
     fbPost({ action:'saveSquad', squad: pm.squad }).catch(()=>{});
     cfg.mySquad = pm.squad; cfg.tactic = pm.tactic;
-    const btn = $('fbPMReady'); if (btn){ btn.disabled=true; btn.textContent='SIAP ✓'; }
+    const btn = $('fbPMReady'); if (btn){ btn.disabled=true; btn.textContent='MAIN ✓'; }
     if (cfg.mode==='ai') { startNow(); return; }
     if (cfg.mode==='pvp') {
       const wait = $('fbPMWait'); if (wait) wait.innerHTML = 'nunggu lawan siap... <b id="fbPMTimer">'+pm.timer+'</b> dtk';
@@ -4257,7 +4316,7 @@ function startMatch(cfg){
     teams:[ mk(cfg.mySquad,0,0), mk(cfg.oppSquad,1, cfg.mode==='ai' ? Math.max(-6,Math.min(6,(DIV_OVR[state.division]||65)-squadOVR(cfg.oppSquad))) : 0) ],    ents:[], ball:{ x:50,y:50,vx:0,vy:0,z:0,owner:null,ownerTeam:null },
     phase:'play', paused:true, over:false, spd:1, raf:null, lastTs:0, startKick:0,
     cam:{ x:50,y:50,z:1.08,shake:0 },
-    snaps:[], attackStart:0, varInfo:null, celeb:null, replay:null, shotSnapId:null, snapId:0, lastTrick:null,
+    snaps:[], attackStart:0, varInfo:null, celeb:null, replay:null, shotSnapId:null, snapId:0, lastTrick:null, assistSnapId:null,
     setpiece:null, pendingOff:null, wall:[], assistBy:null, lastTouchBy:[null,null], touchT:[-999,-999], lastConceded:null,
     tacticCD:0, decT:0, ftPending:false, ftWait:0,
   };
@@ -4465,10 +4524,12 @@ function simTick(dt){
         /* FIRST TOUCH: trap CEPAT (0.25-0.45 dtk) + proteksi bentar biar gak langsung direbut */
         e.ctrl = 0.25 + Math.min(0.2, bspd*0.05);
         e.stealProt = 0.35;
-        /* ANTONY TURN: nerima operan → diem, puterin bola, terus oper akurat (DRI 82+) */
-        if (b.from && b.from.team===e.team && !e.isGK && e.st && e.st.dri>=82 && M.R()<0.45) {
+        /* ANTONY TURN: nerima operan → diem, puterin bola, terus oper akurat (DRI 82+).
+           CUMA 1× per possession — gak bisa spam */
+        if (b.from && b.from.team===e.team && !e.isGK && e.st && e.st.dri>=82 && !e.antonyUsed && M.R()<0.45) {
           e.trick = { type:'antony', t:0.85, dur:0.85, done:false };
           e.stealProt = Math.max(e.stealProt, 1.05);
+          e.antonyUsed = true; /* abis ini gak bisa lagi sampe possession berganti */
         }
         b.vx*=0.1; b.vy*=0.1;
         b.x += (e.x-b.x)*0.6; b.y += (e.y-b.y)*0.6;
@@ -4477,7 +4538,7 @@ function simTick(dt){
       else { e.touchCd=0.3; b.vx=b.vx*0.55+(M.R()-0.5)*1.4; b.vy=b.vy*0.55+(M.R()-0.5)*1.4; }
     }
   });
-  M.ents.forEach((en)=>{ if(en.ctrl>0)en.ctrl-=dt; if(en.touchCd>0)en.touchCd-=dt; if(en.dribLock>0)en.dribLock-=dt; if(en.stealProt>0)en.stealProt-=dt; if(en.foulCd>0)en.foulCd-=dt; if(en.hold>0)en.hold-=dt; if(en.trick && b.owner!==en) en.trick=null; }); /* bola ilang → stop gocekan */
+  M.ents.forEach((en)=>{ if(en.ctrl>0)en.ctrl-=dt; if(en.touchCd>0)en.touchCd-=dt; if(en.dribLock>0)en.dribLock-=dt; if(en.stealProt>0)en.stealProt-=dt; if(en.foulCd>0)en.foulCd-=dt; if(en.hold>0)en.hold-=dt; if(en.trick && b.owner!==en) en.trick=null; if(b.owner!==en && en.antonyUsed) en.antonyUsed=false; }); /* bola ilang → stop gocekan + reset antony */
   if (b.owner && decide) onBall(b.owner, dt);
   /* BAWA BOLA: pemilik LARI terus ke arah serangan, steer hindarin lawan, + BISA NGOCEK */
   if (b.owner && !b.owner.isGK && !b.owner.kick && M.phase==='play') {
@@ -5015,7 +5076,7 @@ function doPass(from, to, accB){
     M.pendingOff = { receiver: to, lineX, onside: !off, margin: Math.abs(to.x-lineX), passSnapId: M.snapId||0 };
   }
   M.lastTouchBy[from.team] = from; M.touchT[from.team] = M.t; from.dribA=null;
-  if (M.assistBy==null || M.assistBy.team!==from.team) M.assistBy = from;
+  if (M.assistBy==null || M.assistBy.team!==from.team) { M.assistBy = from; M.assistSnapId = M.snapId||0; } /* frame assist, buat replay gol */
 }
 /* UMPAN TROBOSAN: bola dikirim ke RUANG KOSONG di depan, striker lari jemput */
 function doThrough(from, runner, tx, ty){
@@ -5196,14 +5257,15 @@ function cornerPositions(atkT, kicker){
   const side = M.ball.y<50? 4:96;
   const nearY = side<50? 40:60, farY = side<50? 57:43;
   const gside = gx===98? 2.2 : -2.2; /* arah goal-side bek (ke gawangnya sendiri) */
-  /* spot penyerang */
-  const insideSpots = [[inw(3),nearY],[inw(3),farY],[inw(8),50],[inw(6),nearY+(side<50?6:-6)],[inw(6),farY+(side<50?-6:6)]];
-  const edgeSpots   = [[inw(16),34],[inw(16),66],[inw(17),50]];
-  const outsideSpot = [inw(21),50];
-  const backSpots   = [[inw(34),40],[inw(34),60]];
+  const jit = ()=> (M.R()-0.5)*2.5; /* jitter biar GAK numpuk di satu titik */
+  /* spot penyerang — semua unik, disebar */
+  const insideSpots = [[inw(3),nearY],[inw(3),farY],[inw(8),50],[inw(6),nearY+(side<50?7:-7)],[inw(6),farY+(side<50?-7:7)]];
+  const edgeSpots   = [[inw(16),32],[inw(16),68],[inw(18),50]];
+  const outsideSpot = [inw(22),50];
+  const backSpots   = [[inw(34),38],[inw(34),62]];
   const attackers = M.ents.filter((e)=>e.team===atkT && !e.isGK && e!==kicker);
   const placed = new Set(); const inBoxAtk = [];
-  const put=(e,spot,inside)=>{ if(placed.has(e))return; placed.add(e); e.x=Math.max(3,Math.min(97,spot[0])); e.y=Math.max(5,Math.min(95,spot[1])); e.dribA=null; e.trick=null; if(inside)inBoxAtk.push(e); };
+  const put=(e,spot,inside)=>{ if(placed.has(e))return; placed.add(e); e.x=Math.max(3,Math.min(97,spot[0]+jit())); e.y=Math.max(5,Math.min(95,spot[1]+jit())); e.dribA=null; e.trick=null; if(inside)inBoxAtk.push(e); };
   let iIn=0,iEdge=0,iBack=0;
   const STR = attackers.filter(e=>e.slotName==='ST'||e.slotName==='CF');
   const CB  = attackers.filter(e=>e.slotName==='CB');
@@ -5218,7 +5280,7 @@ function cornerPositions(atkT, kicker){
   /* bertahan */
   const defenders = M.ents.filter((e)=>e.team===defT && !e.isGK);
   const dplaced = new Set();
-  const dput=(e,spot)=>{ if(dplaced.has(e))return; dplaced.add(e); e.x=Math.max(3,Math.min(97,spot[0])); e.y=Math.max(5,Math.min(95,spot[1])); e.dribA=null; e.trick=null; };
+  const dput=(e,spot)=>{ if(dplaced.has(e))return; dplaced.add(e); e.x=Math.max(3,Math.min(97,spot[0]+jit())); e.y=Math.max(5,Math.min(95,spot[1]+jit())); e.dribA=null; e.trick=null; };
   const dCB  = defenders.filter(e=>e.slotName==='CB');
   const dMID = defenders.filter(e=>['CM','CAM','CDM','LM','RM'].includes(e.slotName));
   const dSTR = defenders.filter(e=>['ST','CF','LW','RW'].includes(e.slotName));
@@ -5296,13 +5358,13 @@ function runSetPiece(){
     if (gk){ b.owner=gk; b.ownerTeam=sp.atkT; b.x=gk.x;b.y=gk.y; touch(sp.atkT,gk); gk.ctrl=0.3; gk.dribA=null; }
     return;
   }
-  if (sp.type==='ti') { /* lemparan ke dalam: lempar ke temen terdekat */
+  if (sp.type==='ti') { /* lemparan ke dalam: LANGSUNG DIUMPAN ke temen terdekat (gak dibawa) */
     const mates = M.ents.filter((e)=>e.team===sp.atkT && !e.isGK && e!==sp.shooter).sort((a,b2)=>dist(a,b)-dist(b2,b));
     const tgt = mates[0];
     const tx = tgt? tgt.x : b.x; const ty = tgt? tgt.y : (b.y<50? b.y+10 : b.y-10);
     const dx = tx-b.x, dy = ty-b.y; const d = Math.hypot(dx,dy)||1;
-    b.vx = dx/d*3.4; b.vy = dy/d*3.4; b.passTarget = tgt||null; b.from = sp.shooter;
-    if (sp.shooter) touch(sp.atkT, sp.shooter);
+    b.vx = dx/d*4.2; b.vy = dy/d*4.2; b.passTarget = tgt||null; b.from = sp.shooter; b.fly=0.15; b.curve=0; b.bendTarget=null;
+    if (sp.shooter) { touch(sp.atkT, sp.shooter); sp.shooter.dribLock=0; }
     return;
   }
   if (sp.type==='fk') {
@@ -5367,16 +5429,22 @@ function startReplay(){
   let slowAt = null;
   if (M.shotSnapId!=null) {
     const sIdx = M.snaps.findIndex((s)=>s.id===M.shotSnapId); /* cari via id, aman dari buffer shift */
-    if (sIdx>=0) { slowAt = sIdx; from = Math.max(0, sIdx-40); } /* mulai pas momen nendang — bukan dari jauh sebelumnya */
+    if (sIdx>=0) slowAt = sIdx;
   }
-  M.replay = { i: from, mode:'goal', slowAt }; /* mulai dari tendangan, slowmo pas momen nendang */
+  /* mulai dari momen ASSIST (pengumpan) biar keliatan prosesnya; slowmo pas momen nendang */
+  if (M.assistSnapId!=null) {
+    const aIdx = M.snaps.findIndex((s)=>s.id===M.assistSnapId);
+    if (aIdx>=0) from = Math.max(0, aIdx-6);
+    else if (slowAt!=null) from = Math.max(0, slowAt-40);
+  } else if (slowAt!=null) from = Math.max(0, slowAt-40);
+  M.replay = { i: from, mode:'goal', slowAt };
 }
 function tickReplay(dt){
   const r = M.replay;
   let step = (r.speed!=null? r.speed : 1.0);
   if (r.mode==='goal' && r.slowAt!=null) {
     const dslow = Math.abs(r.i - r.slowAt);
-    step = dslow<28 ? 0.35 : 1.0; /* SLOWMO di momen tendangan */
+    step = dslow<30 ? 0.32 : 0.8; /* SLOWMO kental pas nendang, sisanya setengah lambat */
   }
   r.i += step;
   const idx = Math.min(M.snaps.length-1, Math.floor(r.i));
@@ -5404,7 +5472,7 @@ function resetKickoff(kick, keepPause){
   const kk = kickers[0];
   if (kk){ kk.x = ownWorldX(kick, 49); kk.y = 50; b.owner = kk; b.ownerTeam = kick; kk.dribA=null; kk.kick=true; touch(kick,kk); }
   M.snaps=[]; M.attackStart=0; M.pendingOff=null; M.wall=[]; M.shotBy=null; M.assistBy=null; M.shotSnapId=null;
-  M.lastConceded=null; M.ftPending=false; M.ftWait=0;
+  M.lastConceded=null; M.ftPending=false; M.ftWait=0; M.assistSnapId=null;
   M.phase='play'; M.paused = !!keepPause;
 }
 /* ── HT / FT ── */
@@ -5540,6 +5608,7 @@ function fulltime(){
       state = d.state;
       if (d.promo==='up') alert('🎉 PROMOSI! naik ke divisi '+state.division);
       else if (d.promo==='down') alert('⚠️ DEGRADASI ke divisi '+state.division);
+      else if (d.promo==='stay') alert('📌 STAY di divisi '+state.division+' — poin direset, musim baru mulai!');
       if (M.cfg.mid) fbPost({ action:'matchDone', mid:M.cfg.mid }).catch(()=>{});
       if (M.cfg.roomId) fbPost({ action:'roomLeave', roomId:M.cfg.roomId }).catch(()=>{});
     } catch (e) { alert(e.message); }
