@@ -4386,7 +4386,7 @@ function buildEnts(){
       const x = ownWorldX(ti, hx*0.5);
       const y = hy;
       M.ents.push({ team:ti, idx:k, name:p.name, ovr:p.ovr, per:p.per, trait:p.trait, isGK:p.pos==='GK', slotName:p.pos,
-        hx, hy, x, y, vx:0, vy:0, r:1.2, spd: 4.2 + p.per.pace*3.0, st:p.st||statsOf(p), skill:p.ovr,
+        hx, hy, x, y, vx:0, vy:0, r:1.6, spd: 4.2 + p.per.pace*3.0, st:p.st||statsOf(p), skill:p.ovr,
         decT: rnd()*0.2, celeb:0, celebType:0, cards:0, dribA:null, ctrl:0, touchCd:0,
         gk: p.gk||null, down:0, lastShotId:null, posQ: p.ovr/100 });
     });
@@ -4443,22 +4443,26 @@ function simTick(dt){
     b.vx += (M.R()-0.5)*0.22; b.vy += (M.R()-0.5)*0.34;
   }
   if (b.owner) { b.bendTarget=null; b.bent=0; } /* pegang bola → reset lengkung */
-  /* CURVE guided: belokin pelan ke arah target (gawang buat shoot / penerima buat pass), MAX 80° total */
+  /* CURVE guided: belokin ke arah target, total belokan dibates b.bendCap (curve shoot sampe 180°, trivela sampe 360°) */
   if (b.curve && b.bendTarget && !b.owner) {
     if (b.bent==null) b.bent=0;
-    if (b.bent < 1.8) {
+    const cap = b.bendCap!=null? b.bendCap : 1.8;
+    if (b.bent < cap) {
       const cur = Math.atan2(b.vy, b.vx);
       const tgt = Math.atan2(b.bendTarget.y - b.y, b.bendTarget.x - b.x);
       let diff = tgt - cur;
       while (diff > Math.PI) diff -= 2*Math.PI;
       while (diff < -Math.PI) diff += 2*Math.PI;
-      const maxTurn = Math.min(b.curve*dt*3.2, 1.8 - b.bent);
+      /* cuma belok kalo selisih arah masih masuk akal (<120°), biar gak belok liar keluar lapangan */
+      if (Math.abs(diff) < 2.1) {
+      const maxTurn = Math.min(b.curve*dt*3.2, cap - b.bent);
       const turn = Math.max(-maxTurn, Math.min(maxTurn, diff));
       if (turn) {
         const nvx = b.vx*Math.cos(turn) - b.vy*Math.sin(turn);
         const nvy = b.vx*Math.sin(turn) + b.vy*Math.cos(turn);
         b.vx = nvx; b.vy = nvy;
         b.bent += Math.abs(turn);
+      }
       }
     }
   }
@@ -4507,7 +4511,7 @@ function simTick(dt){
     if (e.isGK) { gkMove(e,dt); return; }
     moveAI(e,dt,chaser,cover,third,decide);
     /* rebut / tackle / foul (kiper gak boleh tekel keluar kotak) */
-    if (b.owner && b.ownerTeam!==e.team && !e.isGK && !b.owner.isGK && dist(e,b.owner)<2.9 && (b.owner.stealProt||0)<=0) {
+    if (b.owner && b.ownerTeam!==e.team && !e.isGK && !b.owner.isGK && dist(e,b.owner)<3.4 && (b.owner.stealProt||0)<=0) {
       const o = b.owner;
       const steal = dt*(0.30 + e.per.def*0.40 - o.per.drib*0.2);
       if (M.R()<steal) { b.owner=e; b.ownerTeam=e.team; b.passTarget=null; b.fly=0; b.curve=0; M.stats.tackles[e.team]++; touch(e.team,e); M.assistBy=null; e.ctrl=0.6; e.dribA=null; e.gotFrom=null; e.dribLock=0.7; e.stealProt=0.3; }
@@ -4570,23 +4574,38 @@ function simTick(dt){
       else { e.touchCd=0.3; b.vx=b.vx*0.55+(M.R()-0.5)*1.4; b.vy=b.vy*0.55+(M.R()-0.5)*1.4; }
     }
   });
-  M.ents.forEach((en)=>{ if(en.ctrl>0)en.ctrl-=dt; if(en.touchCd>0)en.touchCd-=dt; if(en.dribLock>0)en.dribLock-=dt; if(en.stealProt>0)en.stealProt-=dt; if(en.foulCd>0)en.foulCd-=dt; if(en.hold>0)en.hold-=dt; if(en.trick && b.owner!==en) en.trick=null; if(b.owner!==en && en.antonyUsed) en.antonyUsed=false; }); /* bola ilang → stop gocekan + reset antony */
+  M.ents.forEach((en)=>{ if(en.ctrl>0)en.ctrl-=dt; if(en.touchCd>0)en.touchCd-=dt; if(en.dribLock>0)en.dribLock-=dt; if(en.stealProt>0)en.stealProt-=dt; if(en.foulCd>0)en.foulCd-=dt; if(en.hold>0)en.hold-=dt; if(en.skillCd>0)en.skillCd-=dt; if(en.skillLabel&&en.skillLabel.t>0)en.skillLabel.t-=dt; if(en.trick && b.owner!==en) en.trick=null; if(b.owner!==en && en.antonyUsed) en.antonyUsed=false; }); /* bola ilang → stop gocekan + reset antony */
+  /* CONTACT FOUL: nempel pembawa bola kelamaan = pelanggaran (3dtk ringan, 5dtk kuning, 10dtk merah) */
+  M.ents.forEach((en)=>{
+    if (en.isGK) { en.contactT=0; return; }
+    const stick = b.owner && b.owner!==en && b.ownerTeam!==en.team && dist(en,b.owner)<3.3;
+    if (stick) en.contactT=(en.contactT||0)+dt; else en.contactT=0;
+    if ((en.foulCd2||0)>0){ en.foulCd2-=dt; return; }
+    const ct=en.contactT||0;
+    if (ct>=3 && b.owner){
+      const sev = ct>=10?'red': ct>=5?'yellow':'light';
+      contactFoul(en, b.owner, sev);
+      en.contactT=0; en.foulCd2=2.5;
+    }
+  });
   if (b.owner && decide) onBall(b.owner, dt);
   /* BAWA BOLA: pemilik LARI terus ke arah serangan, steer hindarin lawan, + BISA NGOCEK */
   if (b.owner && !b.owner.isGK && !b.owner.kick && M.phase==='play') {
     const o = b.owner;
     const gx = atkGoal(o.team);
     if (o.dribA==null) o.dribA = Math.atan2((50-o.y)*0.3, (gx-o.x)||0.001);
-    /* ── SKILL MOVES: ada bek nempel + DRI cukup → gocek! Makin tinggi DRI makin SERING keluar ── */
+    /* ── SKILL MOVES: semua gocek bisa dipake siapa aja (gak ada syarat lagi),
+       tapi FREKUENSI/cooldown ikut OVR DRI — makin tinggi DRI makin sering gocek ── */
     const nearDef = M.ents.find((p)=>p.team!==o.team && !p.isGK && Math.hypot(p.x-o.x,p.y-o.y)<3.2);
-    if (!o.trick && nearDef && (o.ctrl||0)<=0 && o.st && o.st.dri>=TRICK_REQ.double && M.R()<dt*(0.6+o.st.dri/28)) {
-      const pool = Object.keys(TRICK_REQ).filter((t)=>t!=='antony' && o.st.dri>=TRICK_REQ[t]);
-      if (pool.length) {
-        const type = pool[Math.floor(M.R()*pool.length)];
-        o.trick = { type, t:TRICK_DUR[type], dur:TRICK_DUR[type], done:false };
-        M.lastTrick = { label:TRICK_LABEL[type], team:o.team, t:M.t }; /* dicatet, ditampilin pas replay gol */
-        o.stealProt = Math.max(o.stealProt||0, o.trick.t+0.15); /* gak bisa direbut pas lagi gocek */
-      }
+    if (!o.trick && nearDef && (o.ctrl||0)<=0 && o.st && (o.skillCd||0)<=0 && M.R()<dt*(1.5+o.st.dri/25)) {
+      const pool = Object.keys(TRICK_DUR).filter((t)=>t!=='antony');
+      const type = pool[Math.floor(M.R()*pool.length)];
+      o.trick = { type, t:TRICK_DUR[type], dur:TRICK_DUR[type], done:false };
+      M.lastTrick = { label:TRICK_LABEL[type], team:o.team, t:M.t }; /* dicatet, ditampilin pas replay gol */
+      o.stealProt = Math.max(o.stealProt||0, o.trick.t+0.15); /* gak bisa direbut pas lagi gocek */
+      const dri = o.st? o.st.dri : 60;
+      o.skillCd = Math.max(0.6, 3.2 - dri*0.022); /* DRI tinggi = cooldown gocek lebih cepet */
+      o.skillLabel = { label:TRICK_LABEL[type], t:1.3 };
     }
     if (o.trick) {
       try {
@@ -5108,13 +5127,17 @@ function doPass(from, to, accB){
   const dx = to.x-from.x + (ok?0:err), dy = to.y-from.y + (ok?0:err*0.6);
   const d = Math.hypot(dx,dy)||1; const pow = 2.4 + d*0.055;
   b.vx = dx/d*pow; b.vy = dy/d*pow; b.passTarget = ok? to : null; b.from = from; b.fly = 0.16; /* bola terbang dulu, gak langsung nyangkut di org depan */
-  /* CURVE PASS: lengkung ke ARAH PENERIMA, belokan max 80°. TRIVELA lebih lengkung (kaki luar) */
-  if (trivela) {
-    b.curve = Math.min(0.9, 0.55+(pasStat-85)*0.03); b.bendTarget = { x:to.x, y:to.y }; b.bent = 0;
+  /* CURVE PASS. TRIVELA (PAS 85+): kaki luar, belokan 180°→360° ikut PAS.
+     cuma belok kalo umpan SUKSES — umpan gagal gak bengkok biar gak keluar-keluar */
+  if (ok && trivela) {
+    b.curve = 1.5;
+    b.bendCap = Math.PI + (pasStat-85)/15*Math.PI; /* PAS 85→180°, PAS 100→360° */
+    b.bendTarget = { x:to.x, y:to.y }; b.bent = 0;
+    from.skillLabel = { label:'TRIVELA', t:1.3 };
     M.lastTrick = { label:'TRIVELA', team:from.team, t:M.t }; /* biar muncul di replay */
   }
-  else if (eliteP) { b.curve = Math.min(0.7, 0.4+(pasStat-80)*0.02); b.bendTarget = { x:to.x, y:to.y }; b.bent = 0; }
-  else { b.curve = 0; b.bendTarget = null; }
+  else if (ok && eliteP) { b.curve = 1.2; b.bendCap=1.8; b.bendTarget = { x:to.x, y:to.y }; b.bent = 0; }
+  else { b.curve = 0; b.bendTarget = null; b.bendCap=null; }
   /* offside check — arah ikut fwdDir (bener setelah tukar sisi half 2);
      syarat: penerima di PARUH LAWAN + lebih dekat ke gawang lawan dr bek kedua-terakhir + lebih depan dr bola.
      Di paruh sendiri TIDAK PERNAH offside. */
@@ -5177,38 +5200,42 @@ function shoot(e){
   const gx = atkGoal(e.team);
   const shoStat = e.st? e.st.sho : e.skill;
   const acc = shoStat/100;
-  const elite = shoStat>=80;   /* penembak elit: bisa placing (termasuk 90+) */
-  const knuck = shoStat>=90 && M.R()<0.5;   /* SHO 90+: 50% KNUCKLE, 50% tetap bisa curve */
+  const elite = shoStat>=85;   /* CURVE SHOOT mulai SHO 85 (derajat naik sampe 180° di SHO 100) */
+  const knuck = shoStat>=92 && M.R()<0.55;   /* SHO 92+: bisa KNUCKLE */
   let ty;
   if (knuck) {
-    /* KNUCKLEBALL: kenceng, lintasan goyang tak terduga — susah ditebak kiper */
     ty = (M.R()<0.5? 42:58) + (M.R()-0.5)*8;
   } else if (elite) {
-    ty = 50 + (M.R()-0.5)*Math.max(2, 14-(shoStat-80)*0.4);
+    ty = 50 + (M.R()-0.5)*Math.max(2, 14-(shoStat-85)*0.4);
   } else {
-    ty = 50 + (M.R()-0.5)*56*(1.3-acc); /* spread lebar: bisa melenceng → goal kick / corner */
+    ty = 50 + (M.R()-0.5)*56*(1.3-acc);
   }
   const dx = gx-b.x, dy = ty-b.y; const d = Math.hypot(dx,dy)||1;
   const pow = 4.5 + acc*3 + (knuck?0.8:0);
   b.vx = dx/d*pow; b.vy = dy/d*pow; M.shotBy = e; e.dribA=null;
   b.knuckle = false;
   if (knuck) {
-    /* knuckle: lurus ke sasaran tapi GOYANG di udara, tanpa lengkung */
-    b.knuckle = true; b.curve = 0; b.bendTarget = null;
+    /* knuckle: lurus ke sasaran tapi GOYANG di udara */
+    b.knuckle = true; b.curve = 0; b.bendTarget = null; b.bendCap=null;
+    e.skillLabel = { label:'KNUCKLE', t:1.3 };
+    M.lastTrick = { label:'KNUCKLE', team:e.team, t:M.t };
   } else if (elite) {
-    /* PLESSING / PLACING: dari samping, bola awal diarahin ke TENGAH terus MELENGKUNG ke TIANG JAUH */
-    const farCorner = b.y < 50 ? 60 : 40; /* shooter di atas → pojok bawah (jauh), sebaliknya */
-    const sideF = Math.min(1, Math.abs(b.y-50)/30); /* 0=tengah, 1=dari samping */
-    const targetY = farCorner + (M.R()-0.5)*Math.max(1, 6-(shoStat-80)*0.3);
+    /* CURVE SHOOT: awal dibidik ke tengah, melengkung ke tiang jauh. Derajat naik ikut SHO (85→100 = 85°→180°) */
+    const farCorner = b.y < 50 ? 60 : 40;
+    const sideF = Math.min(1, Math.abs(b.y-50)/30);
+    const targetY = farCorner + (M.R()-0.5)*Math.max(1, 6-(shoStat-85)*0.3);
     const dGoalDist = Math.hypot(gx-b.x, targetY-b.y);
-    const fakeOff = Math.min(5 + sideF*9, dGoalDist*0.45);
-    const fakeY = targetY + (targetY<50? fakeOff : -fakeOff); /* bidik ke tengah dulu */
+    const fakeOff = Math.min(5 + sideF*9 + (shoStat-85)*0.25, dGoalDist*0.5);
+    const fakeY = targetY + (targetY<50? fakeOff : -fakeOff);
     const fdx=gx-b.x, fdy=fakeY-b.y, fd=Math.hypot(fdx,fdy)||1;
     b.vx = fdx/fd*pow; b.vy = fdy/fd*pow;
-    b.curve = Math.min(1.3, (0.55+(shoStat-80)*0.035)*(1+sideF*0.7));
-    b.bendTarget = { x:gx, y:targetY }; b.bent = 0; /* lengkung masuk ke tiang jauh */
+    b.curve = 2.2;
+    b.bendCap = 0.5 + (shoStat-85)/15*(Math.PI-0.5); /* SHO 85→85°, SHO 100→180° */
+    b.bendTarget = { x:gx, y:targetY }; b.bent = 0;
+    e.skillLabel = { label:'CURVE SHOT', t:1.3 };
+    M.lastTrick = { label:'CURVE SHOT', team:e.team, t:M.t };
   }
-  else { b.curve = 0; b.bendTarget = null; }
+  else { b.curve = 0; b.bendTarget = null; b.bendCap=null; }
   SFX.play('kick', 0.35); /* suara tendangan */
   M.shotN=(M.shotN||0)+1; b.shotId=M.shotN; /* id tembakan biar kiper cuma roll 1x */
   M.shotSnapId = M.snapId||0; /* frame tendangan, buat slowmo di replay */
@@ -5259,6 +5286,27 @@ function foul(e, o){
   /* foul di kotak penalti sendiri = PENALTI (posisi diecek sesuai sisi/half) */
   if (inBox(e.team, o.x, o.y)) { matchMsg('⚽ PENALTI untuk '+tName(o.team)+'!', 'pk'); startPenalty(o.team); }
   else startFreeKick(o.team, o.x, o.y);
+}
+/* pelanggaran gara-gara nempel kelamaan (severity dari durasi nempel) */
+function contactFoul(e, o, sev){
+  if (M.phase!=='play') return;
+  M.stats.fouls[e.team]++;
+  M.cam.shake = 5;
+  const b = M.ball; b.vx*=0.2; b.vy*=0.2;
+  if (sev==='red') {
+    M.stats.rc[e.team]++;
+    matchMsg('🟥 KARTU MERAH! '+e.name+' nempel 10 dtk!', 'red');
+    M.ents = M.ents.filter((x)=>x!==e);
+    if (b.owner===e){ b.owner=null; b.ownerTeam=null; }
+  } else if (sev==='yellow') {
+    e.cards=(e.cards||0)+1;
+    if (e.cards>=2){ M.stats.rc[e.team]++; matchMsg('🟥 KUNING KEDUA! '+e.name+' keluar!','red'); M.ents=M.ents.filter((x)=>x!==e); if(b.owner===e){b.owner=null;b.ownerTeam=null;} }
+    else { M.stats.yc[e.team]++; matchMsg('🟨 KARTU KUNING — '+e.name+' (nempel 5 dtk)','yellow'); }
+  } else {
+    matchMsg('⚠️ PELANGGARAN — '+e.name+' (nempel 3 dtk)', '');
+  }
+  if (o && inBox(e.team, o.x, o.y)) { matchMsg('⚽ PENALTI untuk '+tName(o.team)+'!','pk'); startPenalty(o.team); }
+  else if (o) startFreeKick(o.team, o.x, o.y);
 }
 /* bola mati (throw-in/FK/goal kick): SEMUA pemain balik ke formasi dasar,
    terus 1-4 pemain tim penendang mendekat ke bola jadi opsi operan */
@@ -5812,6 +5860,9 @@ function draw(){
     if (e.trick && TRICK_LABEL[e.trick.type]) { /* label skill di atas pemain */
       x.font='bold 9px Inter, sans-serif'; x.fillStyle='#fb923c';
       x.fillText(TRICK_LABEL[e.trick.type], 0, -28);
+    } else if (e.skillLabel && e.skillLabel.t>0) { /* label CURVE/KNUCKLE/TRIVELA/gocekan */
+      x.font='bold 9px Inter, sans-serif'; x.fillStyle='#fb923c';
+      x.fillText(e.skillLabel.label, 0, -28);
     }
     x.restore();
   });
