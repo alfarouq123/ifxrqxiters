@@ -3405,19 +3405,20 @@ document.addEventListener('click', (e) => {
    UI style: roblox-ish (chunky, tebal, playful)
    ═══════════════════════════════════════════════════════════════════ */
 /* ═══ IFZRQ FC v2 — full rewrite (FC26 cards, vertical builder, engine realistis) ═══ */
-/* ═══════════ SOUND SYSTEM — suara stadion + komentator ═══════════
-   SFX: crowd gol, cheering selebrasi, ambience stadion, peluit, tendangan (dari internet, CC/free archive)
-   + chime gacha sintesis (Web Audio, biar selalu jalan) + komentator (speechSynthesis id-ID) */
+/* ═══════════ SOUND SYSTEM — suara stadion + ultras ═══════════
+   crowd gol, cheering selebrasi, ambience stadion, ULTRAS chant loop, peluit wasit asli, tendangan
+   (dari internet: archive.org CC + wikimedia + orangefreesounds) + chime gacha sintesis (Web Audio) */
 const SFX = {
   on: true,
   urls: {
     goal: 'https://archive.org/download/FootballSoccerSound/Football%20-%20Soccer%20-%20Goal%20Sound%20-%20Sound%20Effects%20FX.mp3',
     cheer: 'https://archive.org/download/FootballSoccerSound/Sports%20Stadium%20Crowd%20Cheering.mp3',
     ambience: 'https://archive.org/download/FootballSoccerSound/Soccer%20Stadium%20Sound%20Effect.mp3',
+    ultras: 'https://www.orangefreesounds.com/wp-content/uploads/2016/03/Football-crowd.mp3',
     kick: 'https://archive.org/download/FootballSoccerSound/Soccer%20Player%20Kicking%20A%20Soccer%20Ball%20Sound%20Effect.mp3',
-    whistle: 'https://upload.wikimedia.org/wikipedia/commons/f/f2/Whistle.ogg',
+    whistle: 'https://upload.wikimedia.org/wikipedia/commons/7/7d/218318_splicesound_referee-whistle-blow-gymnasium.wav',
   },
-  amb: null,
+  amb: null, ultra: null,
   ac: null,
   play(name, vol, maxDur){
     if (!this.on) return;
@@ -3428,18 +3429,25 @@ const SFX = {
       if (maxDur) setTimeout(()=>{ try{ a.pause(); }catch(e){} }, maxDur);
     } catch(e){}
   },
+  /* peluit wasit asli: n = jumlah tiupan ("prittt pritttt") */
+  whistle(n, vol){
+    for (let k=0;k<(n||1);k++) setTimeout(()=>{ this.play('whistle', vol||0.7, 1200); }, k*480);
+  },
   ambStart(){
     if (!this.on) return;
     try {
       if (!this.amb) { this.amb = new Audio(this.urls.ambience); this.amb.loop = true; }
-      this.amb.volume = 0.16;
+      this.amb.volume = 0.13;
       this.amb.play().catch(()=>{});
+      if (!this.ultra) { this.ultra = new Audio(this.urls.ultras); this.ultra.loop = true; }
+      this.ultra.volume = 0.17;
+      this.ultra.play().catch(()=>{});
     } catch(e){}
   },
-  ambStop(){ try { if (this.amb) this.amb.pause(); } catch(e){} },
+  ambStop(){ try { if (this.amb) this.amb.pause(); } catch(e){} try { if (this.ultra) this.ultra.pause(); } catch(e){} },
   toggle(){
     this.on = !this.on;
-    if (!this.on) { this.ambStop(); if (window.speechSynthesis) speechSynthesis.cancel(); }
+    if (!this.on) this.ambStop();
     else if (typeof M!=='undefined' && M && !M.over) this.ambStart();
     return this.on;
   },
@@ -3465,20 +3473,6 @@ const SFX = {
     } catch(e){}
   },
 };
-/* KOMENTATOR: text-to-speech bahasa indonesia */
-function say(text){
-  if (!SFX.on || !window.speechSynthesis) return;
-  try {
-    speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = 'id-ID';
-    const v = speechSynthesis.getVoices().find((x)=>x.lang && (x.lang==='id-ID'||x.lang.startsWith('id')));
-    if (v) u.voice = v;
-    u.rate = 1.15; u.pitch = 1.05; u.volume = 0.95;
-    speechSynthesis.speak(u);
-  } catch(e){}
-}
-if (window.speechSynthesis && speechSynthesis.onvoiceschanged!==undefined) speechSynthesis.onvoiceschanged = ()=>{};
 
 window.FB = (function(){
 'use strict';
@@ -4176,7 +4170,7 @@ function startMatch(cfg){
   $('fbMTactic').onclick = openTactics;
   $('fbMSkip').onclick = () => { M.spd = 30; };
   $('fbMSound').onclick = () => { const on = SFX.toggle(); $('fbMSound').textContent = on? '🔊':'🔇'; };
-  showOverlay('KICK OFF', esc(myName)+' vs '+esc(cfg.oppName), [{ label:'MULAI', fn: () => { hideOverlay(); M.phase='play'; M.paused = false; SFX.ambStart(); SFX.play('whistle',0.8,1600); say('Pertandingan dimulai!'); loop(performance.now()); } }]);
+  showOverlay('KICK OFF', esc(myName)+' vs '+esc(cfg.oppName), [{ label:'MULAI', fn: () => { hideOverlay(); M.phase='play'; M.paused = false; SFX.ambStart(); SFX.whistle(1, 0.8); loop(performance.now()); } }]);
 }
 /* posisi dasar + spread vertikal kalo ada pos dobel (CB-CB, CM-CM, ST-ST, dll) biar formasi beneran kebentuk */
 function slotPos(team, pi){
@@ -4783,7 +4777,7 @@ function foul(e, o){
   if (M.phase!=='play') return;
   M.stats.fouls[e.team]++;
   M.cam.shake = 6;
-  SFX.play('whistle', 0.4, 1100); /* peluit pelanggaran */
+  SFX.whistle(1, 0.45); /* peluit pelanggaran */
   const b = M.ball; b.vx*=0.2; b.vy*=0.2;
   /* KEKERASAN: makin agresif/bruiser makin gede peluang kena kartu (merah rare, kuning kadang2) */
   const sev = M.R() + e.per.aggr*0.55 + (e.trait==='bruiser'?0.14:0);
@@ -4852,7 +4846,7 @@ function startCorner(atkT, defT){
 function corner(atkT, defT){ startCorner(atkT, defT); }
 function startPenalty(atkT){
   M.phase='setpiece';
-  SFX.play('whistle', 0.7, 1400); say('Penalti!');
+  SFX.whistle(1, 0.7);
   const b = M.ball; b.owner=null;b.ownerTeam=null;b.vx=0;b.vy=0;b.curve=0;
   const gx = atkGoal(atkT); const x = gx===98? 87:13;
   b.x=x; b.y=50;
@@ -4936,10 +4930,9 @@ function goal(ti){
   M.ball.owner=null; M.ball.ownerTeam=null; M.ball.vx=0;M.ball.vy=0;
   M.ball.curve=0;
   M.cam.shake = 8;
-  /* SOUND: raungan gol + sorakan selebrasi + komentator */
+  /* SOUND: raungan gol + sorakan selebrasi */
   SFX.play('goal', 0.9);
   setTimeout(()=>{ if (SFX.on) SFX.play('cheer', 0.65); }, 900);
-  say('Gool! '+(scorer?scorer.name:'')+' menjebol gawang '+(ti===0? (M.cfg.oppName||'lawan') : myName)+'!');
 }
 function tickCeleb(dt){
   const c = M.celeb; c.t += dt;
@@ -5005,7 +4998,7 @@ function resetKickoff(kick, keepPause){
 /* ── HT / FT ── */
 function halftime(){
   M.paused=true; M.phase='ht';
-  SFX.play('whistle', 0.7, 2000); say('Peluit babak pertama! Waktunya istirahat.');
+  SFX.whistle(2, 0.7);
   const t2 = M.teams[0];
   const f = FORMATIONS[(t2.squad&&t2.squad.formation)||'433-attack'];
   const slots = f.slots;
@@ -5113,7 +5106,7 @@ function halftime(){
 }
 function fulltime(){
   M.over=true; M.paused=true; M.phase='ft'; cancelAnimationFrame(M.raf);
-  SFX.play('whistle', 0.85, 3000); say('Peluit panjang! Pertandingan berakhir.');
+  SFX.whistle(3, 0.85);
   const [a,b2]=M.score; const outcome = a>b2?'w':a<b2?'l':'d';
   const poss = M.stats.poss[0]+M.stats.poss[1]||1;
   $('fbMOverlay').innerHTML = '<div class="fb-ovl-card big"><h3>FULL TIME — '+a+' : '+b2+'</h3><div class="fb-stats">'
