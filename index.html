@@ -3412,10 +3412,9 @@ document.addEventListener('click', (e) => {
 const SFX = {
   on: true,
   urls: {
-    goal: 'https://archive.org/download/FootballSoccerSound/Football%20-%20Soccer%20-%20Goal%20Sound%20-%20Sound%20Effects%20FX.mp3',
     cheer: 'https://archive.org/download/FootballSoccerSound/Sports%20Stadium%20Crowd%20Cheering.mp3',
     ambience: 'https://archive.org/download/FootballSoccerSound/Soccer%20Stadium%20Sound%20Effect.mp3',
-    ultras: 'https://www.orangefreesounds.com/wp-content/uploads/2016/03/Football-crowd.mp3',
+    ultras: 'https://orangefreesounds.com/wp-content/uploads/2026/04/Large-crowd-cheering-sound-effect-stadium-audience-roar.mp3',
     kick: 'https://archive.org/download/FootballSoccerSound/Soccer%20Player%20Kicking%20A%20Soccer%20Ball%20Sound%20Effect.mp3',
     whistle: 'https://upload.wikimedia.org/wikipedia/commons/7/7d/218318_splicesound_referee-whistle-blow-gymnasium.wav',
   },
@@ -3438,10 +3437,10 @@ const SFX = {
     if (!this.on) return;
     try {
       if (!this.amb) { this.amb = new Audio(this.urls.ambience); this.amb.loop = true; }
-      this.amb.volume = 0.13;
+      this.amb.volume = 0.12;
       this.amb.play().catch(()=>{});
       if (!this.ultra) { this.ultra = new Audio(this.urls.ultras); this.ultra.loop = true; }
-      this.ultra.volume = 0.17;
+      this.ultra.volume = 0.19;
       this.ultra.play().catch(()=>{});
     } catch(e){}
   },
@@ -4514,6 +4513,7 @@ function trySave(gk){
   saveP = Math.max(0.06, Math.min(0.92, saveP));
   if (M.R() >= saveP) return; /* gak kesampe — bola lanjut */
   M.stats.saves[gk.team]++;
+  SFX.play('cheer', 0.8); /* SORAKAN BESAR penonton buat save kiper */
   gk.down = Math.max(0.35, 1.25 - g.spd/100*0.85); /* SPD: seberapa cepet bangun abis dive */
   /* HAN: nangkap lengket atau cuma nepis */
   const catchP = 0.22 + g.han/100*0.55 - shotPow*0.035;
@@ -4872,6 +4872,7 @@ function foul(e, o){
 }
 function startFreeKick(atkT, x, y){
   M.phase='setpiece';
+  SFX.whistle(1, 0.5); /* prit — free kick */
   const b = M.ball; b.owner=null;b.ownerTeam=null; b.vx=0;b.vy=0;
   x = Math.max(14, Math.min(86, x)); y = Math.max(8, Math.min(92,y));
   b.x=x; b.y=y;
@@ -4902,6 +4903,7 @@ function startFreeKick(atkT, x, y){
 }
 function startCorner(atkT, defT){
   M.phase='setpiece';
+  SFX.whistle(1, 0.45); /* prit — corner */
   const b = M.ball; b.owner=null;b.ownerTeam=null;b.vx=0;b.vy=0;b.curve=0;
   const side = b.y<50? 4:96; const x = atkGoal(atkT); /* aware half swap */
   b.x = x; b.y = side;
@@ -4926,6 +4928,7 @@ function startPenalty(atkT){
 }
 function throwIn(team, x, y){
   M.phase='setpiece';
+  SFX.whistle(1, 0.45); /* prit — lemparan ke dalam */
   const b = M.ball; b.owner=null;b.ownerTeam=null;b.vx=0;b.vy=0;b.curve=0;
   x = Math.max(5,Math.min(95,x)); b.x=x; b.y=y;
   const thrower = M.ents.filter((e)=>e.team===team && !e.isGK).sort((a,b2)=>Math.hypot(a.x-x,a.y-y)-Math.hypot(b2.x-x,b2.y-y))[0];
@@ -4943,7 +4946,7 @@ function runSetPiece(){
     let pkP = 0.72 + (sp.shooter? sp.shooter.skill/400 : 0);
     if (gk && gk.gk) pkP -= gk.gk.ref/100*0.15; /* REF kiper bisa baca arah penalti */
     if (sp.shooter && M.R() < pkP) { b.vx = (gx===98?1:-1)*6; b.vy = (M.R()-0.5)*4; M.shotBy=sp.shooter; M.shotSnapId=M.snapId||0; touch(atkT, sp.shooter); }
-    else if (gk) { M.stats.saves[gk.team]++; b.owner=gk; b.ownerTeam=gk.team; b.x=gk.x;b.y=gk.y; b.vx=0;b.vy=0; touch(gk.team,gk); matchMsg('🧤 PENALTI DITEPIS '+gk.name+'!!','pk'); }
+    else if (gk) { M.stats.saves[gk.team]++; SFX.play('cheer', 0.8); b.owner=gk; b.ownerTeam=gk.team; b.x=gk.x;b.y=gk.y; b.vx=0;b.vy=0; touch(gk.team,gk); matchMsg('🧤 PENALTI DITEPIS '+gk.name+'!!','pk'); }
     return;
   }
   if (sp.type==='gk') { /* kiper ambil bola terus distribusi */
@@ -4996,9 +4999,8 @@ function goal(ti){
   M.ball.owner=null; M.ball.ownerTeam=null; M.ball.vx=0;M.ball.vy=0;
   M.ball.curve=0;
   M.cam.shake = 8;
-  /* SOUND: raungan gol + sorakan selebrasi */
-  SFX.play('goal', 0.9);
-  setTimeout(()=>{ if (SFX.on) SFX.play('cheer', 0.65); }, 900);
+  /* SOUND: sorakan BESAR penonton pas gol (file morse lama udah dihapus) */
+  SFX.play('cheer', 0.95);
 }
 function tickCeleb(dt){
   const c = M.celeb; c.t += dt;
@@ -5172,7 +5174,7 @@ function halftime(){
 }
 function fulltime(){
   M.over=true; M.paused=true; M.phase='ft'; cancelAnimationFrame(M.raf);
-  SFX.whistle(3, 0.85);
+  SFX.play('whistle', 0.9, 3200); /* PLUIT PANJANG tanda pertandingan selesai */
   const [a,b2]=M.score; const outcome = a>b2?'w':a<b2?'l':'d';
   const poss = M.stats.poss[0]+M.stats.poss[1]||1;
   $('fbMOverlay').innerHTML = '<div class="fb-ovl-card big"><h3>FULL TIME — '+a+' : '+b2+'</h3><div class="fb-stats">'
