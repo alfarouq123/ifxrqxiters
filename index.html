@@ -3519,6 +3519,12 @@ window.FB = (function(){
 'use strict';
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+/* nama card disingkat: "cristiano ronaldo" -> "c. ronaldo" */
+function shortName(name){
+  const parts = String(name).split(' ').filter(Boolean);
+  if (parts.length<=1) return name;
+  return (parts[0][0] + '. ' + parts.slice(1).join(' ')).toLowerCase();
+}
 function mulberry(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
 const rnd = Math.random;
 const pick = (arr) => arr[Math.floor(rnd()*arr.length)];
@@ -3563,6 +3569,17 @@ const LEGENDS = [
 /* ── ERA MODERN: gold ── */
 ['Leroy Sané','LW','Jerman',86,'gold'],['Serge Gnabry','RW','Jerman',84,'gold'],['Christopher Nkunku','CAM','Prancis',85,'gold'],['Ollie Watkins','ST','Inggris',85,'gold'],['Alexander Isak','ST','Swedia',86,'gold'],['Viktor Gyökeres','ST','Swedia',86,'gold'],['Bradley Barcola','LW','Prancis',84,'gold'],['Francisco Conceição','RW','Portugal',83,'gold'],['João Neves','CM','Portugal',83,'gold'],['Eduardo Camavinga','CM','Prancis',86,'gold'],['Aurélien Tchouaméni','CDM','Prancis',86,'gold'],['Ronald Araújo','CB','Uruguay',87,'gold'],['William Saliba','CB','Prancis',88,'gold'],['Joško Gvardiol','CB','Kroasia',86,'gold'],['Jeremie Frimpong','RB','Belanda',84,'gold'],['Ryan Gravenberch','CM','Belanda',85,'gold'],['Dominik Szoboszlai','CAM','Hungaria',85,'gold'],['Lucas Paquetá','CAM','Brasil',85,'gold'],['Anthony Gordon','LW','Inggris',84,'gold'],['Cole Palmer','CAM','Inggris',87,'gold'],['Enzo Fernández','CM','Argentina',86,'gold'],['Moisés Caicedo','CDM','Ekuador',86,'gold'],['Alexis Mac Allister','CM','Argentina',85,'gold'],['Luis Díaz','LW','Kolombia',86,'gold'],['Diogo Jota','ST','Portugal',84,'gold'],['Cody Gakpo','LW','Belanda',84,'gold'],['Donyell Malen','RW','Belanda',83,'gold'],['Karim Adeyemi','RW','Jerman',82,'gold'],['Serhou Guirassy','ST','Guinea',84,'gold'],['Victor Boniface','ST','Nigeria',83,'gold'],['Benjamin Šeško','ST','Slovenia',83,'gold'],['Rasmus Højlund','ST','Denmark',82,'gold'],['Joshua Zirkzee','ST','Belanda',82,'gold'],['Alejandro Garnacho','LW','Argentina',83,'gold'],['Kobbie Mainoo','CM','Inggris',82,'gold'],['Nico Williams','LW','Spanyol',85,'gold'],['Dani Olmo','CAM','Spanyol',85,'gold'],['Álvaro Morata','ST','Spanyol',84,'gold'],['Marcus Thuram','ST','Prancis',84,'gold'],['Dušan Vlahović','ST','Serbia',84,'gold'],['Paulo Dybala','CAM','Argentina',85,'gold'],['Lorenzo Pellegrini','CAM','Italia',84,'gold'],['Sandro Tonali','CM','Italia',84,'gold'],['Davide Frattesi','CM','Italia',82,'gold'],['Matteo Politano','RW','Italia',82,'gold'],['Giacomo Raspadori','ST','Italia',82,'gold'],['Youssoufa Moukoko','ST','Jerman',80,'gold'],['Mathys Tel','ST','Prancis',80,'gold'],['Evan Ferguson','ST','Irlandia',81,'gold'],['Darwin Núñez','ST','Uruguay',85,'gold'],['Curtis Jones','CM','Inggris',82,'gold'],['Harvey Elliott','CAM','Inggris',81,'gold'],['Alex Grimaldo','LB','Spanyol',84,'gold'],['Nuno Mendes','LB','Portugal',85,'gold'],['Alphonso Davies','LB','Kanada',85,'gold'],['Achraf Hakimi','RB','Maroko',87,'gold'],['Kyle Walker','RB','Inggris',85,'gold'],['Reece James','RB','Inggris',84,'gold'],['Ben White','RB','Inggris',83,'gold'],['Gabriel Magalhães','CB','Brasil',87,'gold'],['Marquinhos','CB','Brasil',87,'gold'],['Alessandro Bastoni','CB','Italia',86,'gold'],['Matthijs de Ligt','CB','Belanda',86,'gold'],['Presnel Kimpembe','CB','Prancis',83,'gold'],['Pau Torres','CB','Spanyol',83,'gold'],['Robin Le Normand','CB','Spanyol',84,'gold'],['Dani Carvajal','RB','Spanyol',85,'gold'],['Jesús Navas','RB','Spanyol',81,'gold'],['Unai Simón','GK','Spanyol',85,'gold'],['David Raya','GK','Spanyol',84,'gold'],['Gregor Kobel','GK','Swiss',85,'gold'],['Diogo Costa','GK','Portugal',85,'gold'],['Guglielmo Vicario','GK','Italia',84,'gold'],['Andriy Lunin','GK','Ukraina',82,'gold'],['Álex Remiro','GK','Spanyol',82,'gold']
 ];
+/* ── HISTORIC: legenda sepanjang masa (era awal s/d modern), khusus gold/legend/icon ── */
+const HISTORIC_PLAYERS = [
+/* era klasik 1900-1950an */
+['Giuseppe Meazza','ST','Italia',95,'icon'],['Silvio Piola','ST','Italia',93,'icon'],['Gunnar Nordahl','ST','Swedia',93,'icon'],['Ricardo Zamora','GK','Spanyol',93,'icon'],['Josep Samitier','CAM','Spanyol',91,'legend'],['Telmo Zarra','ST','Spanyol',92,'legend'],['László Kubala','ST','Hongaria',93,'icon'],['Juan Alberto Schiaffino','CAM','Uruguay',92,'legend'],['Obdulio Varela','CM','Uruguay',91,'legend'],['Alcides Ghiggia','RW','Uruguay',91,'legend'],['Gunnar Gren','ST','Swedia',90,'legend'],['Nils Liedholm','CM','Swedia',90,'legend'],['Alex James','CAM','Skotlandia',90,'legend'],['Dixie Dean','ST','Inggris',92,'legend'],['Tommy Lawton','ST','Inggris',90,'legend'],['Raich Carter','CAM','Inggris',90,'legend'],['Wilf Mannion','CAM','Inggris',89,'gold'],['Nat Lofthouse','ST','Inggris',90,'legend'],['Billy Wright','CB','Inggris',90,'legend'],['Danny Blanchflower','CM','Irlandia Utara',89,'gold'],['Jock Stein','CB','Skotlandia',88,'gold'],['Roger Byrne','LB','Inggris',87,'gold'],['Duncan Edwards','CM','Inggris',91,'legend'],['Raymond Kopa','CAM','Prancis',91,'legend'],['Ladislao Kubala','ST','Hongaria',92,'legend'],['Héctor Rial','ST','Argentina',89,'gold'],['Nándor Hidegkuti','CF','Hongaria',91,'legend'],['József Bozsik','CM','Hongaria',90,'legend'],['Zoltán Czibor','LW','Hongaria',90,'legend'],['Felix Krohn','GK','Jerman',86,'gold'],
+/* era 1960-1980an */
+['Amancio Amaro','RW','Spanyol',89,'gold'],['Luis Suárez Miramontes','CM','Spanyol',91,'legend'],['José Santamaría','CB','Uruguay',90,'legend'],['Gianni Rivera','CAM','Italia',92,'legend'],['Sandro Mazzola','ST','Italia',92,'legend'],['Giacinto Facchetti','LB','Italia',93,'legend'],['Tarcisio Burgnich','CB','Italia',88,'gold'],['Angelo Domenghini','RW','Italia',87,'gold'],['Luigi Riva','ST','Italia',93,'icon'],['José Altafini','ST','Brasil',90,'legend'],['Gérard Hausser','LW','Prancis',86,'gold'],['Albert Brülls','RW','Jerman',86,'gold'],['Uwe Seeler','ST','Jerman',92,'legend'],['Wolfgang Overath','CAM','Jerman',90,'legend'],['Helmut Haller','CAM','Jerman',88,'gold'],['Karl-Heinz Schnellinger','CB','Jerman',87,'gold'],['Franz Beckenbauer','CB','Jerman',96,'icon'],['Sepp Maier','GK','Jerman',93,'icon'],['Gerd Müller','ST','Jerman',95,'icon'],['Paul Breitner','LB','Jerman',90,'legend'],['Uli Hoeneß','RW','Jerman',89,'gold'],['Berti Vogts','RB','Jerman',89,'gold'],['Hans-Georg Schwarzenbeck','CB','Jerman',87,'gold'],['Johan Neeskens','CM','Belanda',91,'legend'],['Johnny Rep','RW','Belanda',88,'gold'],['Rob Rensenbrink','LW','Belanda',90,'legend'],['Arie Haan','CM','Belanda',87,'gold'],['Wim Suurbier','RB','Belanda',86,'gold'],['Ruud Krol','LB','Belanda',90,'legend'],['Piet Schrijvers','GK','Belanda',86,'gold'],['Kevin Keegan','ST','Inggris',91,'legend'],['Peter Shilton','GK','Inggris',90,'legend'],['Bobby Moore','CB','Inggris',93,'icon'],['Alan Ball','CM','Inggris',88,'gold'],['Martin Peters','CM','Inggris',87,'gold'],['Geoff Hurst','ST','Inggris',89,'gold'],['Roger Hunt','ST','Inggris',88,'gold'],['Trevor Brooking','CM','Inggris',88,'gold'],['Kenny Dalglish','ST','Skotlandia',93,'icon'],['Graeme Souness','CM','Skotlandia',89,'gold'],['Archie Gemmill','CM','Skotlandia',87,'gold'],['Michel Platini','CAM','Prancis',95,'icon'],['Alain Giresse','CM','Prancis',89,'gold'],['Jean Tigana','CM','Prancis',88,'gold'],['Luis Fernández','CM','Prancis',87,'gold'],['Manuel Amoros','RB','Prancis',87,'gold'],['Joël Bats','GK','Prancis',87,'gold'],
+/* era 1990-2000an */
+['Lothar Matthäus','CM','Jerman',93,'icon'],['Jürgen Klinsmann','ST','Jerman',91,'legend'],['Rudi Völler','ST','Jerman',90,'legend'],['Andreas Brehme','LB','Jerman',90,'legend'],['Thomas Häßler','CAM','Jerman',88,'gold'],['Jürgen Kohler','CB','Jerman',88,'gold'],['Guido Buchwald','CB','Jerman',86,'gold'],['Bodo Illgner','GK','Jerman',88,'gold'],['Oliver Kahn','GK','Jerman',93,'icon'],['Michael Ballack','CM','Jerman',90,'legend'],['Torsten Frings','CM','Jerman',85,'gold'],['Roberto Carlos','LB','Brasil',93,'icon'],['Cafu','RB','Brasil',92,'legend'],['Carlos Dunga','CDM','Brasil',90,'legend'],['Rivaldo','LW','Brasil',93,'icon'],['Kaká','CAM','Brasil',93,'icon'],['Adriano','ST','Brasil',90,'legend'],['Robinho','LW','Brasil',87,'gold'],['Júlio César','GK','Brasil',89,'gold'],['Maicon','RB','Brasil',87,'gold'],['Lúcio','CB','Brasil',88,'gold'],['Juan','CB','Brasil',86,'gold'],['Gabriel Batistuta','ST','Argentina',92,'legend'],['Diego Simeone','CDM','Argentina',88,'gold'],['Juan Román Riquelme','CAM','Argentina',89,'gold'],['Hernán Crespo','ST','Argentina',89,'gold'],['Javier Zanetti','RB','Argentina',90,'legend'],['Roberto Ayala','CB','Argentina',87,'gold'],['Óscar Córdoba','GK','Kolombia',85,'gold'],['Carlos Valderrama','CAM','Kolombia',90,'legend'],['Faustino Asprilla','ST','Kolombia',87,'gold'],['Iván Zamorano','ST','Chile',89,'gold'],['Marcelo Salas','ST','Chile',89,'gold'],['Elias Figueroa','CB','Chile',89,'gold'],['Enzo Francescoli','CAM','Uruguay',91,'legend'],['Diego Forlán','ST','Uruguay',89,'gold'],['Álvaro Recoba','CAM','Uruguay',87,'gold'],['Ryan Giggs','LW','Wales',91,'legend'],['Ian Rush','ST','Wales',88,'gold'],['Neville Southall','GK','Wales',87,'gold'],['George Best','RW','Irlandia Utara',93,'icon'],['Pat Jennings','GK','Irlandia Utara',88,'gold'],['Gordon Banks','GK','Inggris',90,'legend'],['Gary Lineker','ST','Inggris',90,'legend'],['Peter Beardsley','CF','Inggris',86,'gold'],['John Barnes','LW','Inggris',89,'gold'],['Paul Gascoigne','CAM','Inggris',89,'gold'],['David Seaman','GK','Inggris',88,'gold'],['Tony Adams','CB','Inggris',88,'gold'],['Sol Campbell','CB','Inggris',87,'gold'],['Ashley Cole','LB','Inggris',87,'gold'],['Michael Owen','ST','Inggris',89,'gold'],['Rio Ferdinand','CB','Inggris',88,'gold'],['John Terry','CB','Inggris',88,'gold'],['Petr Čech','GK','Ceko',90,'legend'],['Pavel Nedvěd','LW','Ceko',91,'legend'],['Karel Poborský','RW','Ceko',84,'gold'],['Milan Baroš','ST','Ceko',84,'gold'],['Thomas Rosický','CAM','Ceko',85,'gold'],['Gianluigi Buffon','GK','Italia',93,'icon'],['Fabio Cannavaro','CB','Italia',91,'legend'],['Alessandro Nesta','CB','Italia',90,'legend'],['Paolo Maldini','CB','Italia',95,'icon'],['Andrea Pirlo','CAM','Italia',91,'legend'],['Gennaro Gattuso','CDM','Italia',86,'gold'],['Francesco Totti','CAM','Italia',92,'legend'],['Alessandro Del Piero','CF','Italia',91,'legend'],['Filippo Inzaghi','ST','Italia',89,'gold'],['Christian Vieri','ST','Italia',89,'gold'],['Gianluca Zambrotta','RB','Italia',87,'gold'],['Fabio Grosso','LB','Italia',84,'gold'],['Mauro Camoranesi','RW','Italia',84,'gold'],['Simone Perrotta','CM','Italia',83,'gold'],['Dino Zoff','GK','Italia',92,'legend'],['Gaetano Scirea','CB','Italia',90,'legend'],['Marco Tardelli','CM','Italia',88,'gold'],['Bruno Conti','RW','Italia',88,'gold'],['Paolo Rossi','ST','Italia',91,'legend'],['Roberto Bettega','ST','Italia',88,'gold'],['Claudio Gentile','CB','Italia',87,'gold'],['Antonio Cabrini','LB','Italia',87,'gold'],
+/* tambahan modern 2010-2020an */
+['Lionel Messi','CAM','Argentina',97,'icon'],['Cristiano Ronaldo','ST','Portugal',96,'icon'],['Neymar Jr','LW','Brasil',93,'icon'],['Kylian Mbappé','LW','Prancis',95,'icon'],['Erling Haaland','ST','Norwegia',94,'icon'],['Kevin De Bruyne','CAM','Belgia',94,'icon'],['Luka Modrić','CM','Kroasia',92,'legend'],['Robert Lewandowski','ST','Polandia',93,'icon'],['Mohamed Salah','RW','Mesir',93,'icon'],['Sadio Mané','LW','Senegal',89,'gold'],['Virgil van Dijk','CB','Belanda',92,'legend'],['Alisson Becker','GK','Brasil',91,'legend'],['Ederson Moraes','GK','Brasil',90,'legend'],['Thibaut Courtois','GK','Belgia',91,'legend'],['Manuel Neuer','GK','Jerman',92,'legend'],['Toni Kroos','CM','Jerman',91,'legend'],['Casemiro','CDM','Brasil',89,'gold'],['Karim Benzema','ST','Prancis',91,'legend'],['Antoine Griezmann','CAM','Prancis',90,'legend'],['Paul Pogba','CM','Prancis',88,'gold'],['N\'Golo Kanté','CDM','Prancis',89,'gold'],['Eden Hazard','LW','Belgia',89,'gold'],['Romelu Lukaku','ST','Belgia',87,'gold'],['Sergio Agüero','ST','Argentina',90,'legend'],['Ángel Di María','RW','Argentina',88,'gold'],['Javier Mascherano','CDM','Argentina',87,'gold'],['Sergio Romero','GK','Argentina',84,'gold'],['Luis Suárez','ST','Uruguay',90,'legend'],['Diego Godín','CB','Uruguay',87,'gold'],['Federico Valverde','CM','Uruguay',90,'legend'],['Darwin Núñez','ST','Uruguay',85,'gold'],['Alexis Sánchez','RW','Chile',86,'gold'],['Arturo Vidal','CM','Chile',86,'gold'],['Claudio Bravo','GK','Chile',85,'gold'],['Son Heung-min','LW','Korea Selatan',91,'legend'],['Park Ji-sung','CM','Korea Selatan',84,'gold'],['Takefusa Kubo','RW','Jepang',84,'gold'],['Kaoru Mitoma','LW','Jepang',84,'gold'],['Daichi Kamada','CAM','Jepang',83,'gold'],['Shinji Kagawa','CAM','Jepang',84,'gold'],['Keisuke Honda','CAM','Jepang',83,'gold'],['Yuto Nagatomo','LB','Jepang',81,'gold'],['Maya Yoshida','CB','Jepang',80,'gold'],['Eiji Kawashima','GK','Jepang',80,'gold']
+];
 function clampStat(v){ return Math.max(30, Math.min(99, Math.round(v))); }
 function statsOf(p){
   const q = mulberry(p.id*97+13); const o = p.ovr; const g = POSGROUP[p.pos]; const j = () => (q()-0.5)*10;
@@ -3592,6 +3609,7 @@ function buildDB(){
   const out = [];
   const seen = new Set();
   for (const L of LEGENDS){ if (seen.has(L[0])) continue; seen.add(L[0]); out.push({ id:out.length, name:L[0], pos:L[1], country:L[2], ovr:L[3], r:L[4] }); }
+  for (const L of HISTORIC_PLAYERS){ if (seen.has(L[0])) continue; seen.add(L[0]); out.push({ id:out.length, name:L[0], pos:L[1], country:L[2], ovr:L[3], r:L[4] }); }
   for (const line of DB_RAW) {
     const parts = line.split('|');
     if (parts.length < 5 || parts[4] === 'x') continue;
@@ -3675,7 +3693,7 @@ function cardHTML(p, opts){
   return '<div class="fbc '+r.cls+(opts.cls||'')+'" data-pid="'+p.id+'">'
     + '<div class="fbc-top"><div class="fbc-l"><div class="fbc-ovr">'+p.ovr+'</div><div class="fbc-pos">'+esc(p.pos)+'</div></div><div class="fbc-flag">'+flag(p.country)+'</div></div>'
     + '<img class="fbc-face" src="'+faceFor(p)+'" alt="">'
-    + '<div class="fbc-name">'+esc(p.name)+'</div>'
+    + '<div class="fbc-name">'+esc(shortName(p.name))+'</div>'
     + (POSGROUP[p.pos]==='GK'? gkStatsRow(gkStatsOf(p)) : statsRow(s))
     + '<div class="fbc-rar">'+r.label+'</div>'
     + '</div>';
@@ -3686,7 +3704,7 @@ function miniCard(p, slot, eff){
   return '<div class="fbc mcard '+RAR[p.r].cls+'">'
     + '<div class="fbc-top"><div class="fbc-l"><div class="fbc-ovr">'+o+'</div><div class="fbc-pos">'+esc(slot||p.pos)+'</div></div><div class="fbc-flag">'+flag(p.country)+'</div></div>'
     + '<img class="fbc-face" src="'+faceFor(p)+'" alt="">'
-    + '<div class="fbc-name">'+esc(p.name)+'</div>'
+    + '<div class="fbc-name">'+esc(shortName(p.name))+'</div>'
     + (POSGROUP[p.pos]==='GK'? gkStatsRow(gkStatsOf(p)) : statsRow(s))
     + '</div>';
 }
@@ -3972,34 +3990,38 @@ const DIV_TARGET = {10:12,9:14,8:16,7:18,6:20,5:22,4:24};
 const DIV_STAY   = {10:6,9:8,8:10,7:12,6:14,5:16,4:18};
 const DIV_RATEUP = {3:1500,2:1800};
 const DIV_FLOOR  = {3:1000,2:1500,1:1800};
-function divProgressHTML(){
-  const d = state.division;
+/* render progress SATU track (ai / pvp) */
+function trackDivHTML(tr, label, icon){
+  if (!tr) return '';
+  const d = tr.division;
   if (d>=4){
     const target = DIV_TARGET[d]||20, stay = DIV_STAY[d]||10;
-    const pct = Math.min(100, Math.max(0, Math.round((state.points||0)/target*100)));
-    return '<div class="fb-divbox"><div class="fb-divrow"><span>🏅 DIVISI '+d+'</span><b>'+(state.points||0)+' / '+target+' poin</b></div>'
+    const pct = Math.min(100, Math.max(0, Math.round((tr.points||0)/target*100)));
+    return '<div class="fb-divbox"><div class="fb-divrow"><span>'+icon+' '+label+' · DIVISI '+d+'</span><b>'+(tr.points||0)+' / '+target+' poin</b></div>'
       + '<div class="fb-divbar"><i style="width:'+pct+'%"></i></div>'
-      + '<div class="fb-divsub">match '+(state.matches||0)+'/10 · sentuh '+target+' = PROMOSI · stay ≥'+stay+' poin · W+3 S+1</div></div>';
+      + '<div class="fb-divsub">match '+(tr.matches||0)+'/10 · sentuh '+target+' = PROMOSI · stay ≥'+stay+' poin · W+3 S+1</div></div>';
   } else {
     const upAt = DIV_RATEUP[d], floor = DIV_FLOOR[d]||1000;
-    const r = state.rating||1000;
+    const r = tr.rating||1000;
     const pct = upAt? Math.min(100, Math.max(0, Math.round((r-floor)/(upAt-floor)*100))) : 100;
-    return '<div class="fb-divbox"><div class="fb-divrow"><span>🏅 DIVISI '+d+' · RATING</span><b>'+r+'</b></div>'
+    return '<div class="fb-divbox"><div class="fb-divrow"><span>'+icon+' '+label+' · DIVISI '+d+' · RATING</span><b>'+r+'</b></div>'
       + '<div class="fb-divbar"><i style="width:'+pct+'%"></i></div>'
       + '<div class="fb-divsub">'+(upAt? r+' / '+upAt+' buat naik ke divisi '+(d-1) : 'divisi tertinggi! rating '+r)+'</div></div>';
   }
 }
 function showPlay(){
   if (!state.squad) { alert('draft tim dulu sebelum main'); return; }
+  const ai = state.ai||{}, pvp = state.pvp||{};
   screen('play', '<div class="fb-playmenu"><div class="fb-draft-top">PLAY</div>'
-    + divProgressHTML()
+    + trackDivHTML(ai, 'VS AI', '🤖')
+    + trackDivHTML(pvp, 'PVP', '⚔️')
     + '<div class="fb-playcards">'
-    + '<div class="fb-playcard" id="fbPvAI"><b>VS AI</b><span>lawan AI sesuai divisi lu — langsung nemu lawan</span></div>'
-    + '<div class="fb-playcard" id="fbPvP"><b>PVP</b><span>lawan ORANG ASLI — matchmaking beneran</span></div>'
+    + '<div class="fb-playcard" id="fbPvAI"><b>VS AI</b><span>lawan AI sesuai divisi AI lu — langsung nemu lawan</span></div>'
+    + '<div class="fb-playcard" id="fbPvP"><b>PVP</b><span>lawan ORANG ASLI sesuai divisi PVP lu</span></div>'
     + '<div class="fb-playcard" id="fbFriend"><b>LAGA TEMAN</b><span>bikin room / masuk pakai ID — by1 bareng temen</span></div>'
     + '</div>'
     + '<div class="fb-lbwrap"><div class="fb-lbhead">🏆 TOP GLOBAL</div>'
-    + '<div class="fb-lbtabs"><button type="button" class="fb-lbtab on" data-lb="points">POIN</button><button type="button" class="fb-lbtab" data-lb="rating">RATING</button><button type="button" class="fb-lbtab" data-lb="wins">MENANG</button></div>'
+    + '<div class="fb-lbtabs"><button type="button" class="fb-lbtab on" data-lb="ai">VS AI</button><button type="button" class="fb-lbtab" data-lb="pvp">PVP</button><button type="button" class="fb-lbtab" data-lb="wins">MENANG</button></div>'
     + '<div class="fb-lblist" id="fbLbList">loading...</div></div>'
     + '<button type="button" class="fb-btn fb-ghost" id="fbPlayBack">← Lobby</button></div>');
   $('fbPlayBack').onclick = showLobby;
@@ -4010,16 +4032,19 @@ function showPlay(){
   function renderLb(kind){
     const el=$('fbLbList'); if(!el)return;
     if(!lbData){ el.textContent='loading...'; return; }
-    const arr = kind==='points'? lbData.points : kind==='rating'? lbData.rating : lbData.wins;
+    const arr = kind==='ai'? lbData.ai : kind==='pvp'? lbData.pvp : lbData.wins;
     if(!arr || !arr.length){ el.innerHTML='<div class="fb-hint">belum ada data — main dulu!</div>'; return; }
-    el.innerHTML = arr.map((e,i)=>'<div class="fb-lbrow"><span>#'+(i+1)+'</span><b>'+esc(e.name)+'</b><i>div '+e.division+'</i><b class="fb-lbval">'+(kind==='rating'? e.rating : kind==='wins'? e.w+' W' : e.points+' pt')+'</b></div>').join('');
+    el.innerHTML = arr.map((e,i)=>{
+      const val = kind==='ai'? ('div '+e.aiDiv+' · '+e.aiPoints+' pt') : kind==='pvp'? ('div '+e.pvpDiv+' · '+e.pvpRating) : e.w+' W';
+      return '<div class="fb-lbrow"><span>#'+(i+1)+'</span><b>'+esc(e.name)+'</b><b class="fb-lbval">'+val+'</b></div>';
+    }).join('');
   }
-  fbPost({action:'leaderboard'}).then(d=>{ lbData=d; renderLb('points'); }).catch(()=>{ const el=$('fbLbList'); if(el)el.textContent='gagal load leaderboard'; });
+  fbPost({action:'leaderboard'}).then(d=>{ lbData=d; renderLb('ai'); }).catch(()=>{ const el=$('fbLbList'); if(el)el.textContent='gagal load leaderboard'; });
   document.querySelectorAll('.fb-lbtab').forEach(t=>{ t.onclick=()=>{ document.querySelectorAll('.fb-lbtab').forEach(x=>x.classList.remove('on')); t.classList.add('on'); renderLb(t.dataset.lb); }; });
 }
 const DIV_OVR = { 10:62, 9:65, 8:68, 7:71, 6:74, 5:77, 4:80, 3:84, 2:87, 1:90 };
 function genAITeam(div){
-  const g = mulberry((Date.now() % 100000) + div * 77);
+  const g = mulberry(((Date.now() ^ (Math.random()*0x7fffffff)) >>> 0) + div * 77);
   const fk = Object.keys(FORMATIONS);
   const fk2 = fk[Math.floor(g()*fk.length)]; // formasi acak buat AI
   const slots = FORMATIONS[fk2].slots;
@@ -4035,7 +4060,10 @@ function genAITeam(div){
   const bench = Array.from({ length:5 }, () => { const pool = PLAYERS.filter((p) => p.ovr >= target-12 && p.ovr <= target+4); return (pool.length?pool:PLAYERS)[Math.floor(g()*(pool.length?pool.length:PLAYERS.length))].id; });
   return { formation: fk2, players, bench };
 }
-function playVsAI(){ showPreMatch({ mode:'ai', mySquad: state.squad, oppSquad: genAITeam(state.division), oppName: 'AI Divisi '+state.division }); }
+function playVsAI(){
+  const aiDiv = (state.ai && state.ai.division) || state.division || 10;
+  showPreMatch({ mode:'ai', mySquad: state.squad, oppSquad: genAITeam(aiDiv), oppName: 'AI Divisi '+aiDiv });
+}
 
 /* ── PRE-MATCH: lihat/edit lineup, ganti formasi & cadangan, liat lineup lawan, tombol SIAP ── */
 let pmPoll = null, pmCount = null;
@@ -4067,7 +4095,7 @@ function showPreMatch(cfg){
       + '<div class="fb-build-main"><div class="fb-pitch v" id="fbPMPitch">'+slotsHTML()+'</div>'
       + '<div class="fb-bench"><div class="fb-bench-title">CADANGAN</div><div class="fb-bench-row">'+benchHTML()+'</div></div></div>'
       + '<div class="fb-panel fb-sidepanel">'
-      + divProgressHTML()
+      + (cfg.mode==='pvp'? trackDivHTML(state.pvp,'PVP','⚔️') : trackDivHTML(state.ai,'VS AI','🤖'))
       + '<div class="fb-row"><span>Formasi</span><select id="fbPMForm" class="fb-input">'+Object.entries(FORMATIONS).map(([k,v])=>'<option value="'+k+'"'+(k===pm.squad.formation?' selected':'')+'>'+v.label+'</option>').join('')+'</select></div>'
       + '<div class="fb-row"><span>Taktik Default</span><select id="fbPMTac" class="fb-input">'+Object.entries(TACTICS).map(([k,v])=>'<option value="'+k+'"'+(k===pm.tactic?' selected':'')+'>'+v.label+'</option>').join('')+'</select></div>'
       + '<div class="fb-row"><span>OVR Efektif</span><b>'+squadOVR(pm.squad)+'</b></div>'
@@ -4280,7 +4308,7 @@ function TAC(team){
   }
   return T;
 }
-const TRICK_LABEL = { chop:'RONALDO CHOP', push:'PUSH & RUN', spin:'ROULETTE', antony:'ANTONY TURN', double:'DOUBLE TOUCH', rainbow:'RAINBOW FLICK', elastico:'ELASTICO', nutmeg:'NUTMEG' };
+const TRICK_LABEL = { chop:'RONALDO CHOP', push:'PUSH & RUN', spin:'ROULETTE', antony:'ANTONY TURN', double:'DOUBLE TOUCH', rainbow:'RAINBOW FLICK', elastico:'ELASTICO', nutmeg:'NUTMEG', trivela:'TRIVELA' };
 /* syarat DRI per skill: makin susah makin tinggi DRI yang dibutuhkan, DRI 90+ bisa semua. double touch paling dasar */
 const TRICK_REQ = { double:60, push:68, nutmeg:74, chop:78, antony:80, spin:84, elastico:88, rainbow:90 };
 const TRICK_DUR = { chop:0.42, push:0.5, spin:0.55, double:0.5, rainbow:0.72, elastico:0.42, nutmeg:0.55, antony:0.9 };
@@ -4316,7 +4344,7 @@ function startMatch(cfg){
     teams:[ mk(cfg.mySquad,0,0), mk(cfg.oppSquad,1, cfg.mode==='ai' ? Math.max(-6,Math.min(6,(DIV_OVR[state.division]||65)-squadOVR(cfg.oppSquad))) : 0) ],    ents:[], ball:{ x:50,y:50,vx:0,vy:0,z:0,owner:null,ownerTeam:null },
     phase:'play', paused:true, over:false, spd:1, raf:null, lastTs:0, startKick:0,
     cam:{ x:50,y:50,z:1.08,shake:0 },
-    snaps:[], attackStart:0, varInfo:null, celeb:null, replay:null, shotSnapId:null, snapId:0, lastTrick:null, assistSnapId:null,
+    snaps:[], attackStart:0, varInfo:null, celeb:null, replay:null, shotSnapId:null, snapId:0, lastTrick:null, assistSnapId:null, goalTrick:null,
     setpiece:null, pendingOff:null, wall:[], assistBy:null, lastTouchBy:[null,null], touchT:[-999,-999], lastConceded:null,
     tacticCD:0, decT:0, ftPending:false, ftWait:0,
   };
@@ -4556,7 +4584,7 @@ function simTick(dt){
       if (pool.length) {
         const type = pool[Math.floor(M.R()*pool.length)];
         o.trick = { type, t:TRICK_DUR[type], dur:TRICK_DUR[type], done:false };
-        M.lastTrick = { label:TRICK_LABEL[type], team:o.team }; /* buat ditampilin pas replay gol */
+        M.lastTrick = { label:TRICK_LABEL[type], team:o.team, t:M.t }; /* dicatet, ditampilin pas replay gol */
         o.stealProt = Math.max(o.stealProt||0, o.trick.t+0.15); /* gak bisa direbut pas lagi gocek */
       }
     }
@@ -5072,15 +5100,20 @@ function doPass(from, to, accB){
   const b = M.ball; b.owner=null; b.ownerTeam=null;
   const kicB = (from.isGK && from.gk)? from.gk.kic/100*0.18 : 0; /* KIC: akurasi distribusi kiper */
   const pasStat = from.st? from.st.pass : 50;
-  const eliteP = pasStat>=80; /* pengumpan elit: lebih akurat + umpan lengkung */
+  const eliteP = pasStat>=80;      /* pengumpan elit: lebih akurat + umpan lengkung */
+  const trivela = pasStat>=85 && !from.isGK;  /* TRIVELA: umpan kaki luar (PAS 85+) */
   const acc = Math.max(0.25, Math.min(0.97, 0.5 + from.per.pass*0.4 + kicB + (eliteP?0.12:0) + (accB||0) - dist(from,to)*0.004 - (nearestOpp(from,4)?0.08:0)));
   const ok = M.R() < acc;
   const err = ok? 0 : (0.5-M.R())*(eliteP?6:10);
   const dx = to.x-from.x + (ok?0:err), dy = to.y-from.y + (ok?0:err*0.6);
   const d = Math.hypot(dx,dy)||1; const pow = 2.4 + d*0.055;
   b.vx = dx/d*pow; b.vy = dy/d*pow; b.passTarget = ok? to : null; b.from = from; b.fly = 0.16; /* bola terbang dulu, gak langsung nyangkut di org depan */
-  /* CURVE PASS: lengkung ke ARAH PENERIMA, belokan max 80° */
-  if (eliteP) { b.curve = Math.min(0.7, 0.4+(pasStat-80)*0.02); b.bendTarget = { x:to.x, y:to.y }; b.bent = 0; }
+  /* CURVE PASS: lengkung ke ARAH PENERIMA, belokan max 80°. TRIVELA lebih lengkung (kaki luar) */
+  if (trivela) {
+    b.curve = Math.min(0.9, 0.55+(pasStat-85)*0.03); b.bendTarget = { x:to.x, y:to.y }; b.bent = 0;
+    M.lastTrick = { label:'TRIVELA', team:from.team, t:M.t }; /* biar muncul di replay */
+  }
+  else if (eliteP) { b.curve = Math.min(0.7, 0.4+(pasStat-80)*0.02); b.bendTarget = { x:to.x, y:to.y }; b.bent = 0; }
   else { b.curve = 0; b.bendTarget = null; }
   /* offside check — arah ikut fwdDir (bener setelah tukar sisi half 2);
      syarat: penerima di PARUH LAWAN + lebih dekat ke gawang lawan dr bek kedua-terakhir + lebih depan dr bola.
@@ -5144,8 +5177,8 @@ function shoot(e){
   const gx = atkGoal(e.team);
   const shoStat = e.st? e.st.sho : e.skill;
   const acc = shoStat/100;
-  const elite = shoStat>=80;   /* penembak elit: bisa placing */
-  const knuck = shoStat>=90;   /* SHO 90+: bisa KNUCKLEBALL */
+  const elite = shoStat>=80;   /* penembak elit: bisa placing (termasuk 90+) */
+  const knuck = shoStat>=90 && M.R()<0.5;   /* SHO 90+: 50% KNUCKLE, 50% tetap bisa curve */
   let ty;
   if (knuck) {
     /* KNUCKLEBALL: kenceng, lintasan goyang tak terduga — susah ditebak kiper */
@@ -5415,15 +5448,27 @@ function runSetPiece(){
   if (sp.type==='ck') { doCross(atkT, sp.shooter, atkGoal(atkT), 50); return; }
 }
 function doCross(atkT, from, tx, ty){
-  const b = M.ball; 
-  const target = M.ents.filter((e)=>e.team===atkT && !e.isGK).sort((a,b2)=> Math.hypot(tx-a.x,ty-a.y)-Math.hypot(tx-b2.x,ty-b2.y))[0];
+  const b = M.ball;
+  /* target = penyerang PALING KOSONG di kotak (bukan asal terdekat) */
+  const cands = M.ents.filter((e)=>e.team===atkT && !e.isGK);
+  let target=null, bs=-1e9;
+  for (const m2 of cands){
+    const nearGoal = Math.hypot(tx-m2.x, ty-m2.y);
+    const no = nearestOpp(m2,14); const open = no? Math.min(14,dist(m2,no)):14;
+    const s = open*1.1 - nearGoal*0.3; /* prioritas kosong, bobot deket gawang */
+    if(s>bs){bs=s;target=m2;}
+  }
   const dx = (target?target.x:tx)-b.x, dy = (target?target.y:ty)-b.y; const d = Math.hypot(dx,dy)||1;
-  b.vx = dx/d*4.5; b.vy = dy/d*4.5; b.passTarget = target||null; b.from = from; touch(atkT, from); M.assistBy = from;
+  b.vx = dx/d*4.5; b.vy = dy/d*4.5;
+  b.passTarget = target||null; b.from = from; b.fly=0.22; b.curve=0; b.bendTarget=null; /* proteksi: cuma target yg boleh nyentuh pertama */
+  touch(atkT, from); M.assistBy = from;
 }
 /* ── gol → selebrasi → replay ── */
 function goal(ti){
   M.score[ti]++; M.stats.sot[ti]++;
   M.lastConceded = ti;
+  /* tangkep nama gocekan tim yg nge-gol (kalo baru aja gocek, <8 dtk) */
+  M.goalTrick = (M.lastTrick && M.lastTrick.team===ti && M.t-(M.lastTrick.t||0)<8) ? M.lastTrick.label : null;
   M.phase='celebration'; M.paused=false;
   const scorer = M.shotBy || M.lastTouchBy[ti] || M.ents.find((e)=>e.team===ti&&!e.isGK);
   const spot = [ atkGoal(ti)===98? 94:6, (scorer.y<50? 14:86) ];
@@ -5502,7 +5547,7 @@ function resetKickoff(kick, keepPause){
   const kk = kickers[0];
   if (kk){ kk.x = ownWorldX(kick, 49); kk.y = 50; b.owner = kk; b.ownerTeam = kick; kk.dribA=null; kk.kick=true; touch(kick,kk); }
   M.snaps=[]; M.attackStart=0; M.pendingOff=null; M.wall=[]; M.shotBy=null; M.assistBy=null; M.shotSnapId=null;
-  M.lastConceded=null; M.ftPending=false; M.ftWait=0; M.assistSnapId=null;
+  M.lastConceded=null; M.ftPending=false; M.ftWait=0; M.assistSnapId=null; M.goalTrick=null;
   M.phase='play'; M.paused = !!keepPause;
 }
 /* ── HT / FT ── */
@@ -5636,9 +5681,12 @@ function fulltime(){
     try {
       const d = await fbPost({ action:'report', mode:M.cfg.mode, outcome, my:a, opp:b2, oppName:M.cfg.oppName });
       state = d.state;
-      if (d.promo==='up') alert('🎉 PROMOSI! naik ke divisi '+state.division);
-      else if (d.promo==='down') alert('⚠️ DEGRADASI ke divisi '+state.division);
-      else if (d.promo==='stay') alert('📌 STAY di divisi '+state.division+' — poin direset, musim baru mulai!');
+      const trUp = (M.cfg.mode==='pvp'? state.pvp : state.ai) || {};
+      const dv = trUp.division || state.division;
+      const modeLbl = M.cfg.mode==='pvp'? 'PVP':'VS AI';
+      if (d.promo==='up') alert('🎉 PROMOSI '+modeLbl+'! naik ke divisi '+dv);
+      else if (d.promo==='down') alert('⚠️ DEGRADASI '+modeLbl+' ke divisi '+dv);
+      else if (d.promo==='stay') alert('📌 STAY '+modeLbl+' di divisi '+dv+' — poin direset, musim baru mulai!');
       if (M.cfg.mid) fbPost({ action:'matchDone', mid:M.cfg.mid }).catch(()=>{});
       if (M.cfg.roomId) fbPost({ action:'roomLeave', roomId:M.cfg.roomId }).catch(()=>{});
     } catch (e) { alert(e.message); }
@@ -5770,10 +5818,10 @@ function draw(){
     x.fillStyle='#ff5c5c'; x.beginPath(); x.arc(14,13,5,0,7); x.fill();
     x.fillStyle='#fff'; x.font='bold 12px Inter, sans-serif'; x.textAlign='left'; x.fillText('REPLAY', 26, 17);
     if (M.assistBy) { x.fillStyle='#ffd75e'; x.textAlign='right'; x.fillText('assist: '+M.assistBy.name, W-10, 17); }
-    /* nama GOCEKAN terakhir tim yg nge-gol, tulisan kuning */
-    if (M.replay && M.replay.mode==='goal' && M.lastTrick && M.lastConceded!=null && M.lastTrick.team!==M.lastConceded) {
+    /* nama GOCEKAN tim yg nge-gol, tulisan kuning */
+    if (M.replay && M.replay.mode==='goal' && M.goalTrick) {
       x.fillStyle='#fde047'; x.font='bold 15px Inter, sans-serif'; x.textAlign='center';
-      x.fillText('✨ '+M.lastTrick.label+' ✨', W/2, H-14);
+      x.fillText('✨ '+M.goalTrick+' ✨', W/2, H-14);
     }
   }
   if (M.varInfo && (M.phase==='var' || (M.phase==='replay'&&M.replay&&M.replay.mode==='var'))) {
