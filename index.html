@@ -3473,6 +3473,26 @@ const SFX = {
       });
     } catch(e){}
   },
+  /* suara DADU/ROLL gacha: klik-klik cepat yang melambat */
+  roll(dur){
+    if (!this.on || this.skipping()) return;
+    try {
+      const AC = window.AudioContext||window.webkitAudioContext; if (!AC) return;
+      if (!this.ac) this.ac = new AC();
+      const c = this.ac; if (c.state==='suspended') c.resume();
+      const t0 = c.currentTime; let tt = 0; const D = dur||1.15;
+      for (let i=0; tt<D; i++){
+        const gap = 0.05 + (tt/D)*0.09; /* makin lama makin jarang (melambat) */
+        tt += gap;
+        const o=c.createOscillator(), g=c.createGain();
+        o.type='square'; o.frequency.value = 160+Math.random()*260;
+        g.gain.setValueAtTime(0.11, t0+tt);
+        g.gain.exponentialRampToValueAtTime(0.001, t0+tt+0.045);
+        o.connect(g); g.connect(c.destination);
+        o.start(t0+tt); o.stop(t0+tt+0.05);
+      }
+    } catch(e){}
+  },
 };
 
 window.FB = (function(){
@@ -3720,6 +3740,7 @@ function drawCards(forPos, title, capSlot){
   $('fbDraftExit').onclick = showBuilder;
   const spin = {};
   const settleYears = cands.map(()=>pick(years));
+  SFX.roll(1.15); /* suara dadu nge-gacha pas tahun muter */
   cands.forEach((_,i) => { spin[i] = setInterval(() => { const y = $('fbYear'+i); if (!y) { clearInterval(spin[i]); return; } y.textContent = pick(years); }, 70); });
   /* fase 1: acak tahun, lalu KUNCI tahun (card BELUM muncul) */
   setTimeout(() => {
@@ -4335,13 +4356,13 @@ function simTick(dt){
   /* CURVE guided: belokin pelan ke arah target (gawang buat shoot / penerima buat pass), MAX 80° total */
   if (b.curve && b.bendTarget && !b.owner) {
     if (b.bent==null) b.bent=0;
-    if (b.bent < 1.4) {
+    if (b.bent < 1.8) {
       const cur = Math.atan2(b.vy, b.vx);
       const tgt = Math.atan2(b.bendTarget.y - b.y, b.bendTarget.x - b.x);
       let diff = tgt - cur;
       while (diff > Math.PI) diff -= 2*Math.PI;
       while (diff < -Math.PI) diff += 2*Math.PI;
-      const maxTurn = Math.min(b.curve*dt*2.5, 1.4 - b.bent);
+      const maxTurn = Math.min(b.curve*dt*3.2, 1.8 - b.bent);
       const turn = Math.max(-maxTurn, Math.min(maxTurn, diff));
       if (turn) {
         const nvx = b.vx*Math.cos(turn) - b.vy*Math.sin(turn);
@@ -4454,27 +4475,51 @@ function simTick(dt){
   });
   M.ents.forEach((en)=>{ if(en.ctrl>0)en.ctrl-=dt; if(en.touchCd>0)en.touchCd-=dt; if(en.dribLock>0)en.dribLock-=dt; if(en.stealProt>0)en.stealProt-=dt; if(en.foulCd>0)en.foulCd-=dt; if(en.hold>0)en.hold-=dt; });
   if (b.owner && decide) onBall(b.owner, dt);
-  /* BAWA BOLA: pemilik LARI terus ke arah serangan (bukan diem doang), steer hindarin lawan */
+  /* BAWA BOLA: pemilik LARI terus ke arah serangan, steer hindarin lawan, + BISA NGOCEK */
   if (b.owner && !b.owner.isGK && !b.owner.kick && M.phase==='play') {
     const o = b.owner;
     const gx = atkGoal(o.team);
     if (o.dribA==null) o.dribA = Math.atan2((50-o.y)*0.3, (gx-o.x)||0.001);
+    /* ── SKILL MOVES: ada bek nempel + DRI mumpuni → gocek! ── */
+    const nearDef = M.ents.find((p)=>p.team!==o.team && !p.isGK && Math.hypot(p.x-o.x,p.y-o.y)<3.2);
+    if (!o.trick && nearDef && (o.ctrl||0)<=0 && o.st && o.st.dri>=70 && M.R()<dt*(1.2+o.st.dri/55)) {
+      const mv = M.R();
+      o.trick = mv<0.34? {type:'chop',t:0.42,done:false} : mv<0.67? {type:'push',t:0.5,done:false} : {type:'spin',t:0.55,done:false};
+      o.stealProt = Math.max(o.stealProt||0, o.trick.t+0.15); /* gak bisa direbut pas lagi gocek */
+    }
+    if (o.trick) {
+      const tr = o.trick; tr.t -= dt;
+      if (tr.type==='chop') { /* RONALDO CHOP: bola ditarik ke samping-belakang, badan balik arah */
+        if (!tr.done){ tr.done=true; tr.dir = nearDef && nearDef.y>o.y? -1:1; o.dribA += tr.dir*2.4; }
+      } else if (tr.type==='push') { /* PUSH & RUN: dorong bola jauh ke depan, sprint ngejar */
+        if (!tr.done){ tr.done=true; }
+        const bx2=o.x+Math.cos(o.dribA)*6.5, by2=o.y+Math.sin(o.dribA)*3.9;
+        b.x += (bx2-b.x)*Math.min(1,dt*10); b.y += (by2-b.y)*Math.min(1,dt*10);
+      } else { /* ROULETTE: muter 360°, keluar ke arah beda */
+        if (!tr.done){ tr.done=true; tr.dir = M.R()<0.5?-1:1; o.dribA += tr.dir*1.7; }
+      }
+      if (tr.t<=0) o.trick=null;
+    }
     const ax = o.x + Math.cos(o.dribA)*5.5, ay = o.y + Math.sin(o.dribA)*5.5;
     const blocker = M.ents.find((p)=>p.team!==o.team && !p.isGK && Math.hypot(p.x-ax,p.y-ay)<3);
-    if (blocker) {
+    if (blocker && !o.trick) {
       const want = o.dribA + (blocker.y>o.y? -0.6:0.6);
       o.dribA += (want-o.dribA)*Math.min(1,dt*5);
-    } else {
+    } else if (!o.trick) {
       const want = Math.atan2((50-o.y)*0.3, (gx-o.x)||0.001);
       let da=want-o.dribA; while(da>Math.PI)da-=2*Math.PI; while(da<-Math.PI)da+=2*Math.PI;
       o.dribA += da*Math.min(1,dt*2.2);
     }
-    /* lari: pas trap (ctrl) pelanin dikit, abis itu full speed; kecepatan ikut stat PAC */
-    const sp = o.spd*(TAC(M.teams[o.team]).counter>0.6?1.2:1.08)*((o.ctrl||0)>0?0.5:1);
+    /* lari: pas trap (ctrl) pelanin dikit; push trick = SPRINT; roulette pelan di tempat */
+    let sp = o.spd*(TAC(M.teams[o.team]).counter>0.6?1.2:1.08)*((o.ctrl||0)>0?0.5:1);
+    if (o.trick && o.trick.type==='push') sp *= 1.45;
+    if (o.trick && o.trick.type==='spin') sp *= 0.35;
     o.x += Math.cos(o.dribA)*sp*dt; o.y += Math.sin(o.dribA)*sp*dt*0.6;
     o.x=Math.max(2.5,Math.min(97.5,o.x)); o.y=Math.max(3,Math.min(97,o.y));
-    const fx=o.x+Math.cos(o.dribA)*1.2, fy=o.y+Math.sin(o.dribA)*0.72;
-    b.x += (fx-b.x)*Math.min(1,dt*16); b.y += (fy-b.y)*Math.min(1,dt*16);
+    if (!(o.trick && o.trick.type==='push')) {
+      const fx=o.x+Math.cos(o.dribA)*1.2, fy=o.y+Math.sin(o.dribA)*0.72;
+      b.x += (fx-b.x)*Math.min(1,dt*16); b.y += (fy-b.y)*Math.min(1,dt*16);
+    }
     b.vx=0; b.vy=0;
   }
   /* bola selalu nempel di pemiliknya (kecuali pas ditendang) */
@@ -4502,6 +4547,8 @@ function goalKick(team){ /* GOAL KICK: bola mati dulu, kiper baru nendang distri
   M.phase='setpiece';
   const b=M.ball; b.owner=null;b.ownerTeam=null;b.vx=0;b.vy=0;b.curve=0;
   b.x=gk.x; b.y=gk.y;
+  setupDeadBallPositions(team);
+  const g2=ownGoal(team); gk.x = g2===2? 4:96; gk.y=50; b.x=gk.x; b.y=gk.y;
   matchMsg('🦵 GOAL KICK — '+tName(team), '');
   M.setpiece={ type:'gk', atkT:team, shooter:gk, t:1.0 };
 }
@@ -4576,7 +4623,7 @@ function trySave(gk){
     touch(gk.team,gk); gk.ctrl=0.4; gk.dribA=null;
     gk.hold = 2.0;
     matchMsg('🧤 TANGKAPAN '+gk.name+'!', '');
-    saveReplay(); /* bola mati → replay slowmo dari momen tembakan */
+    /* nangkep = bola aman di tangan → TANPA replay */
   } else {
     if (M.R() < 0.45) {
       /* TEPIsan melewati garis gawang → CORNER buat lawan */
@@ -4821,6 +4868,31 @@ function onBall(e, dt){
   }
   const passS = pm? (0.3 + pm.s*0.6)*(0.5+e.per.pass*0.5) : 0;
   if (passS > best.s) best = { t:'pass', s: passS, m: pm.m };
+  /* TROBOSAN: striker di sekitar garis bek + ada ruang di belakang → umpan ke ruang kosong */
+  let through=null, throughS=0;
+  if (e.st && e.st.pass>=72) {
+    for (const m2 of mates) {
+      if (POSGROUP[m2.slotName]!=='ATT') continue;
+      const mFwd = (m2.x - e.x)*fwd;
+      if (mFwd<6 || dist(e,m2)>50) continue;
+      const no2 = nearestOpp(m2, 10);
+      if (no2 && dist(m2,no2)<=2.5) continue; /* striker dijaga ketat → bukan trobosan bagus */
+      const oppsT = M.ents.filter((o2)=>o2.team!==e.team && !o2.isGK);
+      if (!oppsT.length) continue;
+      const lineX = fwd>0? Math.max(...oppsT.map((o2)=>o2.x)) : Math.min(...oppsT.map((o2)=>o2.x));
+      const nearLine = fwd>0? m2.x>lineX-8 : m2.x<lineX+8;
+      if (!nearLine) continue;
+      const lx = m2.x + fwd*(8+m2.spd*1.2);
+      if (M.ents.some((o2)=>o2.team!==e.team && !o2.isGK && Math.hypot(o2.x-lx,o2.y-m2.y)<6)) continue; /* ruang tujuan ketutup */
+      const s = 0.6 + mFwd*0.012 + (T.direct>0.6?0.3:0) + (T.poss>0.85?-0.3:0);
+      if (s>throughS){ throughS=s; through=m2; }
+    }
+  }
+  if (through && throughS>best.s && (e.ctrl||0)<=0) {
+    const lead = 8 + through.spd*1.2;
+    doThrough(e, through, through.x + fwd*lead, through.y + (M.R()-0.5)*6);
+    return;
+  }
   /* tahan kalo ditekan & gak ada opsi */
   if (pressD<2.5 && best.s<0.3) best = { t:'hold', s:1 };
   if ((e.ctrl||0)>0) best = { t:'drib', s:1 }; /* first touch: bawa dulu, jangan langsung umpan */
@@ -4884,6 +4956,30 @@ function doPass(from, to){
   M.lastTouchBy[from.team] = from; M.touchT[from.team] = M.t; from.dribA=null;
   if (M.assistBy==null || M.assistBy.team!==from.team) M.assistBy = from;
 }
+/* UMPAN TROBOSAN: bola dikirim ke RUANG KOSONG di depan, striker lari jemput */
+function doThrough(from, runner, tx, ty){
+  const b = M.ball; b.owner=null; b.ownerTeam=null;
+  const fwd = fwdDir(from.team);
+  tx = Math.max(3,Math.min(97,tx)); ty = Math.max(5,Math.min(95,ty));
+  const dx=tx-from.x, dy=ty-from.y, d=Math.hypot(dx,dy)||1;
+  const pow = 2.7 + d*0.05;
+  b.vx=dx/d*pow; b.vy=dy/d*pow;
+  b.passTarget=runner; b.from=from; b.fly=0.16; b.curve=0; b.bendTarget=null;
+  const opps = M.ents.filter((o)=>o.team!==from.team);
+  if (opps.length) {
+    const defT = from.team===0?1:0;
+    const dGoalX = ownGoal(defT);
+    const sorted = opps.slice().sort((p,q)=>Math.abs(p.x-dGoalX)-Math.abs(q.x-dGoalX));
+    const lineX = (sorted[1]||sorted[0]).x;
+    const inOppHalf = fwd>0? runner.x>50 : runner.x<50;
+    const beyondDef = fwd>0? runner.x>lineX : runner.x<lineX;
+    const beyondBall = fwd>0? runner.x>b.x : runner.x<b.x;
+    const off = inOppHalf && beyondDef && beyondBall;
+    M.pendingOff = { receiver: runner, lineX, onside: !off, margin: Math.abs(runner.x-lineX), passSnapId: M.snapId||0 };
+  }
+  touch(from.team, from);
+  if (M.assistBy==null || M.assistBy.team!==from.team) M.assistBy = from;
+}
 function shoot(e){
   const b = M.ball; b.owner=null; b.ownerTeam=null;
   const gx = atkGoal(e.team);
@@ -4901,12 +4997,17 @@ function shoot(e){
   const dx = gx-b.x, dy = ty-b.y; const d = Math.hypot(dx,dy)||1;
   const pow = 4.5 + acc*3;
   b.vx = dx/d*pow; b.vy = dy/d*pow; M.shotBy = e; e.dribA=null;
-  /* CURVE SHOT: lengkung ke arah GAWANG (pojok yg dibidik), belokan max 80°.
-     Syarat curve: SHO 80+. Tendangan dari SAMPING (sudut sempit) lengkungnya lebih gede. */
+  /* CURVE SHOT (syarat SHO 80+): awal DIBIDIK keluar gawang dulu, terus DIBELOKKIN masuk —
+     lengkungan banana keliatan jelas, makin dari samping makin gede */
   if (elite) {
     const sideF = Math.min(1, Math.abs(b.y-50)/30); /* 0=tengah, 1=dari samping */
-    b.curve = Math.min(1.1, (0.5+(shoStat-80)*0.03) * (1 + sideF*0.7));
-    b.bendTarget = { x:gx, y:ty }; b.bent = 0;
+    const dGoalDist = Math.hypot(gx-b.x, ty-b.y);
+    const fakeOff = Math.min(5 + sideF*9, dGoalDist*0.45); /* jarak deket = offset kecil biar sempet belok */
+    const fakeY = ty + (ty<50? -fakeOff : fakeOff); /* aim di luar mulut gawang */
+    const fdx=gx-b.x, fdy=fakeY-b.y, fd=Math.hypot(fdx,fdy)||1;
+    b.vx = fdx/fd*pow; b.vy = fdy/fd*pow;
+    b.curve = Math.min(1.3, (0.55+(shoStat-80)*0.035)*(1+sideF*0.7));
+    b.bendTarget = { x:gx, y:ty }; b.bent = 0; /* belokin masuk ke pojok gawang */
   }
   else { b.curve = 0; b.bendTarget = null; }
   SFX.play('kick', 0.35); /* suara tendangan */
@@ -4960,12 +5061,29 @@ function foul(e, o){
   if (inBox(e.team, o.x, o.y)) { matchMsg('⚽ PENALTI untuk '+tName(o.team)+'!', 'pk'); startPenalty(o.team); }
   else startFreeKick(o.team, o.x, o.y);
 }
+/* bola mati (throw-in/FK/goal kick): SEMUA pemain balik ke formasi dasar,
+   terus 1-4 pemain tim penendang mendekat ke bola jadi opsi operan */
+function setupDeadBallPositions(team){
+  M.ents.forEach((e)=>{
+    if (e.isGK){ const g2=ownGoal(e.team); e.x = g2===2? 4:96; e.y=50; e.dribA=null; e.trick=null; return; }
+    e.x = ownWorldX(e.team, e.hx); e.y = e.hy; e.dribA=null; e.trick=null;
+  });
+  const b = M.ball;
+  const near = M.ents.filter((e)=>e.team===team && !e.isGK)
+    .sort((a,b2)=>Math.hypot(a.x-b.x,a.y-b.y)-Math.hypot(b2.x-b.x,b2.y-b.y)).slice(0,4);
+  const offs = [[4,3],[-4,3],[4,-3],[-4,-3]];
+  near.forEach((e,i)=>{
+    e.x = Math.max(3,Math.min(97, b.x+offs[i][0]));
+    e.y = Math.max(5,Math.min(95, b.y+offs[i][1]));
+  });
+}
 function startFreeKick(atkT, x, y){
   M.phase='setpiece';
   SFX.whistle(1, 0.5); /* prit — free kick */
   const b = M.ball; b.owner=null;b.ownerTeam=null; b.vx=0;b.vy=0;
   x = Math.max(14, Math.min(86, x)); y = Math.max(8, Math.min(92,y));
   b.x=x; b.y=y;
+  setupDeadBallPositions(atkT);
   /* pagar cuma kalo free kick di AREA LAWAN (POV tim penendang), simetris kedua tim */
   const defT = atkT===0?1:0; const gx = atkGoal(atkT);
   const inAtkHalf = (gx===98)? (x>50) : (x<50);
@@ -4991,6 +5109,24 @@ function startFreeKick(atkT, x, y){
   if (gkD){ const g2 = ownGoal(defT); gkD.x = g2===2? 4:96; gkD.y = Math.max(40,Math.min(60,y)); }
   M.setpiece = { type:'fk', atkT, shooter, t:1.2 };
 }
+/* posisi corner sesuai aturan: penyerang kumpul DI KOTAK PENALTI (tiang dekat/jauh/tengah),
+   bek-bek marking di dalem kotak juga, kiper stay di garis */
+function cornerPositions(atkT, kicker){
+  const defT = atkT===0?1:0;
+  const gx = atkGoal(atkT);
+  const inw = (d)=> gx===98? gx-d : gx+d;
+  const spots=[[inw(3),43],[inw(3),57],[inw(7),46],[inw(7),54],[inw(7),50],[inw(11),44],[inw(11),56],[inw(16),50],[inw(16),42],[inw(16),58]];
+  const attackers = M.ents.filter((e)=>e.team===atkT && !e.isGK && e!==kicker);
+  const defenders = M.ents.filter((e)=>e.team===defT && !e.isGK);
+  attackers.forEach((e,i)=>{ const s=spots[i%spots.length]; e.x=s[0]; e.y=s[1]; e.dribA=null; e.trick=null; });
+  const gside = ownGoal(defT)===2? -2.4 : 2.4; /* arah ke gawang sendiri (goal-side) */
+  defenders.forEach((e,i)=>{
+    const tgt = attackers[i];
+    if (tgt){ e.x = tgt.x + gside; e.y = tgt.y + (i%2? 1.5:-1.5); }
+    else { e.x = inw(15); e.y = 50 + ((i%5)-2)*6; }
+    e.x=Math.max(3,Math.min(97,e.x)); e.y=Math.max(5,Math.min(95,e.y)); e.dribA=null; e.trick=null;
+  });
+}
 function startCorner(atkT, defT){
   M.phase='setpiece';
   SFX.whistle(1, 0.45); /* prit — corner */
@@ -4999,6 +5135,7 @@ function startCorner(atkT, defT){
   b.x = x; b.y = side;
   const shooter = M.ents.filter((e)=>e.team===atkT && !e.isGK).sort((a,b2)=>b2.skill-a.skill)[0];
   if (shooter){ shooter.x = x===98? 96:4; shooter.y = side; shooter.dribA=null; }
+  cornerPositions(atkT, shooter);
   M.setpiece = { type:'ck', atkT, shooter, side, t:1.2 };
 }
 function corner(atkT, defT){ startCorner(atkT, defT); }
@@ -5021,6 +5158,7 @@ function throwIn(team, x, y){
   SFX.whistle(1, 0.45); /* prit — lemparan ke dalam */
   const b = M.ball; b.owner=null;b.ownerTeam=null;b.vx=0;b.vy=0;b.curve=0;
   x = Math.max(5,Math.min(95,x)); b.x=x; b.y=y;
+  setupDeadBallPositions(team); /* formasi balik dulu */
   const thrower = M.ents.filter((e)=>e.team===team && !e.isGK).sort((a,b2)=>Math.hypot(a.x-x,a.y-y)-Math.hypot(b2.x-x,b2.y-y))[0];
   if (thrower){ thrower.x = x; thrower.y = y<50? y-2:y+2; thrower.dribA=null; }
   matchMsg('🙌 LEMPARAN KE DALAM — '+tName(team), '');
@@ -5147,7 +5285,7 @@ function tickReplay(dt){
 function resetKickoff(kick, keepPause){
   const b = M.ball; b.x=50;b.y=50;b.vx=0;b.vy=0;b.curve=0;b.owner=null;b.ownerTeam=null;
   M.touchT = [-999,-999];
-  M.ents.forEach((e)=>{ e.x = ownWorldX(e.team, e.hx*0.5); e.y = e.hy; e.celeb=0; e.dribA=null; e.ctrl=0; e.touchCd=0; e.kick=false; e.dribT=0; e.dribLock=0; e.down=0; e.hold=0; e.lastShotId=null; });
+  M.ents.forEach((e)=>{ e.x = ownWorldX(e.team, e.hx*0.5); e.y = e.hy; e.celeb=0; e.dribA=null; e.ctrl=0; e.touchCd=0; e.kick=false; e.dribT=0; e.dribLock=0; e.down=0; e.hold=0; e.lastShotId=null; e.trick=null; });
   const kickers = M.ents.filter(e=>e.team===kick && !e.isGK).sort((a,b2)=> ((POSGROUP[b2.slotName]==='ATT')?1:0)-((POSGROUP[a.slotName]==='ATT')?1:0));
   const kk = kickers[0];
   if (kk){ kk.x = ownWorldX(kick, 49); kk.y = 50; b.owner = kk; b.ownerTeam = kick; kk.dribA=null; kk.kick=true; touch(kick,kk); }
@@ -5373,6 +5511,11 @@ function draw(){
     x.beginPath(); x.ellipse(X, Y+10, 10, 4, 0, 0, 7); x.fillStyle='rgba(0,0,0,.35)'; x.fill();
     /* selebrasi animasi */
     let offy = 0, rot = 0;
+    if (e.trick) { /* animasi GOCEK */
+      if (e.trick.type==='spin') rot = (performance.now()/90)%(Math.PI*2); /* roulette muter */
+      else if (e.trick.type==='chop') offy = -Math.abs(Math.sin(performance.now()/70))*6; /* chop hop */
+      else offy = -2; /* push & run: condong maju */
+    }
     if (e.celeb) {
       const t = performance.now()/150;
       if (e.celeb===0) offy = -Math.abs(Math.sin(t))*8; /* lompat */
