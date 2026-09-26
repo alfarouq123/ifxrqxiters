@@ -4410,6 +4410,10 @@ function simTick(dt){
   const b = M.ball;
   /* bola fisik */
   b.x += b.vx*dt*10; b.y += b.vy*dt*10; b.vx*=0.985; b.vy*=0.985;
+  /* KNUCKLEBALL: goyang/dip tak terduga di udara */
+  if (b.knuckle && !b.owner && (Math.abs(b.vx)+Math.abs(b.vy))>1) {
+    b.vx += (M.R()-0.5)*0.22; b.vy += (M.R()-0.5)*0.34;
+  }
   if (b.owner) { b.bendTarget=null; b.bent=0; } /* pegang bola → reset lengkung */
   /* CURVE guided: belokin pelan ke arah target (gawang buat shoot / penerima buat pass), MAX 80° total */
   if (b.curve && b.bendTarget && !b.owner) {
@@ -4639,7 +4643,14 @@ function simTick(dt){
 function separate(){
   for (let i=0;i<M.ents.length;i++) for (let j=i+1;j<M.ents.length;j++){
     const a=M.ents[i], c=M.ents[j]; const dx=c.x-a.x, dy=c.y-a.y; const d=Math.hypot(dx,dy); const min=a.r+c.r;
-    if (d<min && d>0.001){ const push=(min-d)/2; const ux=dx/d, uy=dy/d; a.x-=ux*push; a.y-=uy*push; c.x+=ux*push; c.y+=uy*push; }
+    if (d<min && d>0.001){
+      const push=(min-d)/2; const ux=dx/d, uy=dy/d;
+      const aHold = a.isGK && M.ball.owner===a;   /* kiper lagi pegang bola */
+      const cHold = c.isGK && M.ball.owner===c;
+      if (aHold){ c.x+=ux*push*2; c.y+=uy*push*2; }        /* kiper gak boleh didorong (apalagi masuk gawang) */
+      else if (cHold){ a.x-=ux*push*2; a.y-=uy*push*2; }
+      else { a.x-=ux*push; a.y-=uy*push; c.x+=ux*push; c.y+=uy*push; }
+    }
   }
   /* kiper jangan sampe kedorong keluar kotak */
   M.ents.forEach((e)=>{ if(e.isGK){ const bx=gkBox(e.team); e.x=Math.max(bx.x0,Math.min(bx.x1,e.x)); e.y=Math.max(bx.y0,Math.min(bx.y1,e.y)); } });
@@ -4667,7 +4678,7 @@ function goalKickPositions(team){
 function goalKick(team){ /* GOAL KICK: bola mati dulu, kiper baru nendang distribusi */
   const gk = M.ents.find((e)=>e.team===team&&e.isGK); if(!gk) return;
   M.phase='setpiece';
-  const b=M.ball; b.owner=null;b.ownerTeam=null;b.vx=0;b.vy=0;b.curve=0;b.z=0;
+  const b=M.ball; b.owner=null;b.ownerTeam=null;b.vx=0;b.vy=0;b.curve=0;b.z=0;b.knuckle=false;
   b.x=gk.x; b.y=gk.y;
   goalKickPositions(team);
   const g2=ownGoal(team); gk.x = g2===2? 4:96; gk.y=50; b.x=gk.x; b.y=gk.y;
@@ -4732,6 +4743,8 @@ function trySave(gk){
   const shotPow = Math.hypot(b.vx,b.vy);
   /* REF baca arah & kecepatan reaksi, DIV kualitas diving, POS udah bantu dari positioning */
   let saveP = 0.30 + g.ref/100*0.40 + g.div/100*0.28 + g.pos/100*0.12 - shotPow*0.02 - ((shooter?shooter.skill:70)/100)*0.10;
+  if (b.knuckle) saveP -= 0.18;              /* knuckle goyang → susah dibaca */
+  else if (b.curve && b.bendTarget) saveP -= 0.10; /* placing melengkung → agak susah */
   saveP = Math.max(0.08, Math.min(0.94, saveP));
   if (M.R() >= saveP) return; /* gak kesampe — bola lanjut */
   M.stats.saves[gk.team]++;
@@ -4907,17 +4920,27 @@ function onBall(e, dt){
     const g = e.gk || {div:60,han:60,kic:60,ref:60,spd:60,pos:60};
     const kicF = g.kic/100;
     if (kicF>0.5 && M.R()<kicF) {
-      /* KIC tinggi: long ball ke pemain paling depan */
+      /* KIC tinggi: long ball ke pemain DEPAN yang juga KOSONG */
       const fwd = fwdDir(e.team);
       const mates = M.ents.filter((o)=>o.team===e.team && !o.isGK);
       let tgt=null, bx=-1e9;
-      for (const m2 of mates){ const adv=(m2.x-e.x)*fwd; const s=adv - dist(e,m2)*0.08; if(s>bx){bx=s;tgt=m2;} }
+      for (const m2 of mates){
+        const adv=(m2.x-e.x)*fwd;
+        const no=nearestOpp(m2,14); const open= no? Math.min(14,dist(m2,no)):14;
+        const s=adv*0.6 + open*0.7 - dist(e,m2)*0.05;
+        if(s>bx){bx=s;tgt=m2;}
+      }
       if (tgt && dist(e,tgt)>22){ doPass(e, tgt); return; }
     }
-    /* KIC rendah / gak ada target jauh: distribusi pendek ke yang paling aman */
-    const cand = M.ents.filter((o)=>o.team===e.team && !o.isGK).sort((a,b2)=>dist(a,e)-dist(b2,e)).slice(0,5);
-    let tgt = cand[0]; let bs = -1;
-    for (const m2 of cand){ const no = nearestOpp(m2,12); const s = no? dist(m2,no):12; if (s>bs){ bs=s; tgt=m2; } }
+    /* distribusi ke pemain paling KOSONG (gak ada penjagaan) — JANGAN ke tengah yg rame lawan */
+    const mates = M.ents.filter((o)=>o.team===e.team && !o.isGK);
+    let tgt = null, bs = -1e9;
+    for (const m2 of mates){
+      const no = nearestOpp(m2, 14);
+      const open = no? Math.min(14, dist(m2,no)) : 14;   /* makin jauh dari lawan = makin kosong */
+      const s = open*1.3 - dist(e,m2)*0.025;             /* prioritas kosong, sedikit bobot jarak */
+      if (s>bs){ bs=s; tgt=m2; }
+    }
     if (tgt) doPass(e, tgt);
     return;
   }
@@ -5121,29 +5144,36 @@ function shoot(e){
   const gx = atkGoal(e.team);
   const shoStat = e.st? e.st.sho : e.skill;
   const acc = shoStat/100;
-  const elite = shoStat>=80; /* penembak elit: akurat + melengkung */
+  const elite = shoStat>=80;   /* penembak elit: bisa placing */
+  const knuck = shoStat>=90;   /* SHO 90+: bisa KNUCKLEBALL */
   let ty;
-  if (elite) {
-    /* bidik agak dalem dikit, curve-nya yg belokin ke pojok */
-    const corner = M.R()<0.5? 44 : 56;
-    ty = corner + (M.R()-0.5)*Math.max(1, 10-(shoStat-80)*0.5);
+  if (knuck) {
+    /* KNUCKLEBALL: kenceng, lintasan goyang tak terduga — susah ditebak kiper */
+    ty = (M.R()<0.5? 42:58) + (M.R()-0.5)*8;
+  } else if (elite) {
+    ty = 50 + (M.R()-0.5)*Math.max(2, 14-(shoStat-80)*0.4);
   } else {
     ty = 50 + (M.R()-0.5)*56*(1.3-acc); /* spread lebar: bisa melenceng → goal kick / corner */
   }
   const dx = gx-b.x, dy = ty-b.y; const d = Math.hypot(dx,dy)||1;
-  const pow = 4.5 + acc*3;
+  const pow = 4.5 + acc*3 + (knuck?0.8:0);
   b.vx = dx/d*pow; b.vy = dy/d*pow; M.shotBy = e; e.dribA=null;
-  /* CURVE SHOT (syarat SHO 80+): awal DIBIDIK keluar gawang dulu, terus DIBELOKKIN masuk —
-     lengkungan banana keliatan jelas, makin dari samping makin gede */
-  if (elite) {
+  b.knuckle = false;
+  if (knuck) {
+    /* knuckle: lurus ke sasaran tapi GOYANG di udara, tanpa lengkung */
+    b.knuckle = true; b.curve = 0; b.bendTarget = null;
+  } else if (elite) {
+    /* PLESSING / PLACING: dari samping, bola awal diarahin ke TENGAH terus MELENGKUNG ke TIANG JAUH */
+    const farCorner = b.y < 50 ? 60 : 40; /* shooter di atas → pojok bawah (jauh), sebaliknya */
     const sideF = Math.min(1, Math.abs(b.y-50)/30); /* 0=tengah, 1=dari samping */
-    const dGoalDist = Math.hypot(gx-b.x, ty-b.y);
-    const fakeOff = Math.min(5 + sideF*9, dGoalDist*0.45); /* jarak deket = offset kecil biar sempet belok */
-    const fakeY = ty + (ty<50? -fakeOff : fakeOff); /* aim di luar mulut gawang */
+    const targetY = farCorner + (M.R()-0.5)*Math.max(1, 6-(shoStat-80)*0.3);
+    const dGoalDist = Math.hypot(gx-b.x, targetY-b.y);
+    const fakeOff = Math.min(5 + sideF*9, dGoalDist*0.45);
+    const fakeY = targetY + (targetY<50? fakeOff : -fakeOff); /* bidik ke tengah dulu */
     const fdx=gx-b.x, fdy=fakeY-b.y, fd=Math.hypot(fdx,fdy)||1;
     b.vx = fdx/fd*pow; b.vy = fdy/fd*pow;
     b.curve = Math.min(1.3, (0.55+(shoStat-80)*0.035)*(1+sideF*0.7));
-    b.bendTarget = { x:gx, y:ty }; b.bent = 0; /* belokin masuk ke pojok gawang */
+    b.bendTarget = { x:gx, y:targetY }; b.bent = 0; /* lengkung masuk ke tiang jauh */
   }
   else { b.curve = 0; b.bendTarget = null; }
   SFX.play('kick', 0.35); /* suara tendangan */
@@ -5293,7 +5323,7 @@ function cornerPositions(atkT, kicker){
 function startCorner(atkT, defT){
   M.phase='setpiece';
   SFX.whistle(1, 0.45); /* prit — corner */
-  const b = M.ball; b.owner=null;b.ownerTeam=null;b.vx=0;b.vy=0;b.curve=0;b.z=0;
+  const b = M.ball; b.owner=null;b.ownerTeam=null;b.vx=0;b.vy=0;b.curve=0;b.knuckle=false;b.z=0;b.knuckle=false;
   const side = b.y<50? 4:96; const x = atkGoal(atkT); /* aware half swap */
   b.x = x; b.y = side;
   /* penendang = pemain dengan PASSING terbaik */
@@ -5306,7 +5336,7 @@ function corner(atkT, defT){ startCorner(atkT, defT); }
 function startPenalty(atkT){
   M.phase='setpiece';
   SFX.whistle(1, 0.7);
-  const b = M.ball; b.owner=null;b.ownerTeam=null;b.vx=0;b.vy=0;b.curve=0;
+  const b = M.ball; b.owner=null;b.ownerTeam=null;b.vx=0;b.vy=0;b.curve=0;b.knuckle=false;
   const gx = atkGoal(atkT); const x = gx===98? 87:13;
   b.x=x; b.y=50;
   const shooter = M.ents.filter((e)=>e.team===atkT && !e.isGK).sort((a,b2)=>b2.skill-a.skill)[0];
@@ -5320,7 +5350,7 @@ function startPenalty(atkT){
 function throwIn(team, x, y){
   M.phase='setpiece';
   SFX.whistle(1, 0.45); /* prit — lemparan ke dalam */
-  const b = M.ball; b.owner=null;b.ownerTeam=null;b.vx=0;b.vy=0;b.curve=0;b.z=0;
+  const b = M.ball; b.owner=null;b.ownerTeam=null;b.vx=0;b.vy=0;b.curve=0;b.knuckle=false;b.z=0;b.knuckle=false;
   x = Math.max(5,Math.min(95,x)); b.x=x; b.y=y;
   /* semua balik formasi dulu */
   M.ents.forEach((e)=>{
@@ -5465,7 +5495,7 @@ function tickReplay(dt){
   }
 }
 function resetKickoff(kick, keepPause){
-  const b = M.ball; b.x=50;b.y=50;b.vx=0;b.vy=0;b.curve=0;b.z=0;b.owner=null;b.ownerTeam=null;
+  const b = M.ball; b.x=50;b.y=50;b.vx=0;b.vy=0;b.curve=0;b.z=0;b.knuckle=false;b.owner=null;b.ownerTeam=null;
   M.touchT = [-999,-999];
   M.ents.forEach((e)=>{ e.x = ownWorldX(e.team, e.hx*0.5); e.y = e.hy; e.celeb=0; e.dribA=null; e.ctrl=0; e.touchCd=0; e.kick=false; e.dribT=0; e.dribLock=0; e.down=0; e.hold=0; e.lastShotId=null; e.trick=null; });
   const kickers = M.ents.filter(e=>e.team===kick && !e.isGK).sort((a,b2)=> ((POSGROUP[b2.slotName]==='ATT')?1:0)-((POSGROUP[a.slotName]==='ATT')?1:0));
