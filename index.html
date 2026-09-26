@@ -3972,7 +3972,7 @@ function buildEnts(){
       M.ents.push({ team:ti, idx:k, name:p.name, ovr:p.ovr, per:p.per, trait:p.trait, isGK:p.pos==='GK', slotName:p.pos,
         hx, hy, x, y, vx:0, vy:0, r:1.2, spd: 4.2 + p.per.pace*3.0, st:p.st||statsOf(p), skill:p.ovr,
         decT: rnd()*0.2, celeb:0, celebType:0, cards:0, dribA:null, ctrl:0, touchCd:0,
-        gk: p.gk||null, down:0, lastShotId:null });
+        gk: p.gk||null, down:0, lastShotId:null, posQ: p.ovr/100 });
     });
   });
 }
@@ -4218,6 +4218,16 @@ function moveAI(e,dt,chaser,cover,decide){
   if (b.ownerTeam===e.team) {
     if (myGroup==='ATT') { tx = ownWorldX(e.team, e.hx+18); ty = e.hy + (b.y>50? -8:8)*(e.slotName==='ST'?0.5:1);
       if (team.tactic==='longball' && (e.slotName==='LW'||e.slotName==='RW')) tx = ownWorldX(e.team, 84);
+      /* PENEMPATAN POSISI ikut OVR: ST OVR tinggi main di bahu bek terakhir → gak gampang offside;
+         OVR rendah sering kelewat garis */
+      const oppsD = M.ents.filter((o)=>o.team!==e.team && !o.isGK);
+      if (oppsD.length) {
+        const aGoal = atkGoal(e.team);
+        const s2 = oppsD.slice().sort((p,q)=>Math.abs(p.x-aGoal)-Math.abs(q.x-aGoal));
+        const lineM = (s2[1]||s2[0]).x;
+        const slack = (1-(e.posQ||0.6))*8;
+        if (fwd>0) tx = Math.min(tx, lineM + slack); else tx = Math.max(tx, lineM - slack);
+      }
     } else if (myGroup==='MID') { tx = b.x + fwd*10; ty = b.y + (e.hy>50? -10:10); if (team.tactic==='bus') tx = b.x - fwd*8; }
     else {
       /* PERAN BEK pas nyerang */
@@ -4243,25 +4253,27 @@ function moveAI(e,dt,chaser,cover,decide){
     if (iChase) {
       /* PRESS: kejar pembawa bola */
       tx = carrier.x; ty = carrier.y;
-    } else if (iCover && b.owner) {
+    } else if (iCover && b.owner && myGroup!=='ATT') {
       /* COVER: tutup jalur tembak — berdiri antara carrier dan gawang sendiri */
       tx = carrier.x + (og - carrier.x)*0.28;
       ty = carrier.y + (50 - carrier.y)*0.28;
     } else if (myGroup==='DEF') {
-      /* MARKING: kawal lawan terdekat di zona lu, berdiri di sisi gawang (goal-side) */
+      /* ZONE DEFENSE: posisi ideal = garis pertahanan + jalur sendiri,
+         geser nutup celah ke arah bola, gak kemana-mana */
+      const homeX = ownWorldX(e.team, e.hx);
+      const ax = homeX + (b.x-50)*0.20*fwd;      /* garis naik-turun tipis ikut bola */
+      const ay = e.hy + (b.y-e.hy)*0.30;         /* geser vertikal nutup sisi bola */
+      tx = ax; ty = ay;
+      /* TUTUP CELAH: lawan masuk zona deket posisi ideal → keluar goal-side, tapi gak ngejar jauh */
       const opps = M.ents.filter((o)=>o.team!==e.team && !o.isGK);
-      let mark=null, bd=1e9;
-      for (const o of opps){ const dd = Math.hypot(o.x-e.x,o.y-e.y) + Math.abs(o.y-e.hy)*0.25; if (dd<bd){ bd=dd; mark=o; } }
-      const aggro = 26 + e.per.aggr*14; /* bek agresif ngejar lebih jauh */
-      if (mark && bd<aggro) {
-        tx = mark.x + (og===2? -2.2:2.2); ty = mark.y;
-      } else {
-        /* jaga garis pertahanan */
-        const homeX = ownWorldX(e.team, e.hx);
-        tx = homeX + (b.x-50)*0.22*fwd;
-        ty = e.hy + (b.y-50)*0.18;
+      let threat=null, bd=1e9;
+      for (const o of opps){ const dd=Math.hypot(o.x-ax,o.y-ay); if(dd<bd){bd=dd;threat=o;} }
+      const reachZ = 5 + (e.posQ||0.6)*3.5 + e.per.aggr*3; /* OVR tinggi = lebih jago baca celah */
+      if (threat && bd<reachZ) {
+        const cx = threat.x + (og===2? -1.8:1.8), cy = threat.y;
+        if (Math.hypot(cx-ax,cy-ay) <= reachZ) { tx=cx; ty=cy; } /* jangan sampe bikin garis jebol */
       }
-      if (team.tactic==='bus') { tx = ownWorldX(e.team, e.hx) + (og===2? -2:2); ty = e.hy + (b.y-50)*0.15; }
+      if (team.tactic==='bus') { tx = ownWorldX(e.team, e.hx) + (og===2? -1:1); ty = e.hy + (b.y-e.hy)*0.2; }
     } else {
       /* MID/ATT: geser ngikutin bola */
       const homeX = ownWorldX(e.team, e.hx);
