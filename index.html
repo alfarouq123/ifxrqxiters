@@ -3893,14 +3893,15 @@ function startMatch(cfg){
       /* kepribadian */
       const q = mulberry(p.id * 31 + 7);
       const trait = ['dribbler','playmaker','runner','bruiser'][Math.floor(q()*4)];
+      const st = statsOf(p);
       const per = {
-        drib: 0.4 + q()*0.5 + (trait==='dribbler'?0.25:0),
-        pass: 0.4 + q()*0.5 + (trait==='playmaker'?0.25:0),
-        def:  0.4 + q()*0.5 + (trait==='bruiser'?0.25:0),
-        aggr: 0.3 + q()*0.6 + (trait==='bruiser'?0.3:0),
-        pace: 0.6 + (p.ovr-55)/60 + (trait==='runner'?0.2:0),
+        drib: st.dri/100 + (trait==='dribbler'?0.1:0),
+        pass: st.pass/100 + (trait==='playmaker'?0.1:0),
+        def:  st.def/100 + (trait==='bruiser'?0.1:0),
+        aggr: (st.def+st.phy)/200 + (trait==='bruiser'?0.15:0),
+        pace: st.pac/100 + (trait==='runner'?0.1:0),
       };
-      return { name:p.name, pos:slots[i], ovr, trait, per };
+      return { name:p.name, pos:slots[i], ovr, trait, per, st };
     });
     return { squad, side, tactic:'balance', players: ps, onField: ps.map((_,i)=>i), bench:(squad.bench||[]).map((pid)=>byId(pid)).filter(Boolean) };
   };
@@ -3938,7 +3939,7 @@ function buildEnts(){
       const kx = hx*0.5; const x = ti===0 ? kx : 100-kx;
       const y = hy;
       M.ents.push({ team:ti, idx:k, name:p.name, ovr:p.ovr, per:p.per, trait:p.trait, isGK:p.pos==='GK', slotName:p.pos,
-        hx, hy, x, y, vx:0, vy:0, r:2.4, spd: 5.0 + (p.ovr-60)/11 + p.per.pace*0.8, skill:p.ovr,
+        hx, hy, x, y, vx:0, vy:0, r:2.4, spd: 4.5 + p.per.pace*2.5, st:p.st||statsOf(p), skill:p.ovr,
         decT: rnd()*0.2, celeb:0, celebType:0 });
     });
   });
@@ -3956,7 +3957,7 @@ function loop(ts){
   M.raf = requestAnimationFrame(loop);
 }
 function simTick(dt){
-  M.t += dt; M.min = Math.min(90+M.added, M.t*2);
+  M.t += dt; M.min = Math.min(90+M.added, M.t*1);
   if (M.tacticCD>0) M.tacticCD = Math.max(0, M.tacticCD-dt);
   /* phase khusus */
   if (M.phase==='celebration') { tickCeleb(dt); updCam(dt, M.celeb.spot[0], M.celeb.spot[1], 1.35); return; }
@@ -4106,10 +4107,11 @@ function doPass(from, to){
   const opps = M.ents.filter((o)=>o.team!==from.team && !o.isGK);
   if (opps.length) {
     const lastX = from.team===0? Math.max(...opps.map((o)=>o.x)) : Math.min(...opps.map((o)=>o.x));
-    const inHalf = from.team===0? to.x>50 : to.x<50;
-    const ahead = from.team===0? to.x>lastX : to.x<lastX;
-    if (ahead && inHalf) M.pendingOff = { receiver: to, lineX: lastX, onside:false, margin: Math.abs(to.x-lastX) };
-    else M.pendingOff = { receiver: to, lineX: lastX, onside:true, margin: ahead?0:Math.abs(to.x-lastX) };
+    const inOppHalf = from.team===0? to.x>50 : to.x<50;
+    const beyondDef = from.team===0? to.x>lastX : to.x<lastX;
+    const beyondBall = from.team===0? to.x>b.x : to.x<b.x;
+    const off = inOppHalf && beyondDef && beyondBall;
+    M.pendingOff = { receiver: to, lineX: lastX, onside: !off, margin: Math.abs(to.x-lastX) };
   }
   M.lastTouchBy[from.team] = from;
   if (M.assistBy==null || M.assistBy.team!==from.team) M.assistBy = from;
@@ -4117,7 +4119,7 @@ function doPass(from, to){
 function shoot(e){
   const b = M.ball; b.owner=null; b.ownerTeam=null;
   const gx = goalX(e.team);
-  const acc = e.skill/100;
+  const acc = (e.st? e.st.sho : e.skill)/100;
   const ty = 50 + (M.R()-0.5)*30*(1.2-acc);
   const dx = gx-b.x, dy = ty-b.y; const d = Math.hypot(dx,dy)||1;
   const pow = 4.5 + acc*3;
