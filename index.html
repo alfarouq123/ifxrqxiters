@@ -670,6 +670,7 @@
   .fb-htstatus{ color:#ffd75e; font-weight:700; font-size:13px; min-height:18px; margin-top:6px; }
   .fb-ready2{ background:linear-gradient(135deg,#22c55e,#15803d); color:#fff; font-weight:900; font-size:15px; padding:13px 28px; border:none; border-radius:12px; cursor:pointer; margin-top:8px; width:100%; }
   .fb-ready2:disabled{ background:#14532d; opacity:.85; }
+  .fb-taclist{ max-height:52vh; overflow-y:auto; margin:6px 0; }
   #fbMCanvas{ flex:none; width:min(100%,96vw); aspect-ratio:760/470; height:auto; max-height:64vh; display:block; margin:0 auto; border-radius:10px; }
   .fb-hud{ top:6px; }
   .fb-mctrl{ margin-top:8px; }
@@ -4114,13 +4115,46 @@ function friendLobby(roomId, isHost){
    - kamera zoom/shake
    waktu: 1 detik real = 2 menit game (45 dtk) ; taktik cooldown 20 dtk
 */
+/* Taktik berbasis parameter: defLine (tinggi garis), press (intensitas tekan), poss (prioritas kuasai bola),
+   direct (langsung ke depan), width (main sayap), counter (kecepatan balik). Semua 0-1. */
 const TACTICS = {
-  balance:  { label:'Balance',          short:'menyerang & bertahan setara' },
-  tikitaka: { label:'Tiki Taka',        short:'umpan-umpan pendek' },
-  bus:      { label:'Parking the Bus',  short:'mid mundur bantu defend' },
-  counter:  { label:'Counter Attack',   short:'rebut → serbal cepet' },
-  longball: { label:'Long Ball',        short:'umpan jauh ke sayap/ST' },
+  balance:{label:'Balance',short:'seimbang nyerang & bertahan',defLine:.5,press:.4,poss:.5,direct:.5,width:.5,counter:.5},
+  'counter-attack':{label:'Counter Attack',short:'bertahan dulu, rebut → serang cepet',defLine:.3,press:.35,poss:.35,direct:.65,width:.5,counter:.9},
+  'tiki-taka':{label:'Tiki-Taka',short:'umpan pendek cepat, puter bola cari celah',defLine:.6,press:.5,poss:.95,direct:.15,width:.5,counter:.3},
+  'total-football':{label:'Total Football',short:'semua ikut nyerang-bertahan, tukar posisi',defLine:.7,press:.6,poss:.7,direct:.4,width:.7,counter:.5,fluid:true},
+  'gegenpressing':{label:'Gegenpressing',short:'kehilangan bola → langsung tekan balik',defLine:.8,press:.95,poss:.5,direct:.4,width:.5,counter:.6},
+  'high-press':{label:'High Press',short:'tekan dari area pertahanan lawan',defLine:.9,press:.85,poss:.5,direct:.4,width:.5,counter:.5},
+  'low-block':{label:'Low Block',short:'rapet di belakang, ruang dibuat sempit',defLine:.12,press:.2,poss:.35,direct:.5,width:.4,counter:.6},
+  'mid-block':{label:'Mid Block',short:'jaga area tengah, tekan pas lawan masuk',defLine:.5,press:.45,poss:.45,direct:.45,width:.5,counter:.5},
+  possession:{label:'Possession Football',short:'kuasai bola selama mungkin, kontrol tempo',defLine:.6,press:.4,poss:.9,direct:.2,width:.5,counter:.3},
+  'direct-football':{label:'Direct Football',short:'langsung ke depan, minim operan pendek',defLine:.5,press:.4,poss:.2,direct:.85,width:.5,counter:.6},
+  'wing-play':{label:'Wing Play',short:'serangan lewat sayap, crossing/cutback',defLine:.5,press:.4,poss:.5,direct:.5,width:.95,counter:.5},
+  'route-one':{label:'Route One',short:'bola langsung ke striker, sangat direct',defLine:.3,press:.3,poss:.1,direct:.95,width:.4,counter:.6},
+  'park-the-bus':{label:'Park the Bus',short:'full bertahan, serangan lewat counter',defLine:.05,press:.15,poss:.25,direct:.4,width:.3,counter:.7},
+  'fluid-football':{label:'Fluid Football',short:'posisi bebas, saling tutup ruang',defLine:.6,press:.5,poss:.65,direct:.4,width:.7,counter:.5,fluid:true},
+  'vertical-football':{label:'Vertical Football',short:'bola ke depan secepetnya, jalur vertikal',defLine:.6,press:.5,poss:.4,direct:.75,width:.5,counter:.6},
+  'build-up':{label:'Build-up Play',short:'bangun serangan terstruktur dari belakang',defLine:.55,press:.4,poss:.8,direct:.25,width:.5,counter:.4},
+  'poss-press':{label:'Possession + Pressing',short:'kuasai bola, kehilangan → langsung tekan',defLine:.65,press:.7,poss:.8,direct:.3,width:.5,counter:.4},
+  'counter-press':{label:'Counter-Press',short:'kehilangan bola → kejar, jangan mundur',defLine:.7,press:.9,poss:.45,direct:.45,width:.5,counter:.6},
+  'long-ball':{label:'Long Ball',short:'umpan jauh lewati lini tengah',defLine:.4,press:.35,poss:.2,direct:.9,width:.5,counter:.5},
+  overload:{label:'Overload',short:'kumpulin pemain di satu area, lebihin jumlah',defLine:.55,press:.5,poss:.7,direct:.35,width:.6,counter:.4},
+  'switch-play':{label:'Switch of Play',short:'pindah bola cepat kiri↔kanan',defLine:.5,press:.4,poss:.6,direct:.4,width:.9,counter:.4},
+  'poss-trap':{label:'Possession Trap',short:'pancing lawan deket, lalu serang ruang kosong',defLine:.55,press:.5,poss:.8,direct:.3,width:.6,counter:.5},
+  'fast-buildup':{label:'Fast Build-Up',short:'build-up tempo tinggi, ada celah → ke depan',defLine:.6,press:.5,poss:.65,direct:.6,width:.5,counter:.6},
+  'def-counter':{label:'Defensive Counter',short:'rapet dulu, rebut → cari pemain depan',defLine:.15,press:.25,poss:.3,direct:.7,width:.4,counter:.8},
+  attacking:{label:'Attacking Football',short:'agresif, banyak pemain ke depan',defLine:.8,press:.6,poss:.55,direct:.6,width:.7,counter:.5},
+  reactive:{label:'Reactive Football',short:'adaptasi: kalah→nyerang, menang→tahan',defLine:.5,press:.5,poss:.5,direct:.5,width:.5,counter:.6,reactive:true},
 };
+function TAC(team){
+  let T = TACTICS[team.tactic] || TACTICS.balance;
+  if (T.reactive && typeof M!=='undefined' && M){
+    const ti = team.side; const diff = M.score[ti] - M.score[1-ti];
+    T = Object.assign({}, T);
+    if (diff<0){ T.defLine=Math.min(1,T.defLine+0.3); T.direct=Math.min(1,T.direct+0.3); T.counter=Math.min(1,T.counter+0.2); }
+    else if (diff>0){ T.defLine=Math.max(0,T.defLine-0.25); T.poss=Math.min(1,T.poss+0.2); }
+  }
+  return T;
+}
 let M = null;
 function startMatch(cfg){
   const R = cfg.seed != null ? mulberry(cfg.seed) : mulberry(Date.now() & 0x7fffffff);
@@ -4158,6 +4192,9 @@ function startMatch(cfg){
     setpiece:null, pendingOff:null, wall:[], assistBy:null, lastTouchBy:[null,null], touchT:[-999,-999], lastConceded:null,
     tacticCD:0, decT:0,
   };
+  /* AI lawan pake gaya main random biar variatif */
+  const tacKeys = Object.keys(TACTICS);
+  M.teams[1].tactic = tacKeys[Math.floor(R()*tacKeys.length)];
   buildEnts();
   resetKickoff(0, true);
   screen('match', '<div class="fb-match">'
@@ -4210,8 +4247,11 @@ function touch(team,e){ M.lastTouchBy[team]=e; M.touchT[team]=M.t; }
 function lastTouchTeam(){ return M.touchT[0]>=M.touchT[1]? 0:1; }
 const tName = (ti) => (ti===0? myName : ((M&&M.cfg)? M.cfg.oppName : 'LAWAN'));
 /* kotak penalti (ikuti sisi, aware half swap) */
-function gkBox(ti){ const gx = ownGoal(ti); return { x0: gx===2?2:82, x1: gx===2?18:98, y0:27, y1:73 }; }
-function inBox(ti, x, y){ const bx = gkBox(ti); return x>=bx.x0 && x<=bx.x1 && y>=bx.y0 && y<=bx.y1; }
+function gkBox(ti){ const gx = ownGoal(ti); /* KOTAK KECIL (goal area) — kiper stay deket gawang biar gampang nepis */
+  return gx===2? {x0:2,x1:8,y0:38,y1:62} : {x0:92,x1:98,y0:38,y1:62}; }
+function penBox(ti){ const gx = ownGoal(ti); /* kotak penalti (yang gede) — buat deteksi penalti/clearance */
+  return gx===2? {x0:2,x1:18,y0:27,y1:73} : {x0:82,x1:98,y0:27,y1:73}; }
+function inBox(ti, x, y){ const bx = penBox(ti); return x>=bx.x0 && x<=bx.x1 && y>=bx.y0 && y<=bx.y1; }
 /* pesan kejadian di tengah layar */
 function matchMsg(txt, cls){
   const host = document.querySelector('.fb-match'); if (!host) return;
@@ -4241,12 +4281,25 @@ function simTick(dt){
   const b = M.ball;
   /* bola fisik */
   b.x += b.vx*dt*10; b.y += b.vy*dt*10; b.vx*=0.985; b.vy*=0.985;
-  /* CURVE: bola melengkung (shoot/pass pemain stat tinggi) */
-  if (b.curve && !b.owner) {
-    const c = b.curve*dt*2.5;
-    const nvx = b.vx*Math.cos(c) - b.vy*Math.sin(c);
-    const nvy = b.vx*Math.sin(c) + b.vy*Math.cos(c);
-    b.vx = nvx; b.vy = nvy;
+  if (b.owner) { b.bendTarget=null; b.bent=0; } /* pegang bola → reset lengkung */
+  /* CURVE guided: belokin pelan ke arah target (gawang buat shoot / penerima buat pass), MAX 80° total */
+  if (b.curve && b.bendTarget && !b.owner) {
+    if (b.bent==null) b.bent=0;
+    if (b.bent < 1.4) {
+      const cur = Math.atan2(b.vy, b.vx);
+      const tgt = Math.atan2(b.bendTarget.y - b.y, b.bendTarget.x - b.x);
+      let diff = tgt - cur;
+      while (diff > Math.PI) diff -= 2*Math.PI;
+      while (diff < -Math.PI) diff += 2*Math.PI;
+      const maxTurn = Math.min(b.curve*dt*2.5, 1.4 - b.bent);
+      const turn = Math.max(-maxTurn, Math.min(maxTurn, diff));
+      if (turn) {
+        const nvx = b.vx*Math.cos(turn) - b.vy*Math.sin(turn);
+        const nvy = b.vx*Math.sin(turn) + b.vy*Math.cos(turn);
+        b.vx = nvx; b.vy = nvy;
+        b.bent += Math.abs(turn);
+      }
+    }
   }
   if (b.fly>0) b.fly -= dt; /* proteksi umpan biar gak langsung disentuh */
   /* TEPISAN DEKAT TIANG: bola ngebut ke arah garis gawang di luar mulut gawang tapi masih deket tiang,
@@ -4279,17 +4332,19 @@ function simTick(dt){
   /* keputusan */
   M.decT += dt; const decide = M.decT>0.24; if (decide) M.decT=0;
   /* chaser per tim */
-  /* chaser per tim + cover (presser kedua) */
+  /* presser per tim: 3 pemain terdekat ke bola (buat press sesuai intensitas taktik) */
   const chaser = [null,null];
   const cover = [null,null];
+  const third = [null,null];
   M.ents.forEach((e)=>{ if(e.isGK) return;
-    const d = dist(e,b);
-    if(!chaser[e.team] || d<dist(chaser[e.team],b)) { cover[e.team]=chaser[e.team]; chaser[e.team]=e; }
-    else if(!cover[e.team] || d<dist(cover[e.team],b)) cover[e.team]=e;
+    const d = dist(e,b); const t=e.team;
+    if(!chaser[t] || d<dist(chaser[t],b)) { third[t]=cover[t]; cover[t]=chaser[t]; chaser[t]=e; }
+    else if(!cover[t] || d<dist(cover[t],b)) { third[t]=cover[t]; cover[t]=e; }
+    else if(!third[t] || d<dist(third[t],b)) third[t]=e;
   });
   M.ents.forEach((e)=>{
     if (e.isGK) { gkMove(e,dt); return; }
-    moveAI(e,dt,chaser,cover,decide);
+    moveAI(e,dt,chaser,cover,third,decide);
     /* rebut / tackle / foul (kiper gak boleh tekel keluar kotak) */
     if (b.owner && b.ownerTeam!==e.team && !e.isGK && dist(e,b.owner)<2.9 && (b.owner.stealProt||0)<=0) {
       const o = b.owner;
@@ -4365,7 +4420,7 @@ function simTick(dt){
       o.dribA += da*Math.min(1,dt*2.2);
     }
     /* lari: pas trap (ctrl) pelanin dikit, abis itu full speed; kecepatan ikut stat PAC */
-    const sp = o.spd*(M.teams[o.team].tactic==='counter'?1.2:1.08)*((o.ctrl||0)>0?0.5:1);
+    const sp = o.spd*(TAC(M.teams[o.team]).counter>0.6?1.2:1.08)*((o.ctrl||0)>0?0.5:1);
     o.x += Math.cos(o.dribA)*sp*dt; o.y += Math.sin(o.dribA)*sp*dt*0.6;
     o.x=Math.max(2.5,Math.min(97.5,o.x)); o.y=Math.max(3,Math.min(97,o.y));
     const fx=o.x+Math.cos(o.dribA)*1.2, fy=o.y+Math.sin(o.dribA)*0.72;
@@ -4488,10 +4543,11 @@ function trySave(gk){
   }
 }
 /* ── AI gerak + keputusan ── */
-function moveAI(e,dt,chaser,cover,decide){
+function moveAI(e,dt,chaser,cover,third,decide){
   const b = M.ball; const team = M.teams[e.team];
   if (b.owner===e) return;
-  const iChase = chaser[e.team]===e; const iCover = cover[e.team]===e;
+  const T = TAC(team);
+  const iChase = chaser[e.team]===e; const iCover = cover[e.team]===e; const iThird = third[e.team]===e;
   const fwd = fwdDir(e.team); const og = ownGoal(e.team);
   let tx,ty; const myGroup = POSGROUP[e.slotName];
   const wide = (e.slotName==='LB'||e.slotName==='RB'||e.slotName==='LWB'||e.slotName==='RWB');
@@ -4504,10 +4560,12 @@ function moveAI(e,dt,chaser,cover,decide){
     return;
   }
   if (b.ownerTeam===e.team) {
-    if (myGroup==='ATT') { tx = ownWorldX(e.team, e.hx+18); ty = e.hy + (b.y>50? -8:8)*(e.slotName==='ST'?0.5:1);
-      if (team.tactic==='longball' && (e.slotName==='LW'||e.slotName==='RW')) tx = ownWorldX(e.team, 84);
-      /* PENEMPATAN POSISI ikut OVR: ST OVR tinggi main di bahu bek terakhir → gak gampang offside;
-         OVR rendah sering kelewat garis */
+    /* ── lagi nyerang ── */
+    if (myGroup==='ATT') {
+      tx = ownWorldX(e.team, e.hx+18); ty = e.hy + (b.y>50? -8:8)*(e.slotName==='ST'?0.5:1);
+      if ((T.direct>0.85 || T.width>0.85) && (e.slotName==='LW'||e.slotName==='RW')) tx = ownWorldX(e.team, 86); /* sayap dorong dalem */
+      if (T.fluid) { ty = b.y + (e.hy>50? -8:8); } /* fluid: penyerang lebih bebas cari ruang */
+      /* PENEMPATAN POSISI ikut OVR: ST OVR tinggi main di bahu bek terakhir → gak gampang offside */
       const oppsD = M.ents.filter((o)=>o.team!==e.team && !o.isGK);
       if (oppsD.length) {
         const aGoal = atkGoal(e.team);
@@ -4516,29 +4574,30 @@ function moveAI(e,dt,chaser,cover,decide){
         const slack = (1-(e.posQ||0.6))*8;
         if (fwd>0) tx = Math.min(tx, lineM + slack); else tx = Math.max(tx, lineM - slack);
       }
-    } else if (myGroup==='MID') { tx = b.x + fwd*10; ty = b.y + (e.hy>50? -10:10); if (team.tactic==='bus') tx = b.x - fwd*8; }
-    else {
+    } else if (myGroup==='MID') {
+      tx = b.x + fwd*10; ty = b.y + (e.hy>50? -10:10);
+      if (T.defLine<0.2) tx = b.x - fwd*8; /* low block: mid mundur */
+      if (T.poss>0.85) { tx = b.x + fwd*6; ty = b.y + (e.hy>50? -8:8); } /* possession: mid stay deket bola */
+    } else {
       /* PERAN BEK pas nyerang */
       if (wide) {
-        /* OVERLAP: bek sayap maju bantu serangan, kasih lebar + opsi umpan (gak terlalu dalem biar bentuk tim gak jebol) */
-        const deep = team.tactic==='longball'?28 : (team.tactic==='counter'?26:22);
+        /* OVERLAP: bek sayap maju bantu serangan, kasih lebar + opsi umpan */
+        const deep = 22 + T.counter*4 + T.width*3;
         tx = ownWorldX(e.team, Math.min(84, e.hx+deep));
-        ty = e.hy + (b.y-e.hy)*0.28; /* ikutin aliran bola dikit */
+        ty = e.hy + (b.y-e.hy)*0.28;
       } else if (e.slotName==='CDM') {
-        /* PIVOT: stay di belakang bola jadi opsi umpan aman */
-        tx = b.x - fwd*9; ty = b.y + (50-b.y)*0.3 + (e.hy>50?5:-5);
+        tx = b.x - fwd*9; ty = b.y + (50-b.y)*0.3 + (e.hy>50?5:-5); /* pivot */
       } else {
-        /* CB: naikin garis pertahanan buat build-up, gak usah jauh2 */
-        tx = ownWorldX(e.team, e.hx+9); ty = e.hy + (b.y-e.hy)*0.16;
-        if (team.tactic==='counter') tx += fwd*5;
+        tx = ownWorldX(e.team, e.hx+9); ty = e.hy + (b.y-e.hy)*0.16; /* CB build-up */
+        if (T.counter>0.6) tx += fwd*5;
+        if (T.fluid) tx = ownWorldX(e.team, e.hx+16); /* total football: CB ikut naik */
       }
-      if (team.tactic==='bus' && myGroup==='DEF') tx = ownWorldX(e.team, e.hx); /* bus: bek gak maju */
+      if (T.defLine<0.2 && myGroup==='DEF') tx = ownWorldX(e.team, e.hx); /* low block: bek gak maju */
     }
-    if (team.tactic==='counter' && b.ownerTeam===e.team && myGroup!=='DEF') tx += fwd*8;
+    if (T.counter>0.6 && myGroup!=='DEF') tx += fwd*8; /* counter: non-bek langsung ngebut ke depan */
   } else if (!b.owner) {
-    /* BOLA BEBAS: jangan patung! 2 pemain terdekat converg rebutan, yang deket bola ikut ngejar,
-       sisanya geser ke zona bola (bukan diem di tempat) */
-    if (iChase || iCover) {
+    /* ── BOLA BEBAS: jangan patung, converg rebutan ── */
+    if (iChase || iCover || (iThird && T.press>0.5)) {
       tx = b.x; ty = b.y;
     } else {
       const homeX = ownWorldX(e.team, e.hx);
@@ -4547,31 +4606,30 @@ function moveAI(e,dt,chaser,cover,decide){
       if (Math.hypot(b.x-e.x, b.y-e.y) < 14) { tx = b.x; ty = b.y; } /* deket bola? ikut rebutan */
     }
   } else {
-    /* lagi bertahan */
+    /* ── lagi bertahan (lawan pegang bola) ── */
     const carrier = b.owner || b;
     if (iChase) {
-      /* PRESS: kejar pembawa bola */
-      tx = carrier.x; ty = carrier.y;
-    } else if (iCover && b.owner && myGroup!=='ATT') {
-      /* COVER: tutup jalur tembak — berdiri antara carrier dan gawang sendiri */
-      tx = carrier.x + (og - carrier.x)*0.28;
-      ty = carrier.y + (50 - carrier.y)*0.28;
+      tx = carrier.x; ty = carrier.y; /* press utama */
+    } else if (iCover && b.owner && (T.press>0.6 || myGroup!=='ATT')) {
+      if (T.press>0.6) { tx = carrier.x; ty = carrier.y; } /* press tinggi: cover ikut ngejar */
+      else { tx = carrier.x + (og - carrier.x)*0.28; ty = carrier.y + (50 - carrier.y)*0.28; } /* tutup jalur tembak */
+    } else if (iThird && b.owner && T.press>0.85) {
+      tx = carrier.x; ty = carrier.y; /* gegenpress: presser ke-3 ikut ngejar */
     } else if (myGroup==='DEF') {
-      /* ZONE DEFENSE: GARIS PERTAHANAN GERAK SATU UNIT — semua bek geser bareng,
-         formasi tetep kebentuk, celah ditutup bareng-bareng */
+      /* ZONE DEFENSE: garis pertahanan gerak satu unit, tinggi garis ikut defLine */
       const homeX = ownWorldX(e.team, e.hx);
-      const shiftY = Math.max(-10, Math.min(10, (b.y-50)*0.35));      /* geser vertikal SAMA buat semua bek */
-      const lineX  = Math.max(-6, Math.min(10, (b.x-50)*0.16*fwd));   /* garis naik/turun SAMA buat semua bek */
-      const ax = homeX + lineX;
+      const push = fwd*(T.defLine-0.5)*14; /* defLine tinggi → garis naik ke tengah */
+      const shiftY = Math.max(-10, Math.min(10, (b.y-50)*0.35));
+      const lineX  = Math.max(-6, Math.min(10, (b.x-50)*0.16*fwd));
+      const ax = homeX + lineX + push;
       const ay = e.hy + shiftY;
       tx = ax; ty = ay;
-      /* TUTUP CELAH: cuma 1 bek (yg paling deket ancaman) yg keluar garis, sisanya jaga bentuk.
-         pembawa bola udah diurus chaser, jadi ini buat runner yang nyelip */
-      if (!b.owner || b.owner.team===e.team) {} else {
+      /* TUTUP CELAH: 1 bek terdekat keluar garis nutup runner nyelip */
+      if (b.owner && b.owner.team!==e.team) {
         const opps = M.ents.filter((o)=>o.team!==e.team && !o.isGK && o!==b.owner);
         let threat=null, bd=1e9;
         for (const o of opps){ const dd=Math.hypot(o.x-ax,o.y-ay); if(dd<bd){bd=dd;threat=o;} }
-        const reachZ = 5 + (e.posQ||0.6)*3 + e.per.aggr*2.5; /* OVR tinggi = lebih jago baca celah */
+        const reachZ = 5 + (e.posQ||0.6)*3 + e.per.aggr*2.5;
         if (threat && bd<reachZ) {
           let iAmClosest = true;
           for (const d2 of M.ents){
@@ -4581,20 +4639,22 @@ function moveAI(e,dt,chaser,cover,decide){
           if (iAmClosest) { tx = threat.x + (og===2? -1.8:1.8); ty = threat.y; }
         }
       }
-      if (team.tactic==='bus') { tx = ownWorldX(e.team, e.hx) + (og===2? -1:1); ty = e.hy + shiftY*0.5; }
+      if (T.defLine<0.15) { tx = ownWorldX(e.team, e.hx) + (og===2? -1:1); ty = e.hy + shiftY*0.5; } /* park the bus */
     } else {
-      /* MID/ATT: geser ngikutin bola */
+      /* MID/ATT: geser ngikutin bola + jaga zona */
       const homeX = ownWorldX(e.team, e.hx);
       const shift = (b.x-50)*0.22*fwd;
-      tx = homeX + shift + (team.tactic==='bus' && myGroup==='MID'? -8*fwd:0);
+      const push = fwd*(T.defLine-0.5)*10;
+      tx = homeX + shift + push + (T.defLine<0.2 && myGroup==='MID'? -8*fwd:0);
       ty = e.hy + (b.y-50)*0.18;
-      if (team.tactic==='bus' && myGroup!=='ATT') tx -= 6*fwd;
+      if (T.defLine<0.2 && myGroup!=='ATT') tx -= 6*fwd; /* low block: semua turun */
+      if (T.fluid && myGroup==='ATT') tx -= fwd*8; /* total football: penyerang ikut bantu bertahan */
     }
   }
   tx = Math.max(3,Math.min(97,tx)); ty = Math.max(5,Math.min(95,ty));
   const dx=tx-e.x, dy=ty-e.y, d=Math.hypot(dx,dy);
-  const pressing = (iChase||iCover) && b.owner && b.ownerTeam!==e.team; /* press + cover lari lebih cepet */
-  const sp = e.spd*(team.tactic==='counter'&&b.ownerTeam===e.team?1.2:1)*(pressing?1.18:1);
+  const pressing = (iChase||iCover||(iThird&&T.press>0.85)) && b.owner && b.ownerTeam!==e.team;
+  const sp = e.spd*(T.counter>0.6 && b.ownerTeam===e.team?1.2:1)*(pressing?1.18:1);
   if (d>0.4){ e.x += dx/d*sp*dt; e.y += dy/d*sp*dt; }
 }
 function onBall(e, dt){
@@ -4635,6 +4695,7 @@ function onBall(e, dt){
   }
   const gx = atkGoal(e.team);
   const dGoal = Math.hypot(gx-e.x, 50-e.y);
+  const T = TAC(team);
   /* masih komitmen dribble: bawa lari terus (gerak di simTick), kecuali udah di mulut gawang */
   if ((e.dribLock||0)>0) {
     if (dGoal<20) shoot(e); /* udah deket gawang pas lagi bawa bola? langsung tembak */
@@ -4652,7 +4713,7 @@ function onBall(e, dt){
   let shootS = dGoal<33 ? (0.65 + e.skill/230 - dGoal/80) : (dGoal<40? 0.15:0);
   if (dGoal<16) shootS += 0.35; /* udah di mulut gawang? TEMBAK */
   if (pressD<2.5 && dGoal<30) shootS += 0.15; /* diteken deket gawang? gas tembak */
-  if (team.tactic==='bus') shootS *= 0.4; /* bus: jangan asal tembak */
+  shootS *= (0.6 + T.direct*0.8); /* taktik direct = lebih berani tembak; possession = sabar */
   best = { t:'shoot', s: shootS };
   /* dribble kalo ada ruang */
   const fwd = fwdDir(e.team);
@@ -4665,7 +4726,10 @@ function onBall(e, dt){
   for (const m2 of mates) {
     const mFwd = (m2.x - e.x)*fwd;
     const mSpace = !M.ents.some((o)=>o.team!==e.team && dist(o,m2)<4);
-    let s = (mFwd>0? mFwd*0.026 : -0.15) + (mSpace?0.4:0) + (team.tactic==='tikitaka'? (dist(e,m2)<16?0.4:0):0) + (team.tactic==='longball'? (mFwd>20?0.5:0):0);
+    let s = (mFwd>0? mFwd*0.026 : -0.15) + (mSpace?0.4:0)
+      + (T.poss>0.85? (dist(e,m2)<16?0.4:0):0)                                    /* possession: umpan pendek aman */
+      + (T.direct>0.85? (mFwd>20?0.5:0):0)                                        /* direct/long ball: umpan jauh ke depan */
+      + (T.width>0.85 && (m2.slotName==='LW'||m2.slotName==='RW')? 0.3:0);        /* wing play: prioritas sayap */
     if (e.gotFrom===m2) s -= 0.7; /* jangan langsung balikin ke yg barusan ngumpan (anti loop 2 org) */
     if (pressD>3 && dist(e,m2)<7) s -= 0.4; /* gak di-press? jangan umpan pendek2 ke sebelah */
     if (!pm || s>pm.s) pm = { m:m2, s };
@@ -4713,8 +4777,9 @@ function doPass(from, to){
   const dx = to.x-from.x + (ok?0:err), dy = to.y-from.y + (ok?0:err*0.6);
   const d = Math.hypot(dx,dy)||1; const pow = 2.4 + d*0.055;
   b.vx = dx/d*pow; b.vy = dy/d*pow; b.passTarget = ok? to : null; b.from = from; b.fly = 0.16; /* bola terbang dulu, gak langsung nyangkut di org depan */
-  /* CURVE PASS: umpan melengkung ke arah penerima */
-  b.curve = eliteP? Math.sign(dy||0.001)*Math.sign(b.vx||1)*Math.min(0.15, 0.12+(pasStat-80)*0.01) : 0;
+  /* CURVE PASS: lengkung ke ARAH PENERIMA, belokan max 80° */
+  if (eliteP) { b.curve = Math.min(0.7, 0.4+(pasStat-80)*0.02); b.bendTarget = { x:to.x, y:to.y }; b.bent = 0; }
+  else { b.curve = 0; b.bendTarget = null; }
   /* offside check — arah ikut fwdDir (bener setelah tukar sisi half 2);
      syarat: penerima di PARUH LAWAN + lebih dekat ke gawang lawan dr bek kedua-terakhir + lebih depan dr bola.
      Di paruh sendiri TIDAK PERNAH offside. */
@@ -4751,8 +4816,9 @@ function shoot(e){
   const dx = gx-b.x, dy = ty-b.y; const d = Math.hypot(dx,dy)||1;
   const pow = 4.5 + acc*3;
   b.vx = dx/d*pow; b.vy = dy/d*pow; M.shotBy = e; e.dribA=null;
-  /* CURVE SHOT: bola melengkung ke pojok */
-  b.curve = elite? (ty<50? -1:1)*Math.sign(b.vx||1)*Math.min(0.6, 0.35+(shoStat-80)*0.025) : 0;
+  /* CURVE SHOT: lengkung ke arah GAWANG (pojok yg dibidik), belokan max 80° */
+  if (elite) { b.curve = Math.min(0.9, 0.5+(shoStat-80)*0.03); b.bendTarget = { x:gx, y:ty }; b.bent = 0; }
+  else { b.curve = 0; b.bendTarget = null; }
   SFX.play('kick', 0.35); /* suara tendangan */
   M.shotN=(M.shotN||0)+1; b.shotId=M.shotN; /* id tembakan biar kiper cuma roll 1x */
   M.shotSnapId = M.snapId||0; /* frame tendangan, buat slowmo di replay */
@@ -4903,7 +4969,7 @@ function runSetPiece(){
       const ty = 50 + (M.R()-0.5)*20;
       const dx = gx-b.x, dy = ty-b.y; const dd = Math.hypot(dx,dy)||1;
       b.vx = dx/dd*5.5; b.vy = dy/dd*5.5; M.shotBy=sp.shooter; M.shotSnapId=M.snapId||0; M.shotN=(M.shotN||0)+1; b.shotId=M.shotN; M.stats.sot[atkT]++;
-      b.curve = skl>=80? (ty<50?-1:1)*Math.sign(b.vx||1)*0.7 : 0; /* FK melengkung kalo eksekutornya jago */
+      if (skl>=80) { b.curve=0.9; b.bendTarget={x:gx,y:ty}; b.bent=0; } else { b.curve=0; b.bendTarget=null; } /* FK melengkung ke gawang */
     } else { /* crossing */
       doCross(atkT, sp.shooter, gx, 50);
     }
@@ -5135,9 +5201,9 @@ function fulltime(){
 }
 function openTactics(){
   if (M.tacticCD>0 || !M || M.paused || M.over) return;
-  $('fbMOverlay').innerHTML = '<div class="fb-ovl-card"><h3>TACTICS</h3>'
+  $('fbMOverlay').innerHTML = '<div class="fb-ovl-card"><h3>TACTICS — GAYA BERMAIN</h3><div class="fb-taclist">'
     + Object.entries(TACTICS).map(([k,t]) => '<div class="fb-tacopt '+(M.teams[0].tactic===k?'on':'')+'" data-t="'+k+'"><b>'+t.label+'</b><span>'+t.short+'</span></div>').join('')
-    + '<div class="fb-hint">taktik cuma bisa diganti tiap 20 dtk</div><button type="button" class="fb-btn fb-ghost" id="fbTacClose">Tutup</button></div>';
+    + '</div><div class="fb-hint">taktik cuma bisa diganti tiap 20 dtk</div><button type="button" class="fb-btn fb-ghost" id="fbTacClose">Tutup</button></div>';
   $('fbMOverlay').classList.add('show');
   $('fbTacClose').onclick = () => $('fbMOverlay').classList.remove('show');
   document.querySelectorAll('.fb-tacopt').forEach((el)=>{ el.onclick = () => { M.teams[0].tactic = el.dataset.t; M.tacticCD=20; $('fbMTacNow').textContent = TACTICS[el.dataset.t].label; $('fbMOverlay').classList.remove('show'); }; });
