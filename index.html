@@ -4125,12 +4125,14 @@ function showPreMatch(cfg){
     $('fbPMBack').onclick = () => { clearInterval(pmPoll); clearInterval(pmCount); if (cfg.mode==='pvp') fbPost({action:'queueLeave'}).catch(()=>{}); if (cfg.mode==='friend') fbPost({action:'roomLeave',roomId:cfg.roomId}).catch(()=>{}); showPlay(); };
     $('fbPMOpp').onclick = () => showOppLineup(cfg.oppSquad, tName2);
     document.querySelectorAll('#fbPMPitch .fb-slot').forEach((el) => { el.onclick = () => {
+      if (pm.readied) return; /* udah SIAP → lineup dikunci */
       const i = +el.dataset.i;
       if (!pm.sel) { pm.sel = { kind:'main', i }; render(); return; }
       if (pm.sel.kind==='main') { const j=pm.sel.i; if(j!==i){ const t=pm.squad.players[j]; pm.squad.players[j]=pm.squad.players[i]; pm.squad.players[i]=t; } pm.sel=null; render(); }
       else { const b=pm.sel.i; const t=pm.squad.players[i]; pm.squad.players[i]=pm.squad.bench[b]; pm.squad.bench[b]=t; pm.sel=null; render(); }
     }; });
     document.querySelectorAll('.fb-bench-row .fb-bslot').forEach((el) => { el.onclick = () => {
+      if (pm.readied) return; /* udah SIAP → lineup dikunci */
       const b = +el.dataset.b;
       if (!pm.sel) { pm.sel = { kind:'bench', i:b }; render(); return; }
       if (pm.sel.kind==='bench') { const b2=pm.sel.i; if(b2!==b){ const t=pm.squad.bench[b2]; pm.squad.bench[b2]=pm.squad.bench[b]; pm.squad.bench[b]=t; } pm.sel=null; render(); }
@@ -4147,6 +4149,7 @@ function showPreMatch(cfg){
     startMatch(cfg);
   }
   function onReady(){
+    if (pm.readied) return; pm.readied = true; /* cuma bisa SIAP sekali — pencet berkali² diabaikan */
     state.squad = pm.squad; state.defTactic = pm.tactic;
     fbPost({ action:'saveSquad', squad: pm.squad }).catch(()=>{});
     cfg.mySquad = pm.squad; cfg.tactic = pm.tactic;
@@ -4155,9 +4158,14 @@ function showPreMatch(cfg){
     if (cfg.mode==='pvp') {
       const wait = $('fbPMWait'); if (wait) wait.innerHTML = 'nunggu lawan siap... <b id="fbPMTimer">'+pm.timer+'</b> dtk';
       fbPost({ action:'matchSquad', mid:cfg.mid, squad:pm.squad }).catch(()=>{});
-      fbPost({ action:'matchReadyPre', mid:cfg.mid }).catch(()=>{});
+      /* flag siap dikirim + DI-RETRY terus (write DB bisa kalah konflik) sampe match mulai */
+      const sendReady = () => fbPost({ action:'matchReadyPre', mid:cfg.mid }).then((d)=>{ if (d && d.both && !pm.started) startNow(); }).catch(()=>{});
+      sendReady();
       clearInterval(pmPoll);
+      let rk = 0;
       pmPoll = setInterval(async () => {
+        rk++;
+        if (rk%3===0) sendReady();
         try {
           const d = await fbPost({ action:'queuePoll' });
           if (d.match) {
@@ -4173,9 +4181,13 @@ function showPreMatch(cfg){
     }
     if (cfg.mode==='friend') {
       const wait = $('fbPMWait'); if (wait) wait.innerHTML = 'nunggu lawan siap... <b id="fbPMTimer">'+pm.timer+'</b> dtk';
-      fbPost({ action:'roomReady', roomId:cfg.roomId, squad:pm.squad }).catch(()=>{});
+      const sendReady = () => fbPost({ action:'roomReady', roomId:cfg.roomId, squad:pm.squad }).then((d)=>{ if (d && d.both && !pm.started) startNow(); }).catch(()=>{});
+      sendReady();
       clearInterval(pmPoll);
+      let rk2 = 0;
       pmPoll = setInterval(async () => {
+        rk2++;
+        if (rk2%3===0) sendReady();
         try {
           const d = await fbPost({ action:'roomPoll', roomId:cfg.roomId });
           const r = d.room;
@@ -4377,6 +4389,7 @@ function startMatch(cfg){
     + '</div>');
   $('fbMTactic').onclick = openTactics;
   $('fbMSkip').onclick = () => { M.spd = 30; };
+  if (cfg.mode==='pvp' || cfg.mode==='friend') $('fbMSkip').style.display = 'none'; /* PVP: skip dimatiin biar 2 HP tetep live bareng */
   $('fbMSound').onclick = () => { const on = SFX.toggle(); $('fbMSound').textContent = on? '🔊':'🔇'; };
   showOverlay('KICK OFF', esc(myName)+' vs '+esc(cfg.oppName), [{ label:'MULAI', fn: () => { hideOverlay(); M.phase='play'; M.paused = false; SFX.ambStart(); SFX.whistle(1, 0.8); loop(performance.now()); } }]);
 }
@@ -4401,7 +4414,7 @@ function buildEnts(){
       const y = hy;
       M.ents.push({ team:ti, idx:k, name:p.name, ovr:p.ovr, per:p.per, trait:p.trait, isGK:p.pos==='GK', slotName:p.pos,
         hx, hy, x, y, vx:0, vy:0, r:1.6, spd: 4.2 + p.per.pace*3.0, st:p.st||statsOf(p), skill:p.ovr,
-        decT: rnd()*0.2, celeb:0, celebType:0, cards:0, dribA:null, ctrl:0, touchCd:0,
+        decT: M.R()*0.2, celeb:0, celebType:0, cards:0, dribA:null, ctrl:0, touchCd:0, /* M.R (seeded), JANGAN rnd/Math.random — biar PVP sinkron */
         gk: p.gk||null, down:0, lastShotId:null, posQ: p.ovr/100 });
     });
   });
@@ -4430,10 +4443,20 @@ function matchMsg(txt, cls){
   host.appendChild(d); setTimeout(()=>{ if (d.parentNode) d.remove(); }, 2300);
 }
 function nearestOpp(e, rad){ let best=null; M.ents.forEach((o)=>{ if(o.team!==e.team && (!rad||dist(o,e)<rad)) { if(!best||dist(o,e)<dist(best,e)) best=o; } }); return best; }
+/* FIXED TIMESTEP 1/30 dtk: jumlah tick + urutan RNG selalu SAMA di device apapun.
+   Ini yang bikin match PVP identik di 2 HP (seed sama → jalannya pertandingan sama). */
+const FIXED_DT = 1/30;
 function loop(ts){
   if (!M || M.over) return;
   try {
-    if (M.lastTs) { const dt = Math.min(0.05,(ts-M.lastTs)/1000)*M.spd; if (!M.paused) simTick(dt); }
+    if (M.lastTs) {
+      const real = Math.min(0.5, (ts-M.lastTs)/1000);
+      if (!M.paused) {
+        M.acc = Math.min(0.5, (M.acc||0) + real);
+        let guard = 0;
+        while (M.acc >= FIXED_DT && guard < 45) { simTick(FIXED_DT*M.spd); M.acc -= FIXED_DT; guard++; }
+      } else M.acc = 0;
+    }
     M.lastTs = ts; draw();
   } catch(e) { /* jangan freeze */ }
   M.raf = requestAnimationFrame(loop);
@@ -5712,21 +5735,24 @@ function halftime(){
       ei.isGK = ei.slotName==='GK'; ej.isGK = ej.slotName==='GK';
     }
   }
+  const htLocked = M.cfg.mode==='pvp' || M.cfg.mode==='friend'; /* PVP: lineup babak 2 DIKUNCI — swap lokal bikin 2 HP gak sinkron */
   function renderHT(){
     $('fbMOverlay').innerHTML = '<div class="fb-ovl-card big htcard"><h3>JEDA — ATUR LINEUP BABAK 2</h3>'
       + '<div class="fb-pitch v htv">'+pitchHTML()+'</div>'
       + '<div class="fb-bench-row htb">'+benchHTML()+'</div>'
-      + '<div class="fb-hint">tap lapangan ↔ cadangan buat ganti pemain; tap 2 pemain lapangan buat tukar posisi</div>'
+      + '<div class="fb-hint">'+(htLocked? 'match vs pemain: lineup babak 2 dikunci biar 2 HP tetep sinkron' : 'tap lapangan ↔ cadangan buat ganti pemain; tap 2 pemain lapangan buat tukar posisi')+'</div>'
       + '<div class="fb-htstatus" id="fbHTStatus"></div>'
       + '<button type="button" class="fb-btn fb-ready2" id="fbHTGo">SIAP LANJUT ▶</button></div>';
     $('fbMOverlay').classList.add('show');
     document.querySelectorAll('.htv .fb-slot').forEach((el)=>{ el.onclick = () => {
+      if (htLocked) return;
       const i = +el.dataset.i;
       if (!sel){ sel={kind:'main',i}; renderHT(); return; }
       if (sel.kind==='main'){ if(sel.i!==i) swapSlots(sel.i,i); sel=null; renderHT(); }
       else { doBenchSwap(sel.i, i); sel=null; renderHT(); }
     }; });
     document.querySelectorAll('.htb .fb-bslot').forEach((el)=>{ el.onclick = () => {
+      if (htLocked) return;
       const b = +el.dataset.b;
       if (!sel){ sel={kind:'bench',i:b}; renderHT(); return; }
       if (sel.kind==='bench'){ if(sel.i!==b){ const tmp=t2.bench[sel.i]; t2.bench[sel.i]=t2.bench[b]; t2.bench[b]=tmp; } sel=null; renderHT(); }
@@ -5755,8 +5781,10 @@ function halftime(){
       }, 1000);
     } else if (M.cfg.roomId) { /* laga teman */
       showWait('nunggu lawan siap... (30)');
-      fbPost({action:'roomReadyHalf', roomId:M.cfg.roomId}).catch(()=>{});
+      const sendRH = () => fbPost({action:'roomReadyHalf', roomId:M.cfg.roomId}).catch(()=>{});
+      sendRH();
       const tick = setInterval(async ()=>{ waited++;
+        if (waited%4===0) sendRH(); /* retry: flag bisa ilang kalo write DB konflik */
         try {
           const d = await fbPost({action:'roomPoll', roomId:M.cfg.roomId});
           const r = d.room;
