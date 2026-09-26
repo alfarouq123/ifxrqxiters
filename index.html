@@ -663,6 +663,13 @@
   .fb-opplineup{ position:fixed; inset:0; z-index:80; background:rgba(4,6,10,.82); display:flex; align-items:center; justify-content:center; padding:14px; box-sizing:border-box; }
   .fb-opplineup .fb-ovl-card{ max-width:560px; width:100%; max-height:94vh; overflow-y:auto; }
   .fb-opplineup .fb-pitch.v{ min-height:380px; margin-top:10px; }
+  /* halftime lineup */
+  .htcard{ max-width:640px; max-height:96vh; overflow-y:auto; }
+  .htv{ min-height:340px; margin-top:8px; }
+  .htb{ margin-top:8px; justify-content:center; }
+  .fb-htstatus{ color:#ffd75e; font-weight:700; font-size:13px; min-height:18px; margin-top:6px; }
+  .fb-ready2{ background:linear-gradient(135deg,#22c55e,#15803d); color:#fff; font-weight:900; font-size:15px; padding:13px 28px; border:none; border-radius:12px; cursor:pointer; margin-top:8px; width:100%; }
+  .fb-ready2:disabled{ background:#14532d; opacity:.85; }
   #fbMCanvas{ flex:none; width:min(100%,96vw); aspect-ratio:760/470; height:auto; max-height:64vh; display:block; margin:0 auto; border-radius:10px; }
   .fb-hud{ top:6px; }
   .fb-mctrl{ margin-top:8px; }
@@ -4063,7 +4070,7 @@ function startMatch(cfg){
         aggr: (st.def+st.phy)/200 + (trait==='bruiser'?0.15:0),
         pace: st.pac/100 + (trait==='runner'?0.1:0),
       };
-      return { name:p.name, pos:slots[i], ovr, trait, per, st, gk: p.pos==='GK'? gkStatsOf(p) : null };
+      return { name:p.name, pos:slots[i], ovr, trait, per, st, gk: p.pos==='GK'? gkStatsOf(p) : null, id: p.id, r: p.r||'bronze', country: p.country||'?' };
     });
     return { squad, side, tactic:'balance', players: ps, onField: ps.map((_,i)=>i), bench:(squad.bench||[]).map((pid)=>byId(pid)).filter(Boolean) };
   };
@@ -4149,20 +4156,39 @@ function loop(ts){
   M.raf = requestAnimationFrame(loop);
 }
 function simTick(dt){
-  M.t += dt; M.min = Math.min(90+M.added, M.t*1);
-  if (M.tacticCD>0) M.tacticCD = Math.max(0, M.tacticCD-dt);
-  /* phase khusus */
+  /* phase khusus dulu — WAKTU MATCH BERHENTI pas replay/selebrasi/setpiece/VAR */
   if (M.phase==='celebration') { tickCeleb(dt); updCam(dt, M.celeb.spot[0], M.celeb.spot[1], 1.35); return; }
   if (M.phase==='replay') { tickReplay(dt); return; }
   if (M.phase==='var') { M.varInfo.t -= dt; if (M.varInfo.t<=0) applyVar(); updCam(dt, M.ball.x, M.ball.y, 1.3); return; }
   if (M.phase==='setpiece') { M.setpiece.t -= dt; if (M.setpiece.t<=0) runSetPiece(); updCam(dt, M.ball.x, M.ball.y, 1.2); return; }
   if (M.phase!=='play') return;
+  M.t += dt; M.min = Math.min(90+M.added, M.t*1);
+  if (M.tacticCD>0) M.tacticCD = Math.max(0, M.tacticCD-dt);
   if (M.half===1 && M.min>=45) { M.half=2; halftime(); return; }
   if (M.min>=90+M.added) { fulltime(); return; }
   const b = M.ball;
   /* bola fisik */
   b.x += b.vx*dt*10; b.y += b.vy*dt*10; b.vx*=0.985; b.vy*=0.985;
+  /* CURVE: bola melengkung (shoot/pass pemain stat tinggi) */
+  if (b.curve && !b.owner) {
+    const c = b.curve*dt*2.5;
+    const nvx = b.vx*Math.cos(c) - b.vy*Math.sin(c);
+    const nvy = b.vx*Math.sin(c) + b.vy*Math.cos(c);
+    b.vx = nvx; b.vy = nvy;
+  }
   if (b.fly>0) b.fly -= dt; /* proteksi umpan biar gak langsung disentuh */
+  /* TEPISAN DEKAT TIANG: bola ngebut ke arah garis gawang di luar mulut gawang tapi masih deket tiang,
+     kiper nyentuh → last touch bek → CORNER */
+  if (!b.owner && Math.hypot(b.vx,b.vy)>1.5 && (b.shotId!=null)) {
+    const nearX = (b.vx>0 && b.x>90) ? 98 : (b.vx<0 && b.x<10 ? 2 : null);
+    if (nearX!=null && b.y>31 && b.y<69 && !(b.y>38&&b.y<62)) {
+      const gkN = M.ents.find((e)=>e.isGK && ownGoal(e.team)===nearX);
+      if (gkN && dist(gkN,b)<5 && M.R()<0.5) {
+        touch(gkN.team,gkN); /* bek (kiper) nyentuh terakhir */
+        b.vy = (b.y>=50?1:-1)*2.2; b.vx = (nearX===98?1:-1)*1.0; /* dorong keluar garis */
+      }
+    }
+  }
   /* keluar garis samping (garis lapangan di y=4 & y=96) → LEMPARAN KE DALAM */
   if (b.y<4 || b.y>96) {
     const outTop = b.y<4;
@@ -4196,8 +4222,24 @@ function simTick(dt){
     if (b.owner && b.ownerTeam!==e.team && !e.isGK && dist(e,b.owner)<2.9 && (b.owner.stealProt||0)<=0) {
       const o = b.owner;
       const steal = dt*(0.30 + e.per.def*0.40 - o.per.drib*0.2);
-      if (M.R()<steal) { b.owner=e; b.ownerTeam=e.team; b.passTarget=null; b.fly=0; M.stats.tackles[e.team]++; touch(e.team,e); M.assistBy=null; e.ctrl=0.6; e.dribA=null; e.gotFrom=null; e.dribLock=0.7; e.stealProt=0.3; }
+      if (M.R()<steal) { b.owner=e; b.ownerTeam=e.team; b.passTarget=null; b.fly=0; b.curve=0; M.stats.tackles[e.team]++; touch(e.team,e); M.assistBy=null; e.ctrl=0.6; e.dribA=null; e.gotFrom=null; e.dribLock=0.7; e.stealProt=0.3; }
       else if (dist(e,o)<2.2 && (e.foulCd||0)<=0 && M.R() < dt*(0.03 + e.per.aggr*0.22 + (e.trait==='bruiser'?0.10:0))) { e.foulCd=2.0; foul(e,o); return; }
+    }
+    /* BLOCK/DEFLECT: bek di kotak sendiri kesamber shot lewat → defleksi atau sapuan ke corner */
+    if (!b.owner && b.shotId!=null && (e.touchCd||0)<=0 && !e.isGK && POSGROUP[e.slotName]==='DEF' && inBox(e.team,e.x,e.y) && dist(e,b)<2.8) {
+      const bs2 = Math.hypot(b.vx,b.vy);
+      if (bs2>2.6 && M.R()<0.5) {
+        e.touchCd=0.5; touch(e.team,e);
+        if (M.R()<0.35) { /* sapuan panik → corner lawan */
+          const og2 = ownGoal(e.team);
+          const cy = b.y>=50? 94:6;
+          const ddx=og2-b.x, ddy=cy-b.y; const dd=Math.hypot(ddx,ddy)||1;
+          const pwr=4.5+M.R()*1.5;
+          b.vx=ddx/dd*pwr; b.vy=ddy/dd*pwr; b.curve=0; b.shotId=null; b.fly=0.15; b.passTarget=null;
+        } else { /* defleksi: arah berubah */
+          b.vy += (M.R()-0.5)*3.5; b.vx*=0.85; b.shotId=null; b.fly=0.1;
+        }
+      }
     }
     /* ambil bola bebas + offside */
     if (!b.owner && dist(e,b)<1.5) {
@@ -4210,6 +4252,7 @@ function simTick(dt){
         const lastI = Math.max(0, M.snaps.length-1);
         let startI = M.snaps.findIndex((s)=>s.id===po.passSnapId);
         if (startI<0) startI = Math.max(0, lastI-120);
+        else startI = Math.max(startI, lastI-120); /* maksimal ~2 dtk slowmo */
         M.phase='replay'; M.replay = { i:startI, speed:0.5, mode:'var' };
         return; } }
       if ((e.touchCd||0)>0) return; // lagi cooldown sentuh
@@ -4219,7 +4262,7 @@ function simTick(dt){
         /* bola kenceng masuk kotak sendiri → bek sering langsung buang (clearance), bukan di-trap */
         if (POSGROUP[e.slotName]==='DEF' && inBox(e.team,e.x,e.y) && bspd>2.6 && M.R()<0.55) { clearBall(e); }
         else {
-        b.owner=e; b.ownerTeam=e.team; b.passTarget=null; b.fly=0; touch(e.team,e); e.dribA=null;
+        b.owner=e; b.ownerTeam=e.team; b.passTarget=null; b.fly=0; b.curve=0; touch(e.team,e); e.dribA=null;
         e.gotFrom = b.from||null; /* inget siapa yang ngumpan, biar gak ping-pong balik */
         e.dribLock = 0.85 + M.R()*0.4; /* komitmen bawa lari dulu, jangan langsung umpan */
         /* FIRST TOUCH: trap CEPAT (0.25-0.45 dtk) + proteksi bentar biar gak langsung direbut */
@@ -4280,7 +4323,7 @@ function cornerOrKick(defTeam){ /* defTeam = tim yang gawangnya di sisi keluar *
 function goalKick(team){ /* GOAL KICK: bola mati dulu, kiper baru nendang distribusi */
   const gk = M.ents.find((e)=>e.team===team&&e.isGK); if(!gk) return;
   M.phase='setpiece';
-  const b=M.ball; b.owner=null;b.ownerTeam=null;b.vx=0;b.vy=0;
+  const b=M.ball; b.owner=null;b.ownerTeam=null;b.vx=0;b.vy=0;b.curve=0;
   b.x=gk.x; b.y=gk.y;
   matchMsg('🦵 GOAL KICK — '+tName(team), '');
   M.setpiece={ type:'gk', atkT:team, shooter:gk, t:1.0 };
@@ -4293,23 +4336,32 @@ function gkMove(e,dt){
   if (e.down>0) e.down -= dt;
   let tx, ty;
   const ballInBox = b.x>=box.x0-1 && b.x<=box.x1+1 && b.y>=box.y0 && b.y<=box.y1;
-  if (!b.owner && ballInBox) {
+  const bspd0 = Math.hypot(b.vx,b.vy);
+  const toward = (gx===2? b.vx<-0.3 : b.vx>0.3);
+  e.diving = false;
+  if (!b.owner && bspd0>1.5 && toward) {
+    /* DIVE: baca arah tembakan, potong jalur bola (makin tinggi REF makin cepet) */
+    const vxe=b.vx*10, vye=b.vy*10;
+    tx = b.x + vxe*0.12; ty = b.y + vye*0.12;
+    tx = Math.max(box.x0,Math.min(box.x1,tx)); ty = Math.max(box.y0,Math.min(box.y1,ty));
+    e.diving = true;
+  } else if (!b.owner && ballInBox) {
     /* JEMPUT bola di mana aja SELAMA masih di dalam kotak penalti */
     tx = b.x + b.vx*0.35; ty = b.y + b.vy*0.35;
   } else if (b.owner && b.ownerTeam===e.team) {
     tx = gx===2? gx+4 : gx-4; ty = 50 + (b.y-50)*0.18;
   } else {
-    /* POS (positioning): makin tinggi makin pinter nutup sudut — keluar garis lebih berani & ngikutin bola lebih rapat */
+    /* POS (positioning): makin tinggi makin pinter nutup sudut — stay deket garis, geser ngikutin bola */
     const posF = g.pos/100;
-    const depth = Math.max(2, Math.min(3.5+posF*8.5, Math.abs(b.x-gx)*0.3));
+    const depth = Math.max(2, Math.min(3.0+posF*2.5, Math.abs(b.x-gx)*0.22));
     tx = gx===2? gx+depth : gx-depth;
     ty = 50 + (b.y-50)*(0.22+posF*0.3);
   }
   tx = Math.max(box.x0+0.8, Math.min(box.x1-0.8, tx));
   ty = Math.max(box.y0+0.8, Math.min(box.y1-0.8, ty));
   const dx=tx-e.x, dy=ty-e.y, d=Math.hypot(dx,dy);
-  /* SPD: mobilitas di kotak; abis diving (down) lemot dulu buat bangun */
-  const sp = (4.2 + g.spd/100*3.0) * (e.down>0? 0.3:1);
+  /* SPD: mobilitas di kotak; dive 1.9x lebih cepet; abis dive (down) lemot dulu buat bangun */
+  const sp = (4.2 + g.spd/100*3.0) * (e.down>0? 0.3:1) * (e.diving? 1.9:1);
   if (d>0.25){ const step = Math.min(d, sp*dt); e.x += dx/d*step; e.y += dy/d*step; }
   /* HARD CLAMP: kiper gak pernah bisa keluar kotak penalti */
   e.x = Math.max(box.x0, Math.min(box.x1, e.x)); e.y = Math.max(box.y0, Math.min(box.y1, e.y));
@@ -4340,16 +4392,17 @@ function trySave(gk){
   const catchP = 0.22 + g.han/100*0.55 - shotPow*0.035;
   if (M.R() < catchP) {
     /* NANGKAP lengket */
-    b.vx=0;b.vy=0; b.owner=gk; b.ownerTeam=gk.team; b.x=gk.x;b.y=gk.y; b.passTarget=null;
+    b.vx=0;b.vy=0; b.curve=0; b.owner=gk; b.ownerTeam=gk.team; b.x=gk.x;b.y=gk.y; b.passTarget=null;
     touch(gk.team,gk); gk.ctrl=0.4; gk.dribA=null;
     matchMsg('🧤 TANGKAPAN '+gk.name+'!', '');
   } else {
-    if (M.R() < 0.32) {
+    if (M.R() < 0.45) {
       /* TEPIsan melewati garis gawang → CORNER buat lawan */
       b.vx = (gx===2? -1:1)*2.6;
       b.vy = (b.y>=50?1:-1)*2.8;
       b.x = gk.x + (gx===2?-0.8:0.8); b.y = b.y>=50? 63:37;
       b.owner=null; b.ownerTeam=null; b.shotId=null;
+      touch(gk.team,gk); /* kiper nyentuh terakhir → CORNER buat lawan */
       matchMsg('👋 TEPISAN '+gk.name+'! lewat garis — CORNER', '');
     } else {
       /* TEPIS ke samping — bola lepas, bisa diperebutkan! */
@@ -4548,22 +4601,37 @@ function onBall(e, dt){
 function clearBall(e){
   const b = M.ball; b.owner=null; b.ownerTeam=null;
   const fwd = fwdDir(e.team);
+  const og = ownGoal(e.team);
+  /* bek deket gawang sendiri lagi panik → kadang sapuan malah mengarah ke corner sendiri = CORNER lawan */
+  if (inBox(e.team,e.x,e.y) && Math.abs(e.x-og)<12 && M.R()<0.35) {
+    const cy = b.y>=50? 94:6; /* bidik corner flag terdekat */
+    const ddx = og - b.x, ddy = cy - b.y;
+    const dd = Math.hypot(ddx,ddy)||1;
+    const pwr = 4.5+M.R()*1.5; /* kenceng biar gak keburu diambil sebelum keluar */
+    b.vx = ddx/dd*pwr; b.vy = ddy/dd*pwr;
+    b.curve=0; b.fly=0.15; b.passTarget=null; b.from=e; touch(e.team,e); e.dribA=null;
+    return;
+  }
   const side = (b.y>=50? 1:-1);
   b.vx = fwd*(3.2 + M.R()*1.6);
   b.vy = side*(2.6 + M.R()*3.2); /* buang agak lebar: sering jadi lemparan ke dalam */
-  b.fly=0.18; b.passTarget=null; b.from=e;
+  b.fly=0.18; b.passTarget=null; b.from=e; b.curve=0;
   touch(e.team,e);
   e.dribA=null;
 }
 function doPass(from, to){
   const b = M.ball; b.owner=null; b.ownerTeam=null;
   const kicB = (from.isGK && from.gk)? from.gk.kic/100*0.18 : 0; /* KIC: akurasi distribusi kiper */
-  const acc = Math.max(0.25, Math.min(0.95, 0.5 + from.per.pass*0.4 + kicB - dist(from,to)*0.004 - (nearestOpp(from,4)?0.08:0)));
+  const pasStat = from.st? from.st.pass : 50;
+  const eliteP = pasStat>=80; /* pengumpan elit: lebih akurat + umpan lengkung */
+  const acc = Math.max(0.25, Math.min(0.97, 0.5 + from.per.pass*0.4 + kicB + (eliteP?0.12:0) - dist(from,to)*0.004 - (nearestOpp(from,4)?0.08:0)));
   const ok = M.R() < acc;
-  const err = ok? 0 : (0.5-M.R())*10;
+  const err = ok? 0 : (0.5-M.R())*(eliteP?6:10);
   const dx = to.x-from.x + (ok?0:err), dy = to.y-from.y + (ok?0:err*0.6);
   const d = Math.hypot(dx,dy)||1; const pow = 2.4 + d*0.055;
   b.vx = dx/d*pow; b.vy = dy/d*pow; b.passTarget = ok? to : null; b.from = from; b.fly = 0.16; /* bola terbang dulu, gak langsung nyangkut di org depan */
+  /* CURVE PASS: umpan melengkung ke arah penerima */
+  b.curve = eliteP? Math.sign(dy||0.001)*Math.sign(b.vx||1)*Math.min(0.15, 0.12+(pasStat-80)*0.01) : 0;
   /* offside check — arah ikut fwdDir (bener setelah tukar sisi half 2);
      syarat: penerima di PARUH LAWAN + lebih dekat ke gawang lawan dr bek kedua-terakhir + lebih depan dr bola.
      Di paruh sendiri TIDAK PERNAH offside. */
@@ -4586,11 +4654,22 @@ function doPass(from, to){
 function shoot(e){
   const b = M.ball; b.owner=null; b.ownerTeam=null;
   const gx = atkGoal(e.team);
-  const acc = (e.st? e.st.sho : e.skill)/100;
-  const ty = 50 + (M.R()-0.5)*56*(1.3-acc); /* spread lebar: tembakan bisa melenceng jauh → goal kick / corner */
+  const shoStat = e.st? e.st.sho : e.skill;
+  const acc = shoStat/100;
+  const elite = shoStat>=80; /* penembak elit: akurat + melengkung */
+  let ty;
+  if (elite) {
+    /* bidik agak dalem dikit, curve-nya yg belokin ke pojok */
+    const corner = M.R()<0.5? 44 : 56;
+    ty = corner + (M.R()-0.5)*Math.max(1, 10-(shoStat-80)*0.5);
+  } else {
+    ty = 50 + (M.R()-0.5)*56*(1.3-acc); /* spread lebar: bisa melenceng → goal kick / corner */
+  }
   const dx = gx-b.x, dy = ty-b.y; const d = Math.hypot(dx,dy)||1;
   const pow = 4.5 + acc*3;
   b.vx = dx/d*pow; b.vy = dy/d*pow; M.shotBy = e; e.dribA=null;
+  /* CURVE SHOT: bola melengkung ke pojok */
+  b.curve = elite? (ty<50? -1:1)*Math.sign(b.vx||1)*Math.min(0.6, 0.35+(shoStat-80)*0.025) : 0;
   M.shotN=(M.shotN||0)+1; b.shotId=M.shotN; /* id tembakan biar kiper cuma roll 1x */
   M.shotSnapId = M.snapId||0; /* frame tendangan, buat slowmo di replay */
   M.stats.shots[e.team]++;
@@ -4672,7 +4751,7 @@ function startFreeKick(atkT, x, y){
 }
 function startCorner(atkT, defT){
   M.phase='setpiece';
-  const b = M.ball; b.owner=null;b.ownerTeam=null;b.vx=0;b.vy=0;
+  const b = M.ball; b.owner=null;b.ownerTeam=null;b.vx=0;b.vy=0;b.curve=0;
   const side = b.y<50? 4:96; const x = atkGoal(atkT); /* aware half swap */
   b.x = x; b.y = side;
   const shooter = M.ents.filter((e)=>e.team===atkT && !e.isGK).sort((a,b2)=>b2.skill-a.skill)[0];
@@ -4682,7 +4761,7 @@ function startCorner(atkT, defT){
 function corner(atkT, defT){ startCorner(atkT, defT); }
 function startPenalty(atkT){
   M.phase='setpiece';
-  const b = M.ball; b.owner=null;b.ownerTeam=null;b.vx=0;b.vy=0;
+  const b = M.ball; b.owner=null;b.ownerTeam=null;b.vx=0;b.vy=0;b.curve=0;
   const gx = atkGoal(atkT); const x = gx===98? 87:13;
   b.x=x; b.y=50;
   const shooter = M.ents.filter((e)=>e.team===atkT && !e.isGK).sort((a,b2)=>b2.skill-a.skill)[0];
@@ -4695,7 +4774,7 @@ function startPenalty(atkT){
 }
 function throwIn(team, x, y){
   M.phase='setpiece';
-  const b = M.ball; b.owner=null;b.ownerTeam=null;b.vx=0;b.vy=0;
+  const b = M.ball; b.owner=null;b.ownerTeam=null;b.vx=0;b.vy=0;b.curve=0;
   x = Math.max(5,Math.min(95,x)); b.x=x; b.y=y;
   const thrower = M.ents.filter((e)=>e.team===team && !e.isGK).sort((a,b2)=>Math.hypot(a.x-x,a.y-y)-Math.hypot(b2.x-x,b2.y-y))[0];
   if (thrower){ thrower.x = x; thrower.y = y<50? y-2:y+2; thrower.dribA=null; }
@@ -4738,6 +4817,7 @@ function runSetPiece(){
       const ty = 50 + (M.R()-0.5)*20;
       const dx = gx-b.x, dy = ty-b.y; const dd = Math.hypot(dx,dy)||1;
       b.vx = dx/dd*5.5; b.vy = dy/dd*5.5; M.shotBy=sp.shooter; M.shotSnapId=M.snapId||0; M.shotN=(M.shotN||0)+1; b.shotId=M.shotN; M.stats.sot[atkT]++;
+      b.curve = skl>=80? (ty<50?-1:1)*Math.sign(b.vx||1)*0.7 : 0; /* FK melengkung kalo eksekutornya jago */
     } else { /* crossing */
       doCross(atkT, sp.shooter, gx, 50);
     }
@@ -4815,7 +4895,7 @@ function tickReplay(dt){
   }
 }
 function resetKickoff(kick, keepPause){
-  const b = M.ball; b.x=50;b.y=50;b.vx=0;b.vy=0;b.owner=null;b.ownerTeam=null;
+  const b = M.ball; b.x=50;b.y=50;b.vx=0;b.vy=0;b.curve=0;b.owner=null;b.ownerTeam=null;
   M.touchT = [-999,-999];
   M.ents.forEach((e)=>{ e.x = ownWorldX(e.team, e.hx*0.5); e.y = e.hy; e.celeb=0; e.dribA=null; e.ctrl=0; e.touchCd=0; e.kick=false; e.dribT=0; e.dribLock=0; e.down=0; e.lastShotId=null; });
   const kickers = M.ents.filter(e=>e.team===kick && !e.isGK).sort((a,b2)=> ((POSGROUP[b2.slotName]==='ATT')?1:0)-((POSGROUP[a.slotName]==='ATT')?1:0));
@@ -4828,33 +4908,110 @@ function resetKickoff(kick, keepPause){
 /* ── HT / FT ── */
 function halftime(){
   M.paused=true; M.phase='ht';
-  const t = M.teams[0];
-  const rows = t.onField.map((pi,k) => { const p = t.players[pi]; return '<div class="fb-subrow" data-k="'+k+'"><b>'+p.ovr+'</b> '+esc(p.name)+' <i>'+p.slot+'</i></div>'; }).join('');
-  const bench = t.bench.map((p,i) => '<div class="fb-subrow bench" data-b="'+i+'"><b>'+p.ovr+'</b> '+esc(p.name)+' <i>'+p.pos+'</i></div>').join('');
-  $('fbMOverlay').innerHTML = '<div class="fb-ovl-card big"><h3>JEDA — GANTI PEMAIN</h3><div class="fb-subcols"><div><div class="fb-subtitle">DI LAPANGAN</div>'+rows+'</div><div><div class="fb-subtitle">CADANGAN</div>'+bench+'</div></div><div class="fb-hint">tap 1 lapangan + 1 cadangan buat tukar</div><button type="button" class="fb-btn" id="fbHTGo">LANJUT</button></div>';
-  $('fbMOverlay').classList.add('show');
-  let selA=null, selB=null;
-  document.querySelectorAll('.fb-subrow[data-k]').forEach((el)=> el.onclick = ()=>{ document.querySelectorAll('.fb-subrow').forEach((x)=>x.classList.remove('sel')); el.classList.add('sel'); selA=+el.dataset.k; });
-  document.querySelectorAll('.fb-subrow[data-b]').forEach((el)=> el.onclick = ()=>{ if(selA==null)return; document.querySelectorAll('.fb-subrow[data-b]').forEach((x)=>x.classList.remove('sel')); el.classList.add('sel'); selB=+el.dataset.b; });
-  const go = () => {
-    if (selA!=null&&selB!=null) {
-      const t2 = M.teams[0]; const onPi = t2.onField[selA]; const bp = t2.bench[selB];
-      const old = { name:t2.players[onPi].name, pos:t2.players[onPi].pos, ovr:t2.players[onPi].ovr, r:'bronze' };
-      t2.players[onPi] = { name:bp.name, pos:bp.pos, ovr:bp.ovr, slot:t2.players[onPi].pos };
-      t2.bench[selB] = old;
-      const ent = M.ents.find((e)=>e.team===0&&e.idx===selA);
-      if (ent){ ent.name=bp.name; ent.ovr=bp.ovr; ent.spd=5.0+(bp.ovr-60)/11; ent.skill=bp.ovr; ent.slotName=t2.players[onPi].slot; ent.isGK = bp.pos==='GK';
-        ent.gk = bp.pos==='GK'? gkStatsOf(bp) : null;
-        if (ent.isGK){ const bx=gkBox(0); ent.x = ownGoal(0)===2? 4:96; ent.y = 50; } /* kiper baru langsung ke kotak */
-      }
+  const t2 = M.teams[0];
+  const f = FORMATIONS[(t2.squad&&t2.squad.formation)||'433-attack'];
+  const slots = f.slots;
+  let sel = null;
+  const slotOf = (p,i) => p.slot || slots[i];
+  function pitchHTML(){
+    return slots.map((s2,i)=>{
+      const p = t2.players[i]; if(!p) return '';
+      const [x,y] = vXY(s2,i,slots);
+      const selc = (sel && sel.kind==='main' && sel.i===i)? ' selslot':'';
+      return '<div class="fb-slot filled'+selc+'" data-i="'+i+'" style="left:'+x+'%;top:'+y+'%">'+miniCard(p, slotOf(p,i), p.ovr)+'</div>';
+    }).join('');
+  }
+  function benchHTML(){
+    return (t2.bench||[]).map((p,i)=>{
+      const selc = (sel && sel.kind==='bench' && sel.i===i)? ' selslot':'';
+      return '<div class="fb-bslot '+(p?'filled':'')+selc+'" data-b="'+i+'">'+(p?miniCard(p,p.pos,p.ovr):'<div class="fb-plus">+</div>')+'</div>';
+    }).join('');
+  }
+  function doBenchSwap(benchIdx, slotIdx){
+    const bp = t2.bench[benchIdx]; if(!bp) return;
+    const cur = t2.players[slotIdx];
+    const oldSlot = slotOf(cur, slotIdx);
+    const natPos = (cur.id!=null && byId(cur.id))? byId(cur.id).pos : oldSlot;
+    t2.bench[benchIdx] = { name:cur.name, pos:natPos, ovr:cur.ovr, r:cur.r||'bronze', country:cur.country||'?', id:cur.id, st:cur.st };
+    const st2 = bp.st || statsOf(bp);
+    t2.players[slotIdx] = { name:bp.name, pos:bp.pos, ovr:bp.ovr, r:bp.r||'gold', country:bp.country||'?', id:bp.id, st:st2,
+      gk: bp.pos==='GK'? gkStatsOf(bp):null, slot:oldSlot,
+      per:{ drib:st2.dri/100, pass:st2.pass/100, def:st2.def/100, aggr:(st2.def+st2.phy)/200, pace:st2.pac/100 }, trait:'none' };
+    const ent = M.ents.find((e)=>e.team===0 && e.idx===slotIdx);
+    if (ent){
+      ent.name=bp.name; ent.ovr=bp.ovr; ent.skill=bp.ovr;
+      ent.spd = 4.2 + st2.pac/100*3.0;
+      ent.slotName = oldSlot; ent.isGK = bp.pos==='GK';
+      ent.st = st2; ent.per = t2.players[slotIdx].per;
+      ent.gk = bp.pos==='GK'? gkStatsOf(bp) : null;
+      if (ent.isGK){ const bx=gkBox(0); ent.x = ownGoal(0)===2? 4:96; ent.y = 50; }
     }
+  }
+  function swapSlots(i,j){
+    const tmp = t2.players[j]; t2.players[j]=t2.players[i]; t2.players[i]=tmp;
+    const ei = M.ents.find((e)=>e.team===0&&e.idx===i), ej = M.ents.find((e)=>e.team===0&&e.idx===j);
+    if (ei&&ej){
+      let ts=ei.slotName; ei.slotName=ej.slotName; ej.slotName=ts;
+      let tx=ei.hx; ei.hx=ej.hx; ej.hx=tx;
+      let ty=ei.hy; ei.hy=ej.hy; ej.hy=ty;
+      ei.isGK = ei.slotName==='GK'; ej.isGK = ej.slotName==='GK';
+    }
+  }
+  function renderHT(){
+    $('fbMOverlay').innerHTML = '<div class="fb-ovl-card big htcard"><h3>JEDA — ATUR LINEUP BABAK 2</h3>'
+      + '<div class="fb-pitch v htv">'+pitchHTML()+'</div>'
+      + '<div class="fb-bench-row htb">'+benchHTML()+'</div>'
+      + '<div class="fb-hint">tap lapangan ↔ cadangan buat ganti pemain; tap 2 pemain lapangan buat tukar posisi</div>'
+      + '<div class="fb-htstatus" id="fbHTStatus"></div>'
+      + '<button type="button" class="fb-btn fb-ready2" id="fbHTGo">SIAP LANJUT ▶</button></div>';
+    $('fbMOverlay').classList.add('show');
+    document.querySelectorAll('.htv .fb-slot').forEach((el)=>{ el.onclick = () => {
+      const i = +el.dataset.i;
+      if (!sel){ sel={kind:'main',i}; renderHT(); return; }
+      if (sel.kind==='main'){ if(sel.i!==i) swapSlots(sel.i,i); sel=null; renderHT(); }
+      else { doBenchSwap(sel.i, i); sel=null; renderHT(); }
+    }; });
+    document.querySelectorAll('.htb .fb-bslot').forEach((el)=>{ el.onclick = () => {
+      const b = +el.dataset.b;
+      if (!sel){ sel={kind:'bench',i:b}; renderHT(); return; }
+      if (sel.kind==='bench'){ if(sel.i!==b){ const tmp=t2.bench[sel.i]; t2.bench[sel.i]=t2.bench[b]; t2.bench[b]=tmp; } sel=null; renderHT(); }
+      else { doBenchSwap(b, sel.i); sel=null; renderHT(); }
+    }; });
+    $('fbHTGo').onclick = onHTReady;
+  }
+  function goH2(){
     hideOverlay();
-    if (M.cfg.mode!=='ai' && M.cfg.mid) {
-      let waited=0; showOverlay('JEDA','nunggu lawan siap... (30)',[]);
-      const tick = setInterval(async ()=>{ waited++; try { const d = await fbPost({action:'matchReady',mid:M.cfg.mid}); if (d.both||waited>=30){ clearInterval(tick); hideOverlay(); M.half=2; resetKickoff(1-(M.startKick||0)); } else showOverlay('JEDA','nunggu lawan siap... ('+(30-waited)+')',[]); } catch(e){ clearInterval(tick); hideOverlay(); M.half=2; resetKickoff(1-(M.startKick||0)); } },1000);
-    } else { M.half=2; resetKickoff(1-(M.startKick||0)); }
-  };
-  $('fbHTGo').onclick = go;
+    M.half=2; resetKickoff(1-(M.startKick||0));
+  }
+  function onHTReady(){
+    const btn = $('fbHTGo'); btn.disabled=true; btn.textContent='SIAP ✓';
+    if (M.cfg.mode==='ai') { goH2(); return; }
+    const st = $('fbHTStatus');
+    let waited = 0;
+    const showWait = (msg)=>{ if (st) st.textContent = msg; };
+    if (M.cfg.mid) { /* pvp: dua pihak harus siap */
+      showWait('nunggu lawan siap... (30)');
+      const tick = setInterval(async ()=>{ waited++;
+        try {
+          const d = await fbPost({action:'matchReady', mid:M.cfg.mid});
+          if (d.both || waited>=30){ clearInterval(tick); goH2(); }
+          else showWait('nunggu lawan siap... ('+(30-waited)+')');
+        } catch(e){ clearInterval(tick); goH2(); }
+      }, 1000);
+    } else if (M.cfg.roomId) { /* laga teman */
+      showWait('nunggu lawan siap... (30)');
+      fbPost({action:'roomReadyHalf', roomId:M.cfg.roomId}).catch(()=>{});
+      const tick = setInterval(async ()=>{ waited++;
+        try {
+          const d = await fbPost({action:'roomPoll', roomId:M.cfg.roomId});
+          const r = d.room;
+          if ((r && r.readyHA && r.readyHB) || waited>=30){ clearInterval(tick); goH2(); }
+          else showWait('nunggu lawan siap... ('+(30-waited)+')');
+        } catch(e){ clearInterval(tick); goH2(); }
+      }, 1000);
+    } else goH2();
+  }
+  renderHT();
 }
 function fulltime(){
   M.over=true; M.paused=true; M.phase='ft'; cancelAnimationFrame(M.raf);
