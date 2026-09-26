@@ -5176,32 +5176,59 @@ function startFreeKick(atkT, x, y){
   if (gkD){ const g2 = ownGoal(defT); gkD.x = g2===2? 4:96; gkD.y = Math.max(40,Math.min(60,y)); }
   M.setpiece = { type:'fk', atkT, shooter, t:1.2 };
 }
-/* posisi corner sesuai aturan: penyerang kumpul DI KOTAK PENALTI (tiang dekat/jauh/tengah),
-   bek-bek marking di dalem kotak juga, kiper stay di garis */
+/* posisi corner sesuai PERAN (seperti instruksi):
+   PENYERANG: striker target utama di kotak, CB masuk duel udara, winger/mid cari bola pantul di tepi,
+              1 pemain di luar kotak buat bola muntah, 1-2 pemain stay di belakang antisipasi counter.
+   BERTAHAN: CB marking penyerang berbahaya (goal-side), bek lain jaga tiang, mid jaga depan kotak,
+              striker stay agak depan buat counter, sisanya marking/zona. */
 function cornerPositions(atkT, kicker){
   const defT = atkT===0?1:0;
   const gx = atkGoal(atkT);
   const inw = (d)=> gx===98? gx-d : gx+d;
-  const spots=[[inw(3),43],[inw(3),57],[inw(7),46],[inw(7),54],[inw(7),50],[inw(11),44],[inw(11),56],[inw(16),50],[inw(16),42],[inw(16),58]];
+  const side = M.ball.y<50? 4:96;
+  const nearY = side<50? 40:60, farY = side<50? 57:43;
+  const gside = gx===98? 2.2 : -2.2; /* arah goal-side bek (ke gawangnya sendiri) */
+  /* spot penyerang */
+  const insideSpots = [[inw(3),nearY],[inw(3),farY],[inw(8),50],[inw(6),nearY+(side<50?6:-6)],[inw(6),farY+(side<50?-6:6)]];
+  const edgeSpots   = [[inw(16),34],[inw(16),66],[inw(17),50]];
+  const outsideSpot = [inw(21),50];
+  const backSpots   = [[inw(34),40],[inw(34),60]];
   const attackers = M.ents.filter((e)=>e.team===atkT && !e.isGK && e!==kicker);
+  const placed = new Set(); const inBoxAtk = [];
+  const put=(e,spot,inside)=>{ if(placed.has(e))return; placed.add(e); e.x=Math.max(3,Math.min(97,spot[0])); e.y=Math.max(5,Math.min(95,spot[1])); e.dribA=null; e.trick=null; if(inside)inBoxAtk.push(e); };
+  let iIn=0,iEdge=0,iBack=0;
+  const STR = attackers.filter(e=>e.slotName==='ST'||e.slotName==='CF');
+  const CB  = attackers.filter(e=>e.slotName==='CB');
+  const MID = attackers.filter(e=>['CM','CAM','CDM','LM','RM','LW','RW'].includes(e.slotName));
+  STR.forEach(e=>{ if(iIn<insideSpots.length) put(e,insideSpots[iIn++],true); });       /* striker target utama */
+  CB.forEach(e=>{ if(iIn<insideSpots.length) put(e,insideSpots[iIn++],true); });        /* CB duel udara */
+  const outC = MID.find(e=>!placed.has(e)) || attackers.find(e=>!placed.has(e));
+  if(outC) put(outC,outsideSpot,false);                                                  /* 1 di luar kotak */
+  MID.forEach(e=>{ if(!placed.has(e) && iEdge<edgeSpots.length) put(e,edgeSpots[iEdge++],false); }); /* winger/mid tepi kotak */
+  attackers.forEach(e=>{ if(!placed.has(e) && iBack<backSpots.length) put(e,backSpots[iBack++],false); }); /* 1-2 stay belakang */
+  attackers.forEach(e=>{ if(!placed.has(e)) put(e,edgeSpots[iEdge%edgeSpots.length],false); });
+  /* bertahan */
   const defenders = M.ents.filter((e)=>e.team===defT && !e.isGK);
-  attackers.forEach((e,i)=>{ const s=spots[i%spots.length]; e.x=s[0]; e.y=s[1]; e.dribA=null; e.trick=null; });
-  const gside = ownGoal(defT)===2? -2.4 : 2.4; /* arah ke gawang sendiri (goal-side) */
-  defenders.forEach((e,i)=>{
-    const tgt = attackers[i];
-    if (tgt){ e.x = tgt.x + gside; e.y = tgt.y + (i%2? 1.5:-1.5); }
-    else { e.x = inw(15); e.y = 50 + ((i%5)-2)*6; }
-    e.x=Math.max(3,Math.min(97,e.x)); e.y=Math.max(5,Math.min(95,e.y)); e.dribA=null; e.trick=null;
-  });
+  const dplaced = new Set();
+  const dput=(e,spot)=>{ if(dplaced.has(e))return; dplaced.add(e); e.x=Math.max(3,Math.min(97,spot[0])); e.y=Math.max(5,Math.min(95,spot[1])); e.dribA=null; e.trick=null; };
+  const dCB  = defenders.filter(e=>e.slotName==='CB');
+  const dMID = defenders.filter(e=>['CM','CAM','CDM','LM','RM'].includes(e.slotName));
+  const dSTR = defenders.filter(e=>['ST','CF','LW','RW'].includes(e.slotName));
+  dCB.forEach((e,i)=>{ const tgt=inBoxAtk[i]; if(tgt) dput(e,[tgt.x+gside, tgt.y+(i%2?1.5:-1.5)]); }); /* marking goal-side */
+  defenders.filter(e=>['LB','RB','LWB','RWB'].includes(e.slotName)).forEach((e,i)=>{ dput(e,[inw(2), i%2? farY:nearY]); }); /* jaga tiang */
+  dMID.forEach((e,i)=>{ dput(e,[inw(17), 40+i*10]); });                                                 /* depan kotak */
+  dSTR.forEach((e,i)=>{ dput(e,[inw(36), 45+i*8]); });                                                  /* striker stay depan */
+  defenders.forEach(e=>{ if(!dplaced.has(e)) dput(e,[inw(10), 35+(dplaced.size%3)*12]); });            /* sisanya zona */
 }
 function startCorner(atkT, defT){
   M.phase='setpiece';
   SFX.whistle(1, 0.45); /* prit — corner */
-  const b = M.ball; b.owner=null;b.ownerTeam=null;b.vx=0;b.vy=0;b.curve=0;
+  const b = M.ball; b.owner=null;b.ownerTeam=null;b.vx=0;b.vy=0;b.curve=0;b.z=0;
   const side = b.y<50? 4:96; const x = atkGoal(atkT); /* aware half swap */
   b.x = x; b.y = side;
-  const shooter = M.ents.filter((e)=>e.team===atkT && !e.isGK).sort((a,b2)=>b2.skill-a.skill)[0];
-  if (shooter){ shooter.x = x===98? 96:4; shooter.y = side; shooter.dribA=null; }
+  /* penendang = pemain dengan PASSING terbaik */
+  const shooter = M.ents.filter((e)=>e.team===atkT && !e.isGK).sort((a,b2)=>((b2.st?b2.st.pass:0)-(a.st?a.st.pass:0)))[0];
+  if (shooter){ shooter.x = x===98? 96:4; shooter.y = side; shooter.dribA=null; shooter.trick=null; }
   cornerPositions(atkT, shooter);
   M.setpiece = { type:'ck', atkT, shooter, side, t:1.2 };
 }
