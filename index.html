@@ -647,10 +647,16 @@
   .fb-idx-grid .fbc{ aspect-ratio:3/4.4; }
   /* match center + aspect */
   .fb-match{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; background:#0a1208; }
-  #fbMCanvas{ width:min(100%,96vw); aspect-ratio:760/470; height:auto; max-height:64vh; display:block; margin:0 auto; border-radius:10px; }
+  #fbMCanvas{ flex:none; width:min(100%,96vw); aspect-ratio:760/470; height:auto; max-height:64vh; display:block; margin:0 auto; border-radius:10px; }
   .fb-hud{ top:6px; }
   .fb-mctrl{ margin-top:8px; }
 
+    .fbc-stats{ display:flex; justify-content:space-between; gap:1px; padding:0 2px; }
+  .fbc-stats span{ display:flex; flex-direction:column; align-items:center; }
+  .fbc-stats i{ font-style:normal; font-size:5px; opacity:.8; } .fbc-stats b{ font-size:7px; }
+  .mcard .fbc-name{ font-size:8px; } .mcard .fbc-ovr{ font-size:14px; } .mcard .fbc-pos{ font-size:8px; }
+  .fb-draft .fbc-name{ font-size:9.5px; } .fb-draft .fbc-ovr{ font-size:20px; } .fb-draft .fbc-stats b{ font-size:7px; }
+  .fb-slot{ width:14%; }
   /* ═══ STUDIO (AI video + image) ═══ */
   #viewStudio .viewpage{ padding-bottom:40px; }
   .st-chips{ display:flex; gap:8px; margin-bottom:14px; }
@@ -3428,6 +3434,7 @@ function statsOf(p){
   else { sho=o+6; dri=o+4; pac=o+5; def=o-12; pas=o-2; phy=o-2; }
   return { pac:clampStat(pac), sho:clampStat(sho), pass:clampStat(pas), dri:clampStat(dri), def:clampStat(def), phy:clampStat(phy) };
 }
+function statsRow(s){ return '<div class="fbc-stats">' + [['PAC',s.pac],['SHO',s.sho],['PAS',s.pass],['DRI',s.dri],['DEF',s.def],['PHY',s.phy]].map(x=>'<span><i>'+x[0]+'</i><b>'+x[1]+'</b></span>').join('') + '</div>'; }
 function buildDB(){
   const out = [];
   const seen = new Set();
@@ -3450,8 +3457,11 @@ function buildDB(){
     if (g() < 0.25) name += ' Junior';
     if (seen.has(name)) continue;
     seen.add(name);
-    const ovr = 48 + Math.floor(g() * 17); // 48-64 = perunggu
-    out.push({ id: out.length, name, pos: GEN_POS[Math.floor(g() * GEN_POS.length)], country: c, ovr, r: 'bronze' });
+    const roll = g(); let ovr, r;
+    if (roll < 0.18) { ovr = 50 + Math.floor(g()*15); r = 'bronze'; }
+    else if (roll < 0.8) { ovr = 65 + Math.floor(g()*10); r = 'silver'; }
+    else { ovr = 75 + Math.floor(g()*10); r = 'gold'; }
+    out.push({ id: out.length, name, pos: GEN_POS[Math.floor(g() * GEN_POS.length)], country: c, ovr, r });
   }
   return out;
 }
@@ -3484,7 +3494,7 @@ function cardHTML(p, opts){
     + '<div class="fbc-top"><div class="fbc-l"><div class="fbc-ovr">'+p.ovr+'</div><div class="fbc-pos">'+esc(p.pos)+'</div></div><div class="fbc-flag">'+flag(p.country)+'</div></div>'
     + '<img class="fbc-face" src="'+FACE_SVG+'" alt="">'
     + '<div class="fbc-name">'+esc(p.name)+'</div>'
-    + '<div class="fbc-stats">'+s.pac+' '+s.sho+' '+s.pass+' '+s.dri+' '+s.def+' '+s.phy+'</div>'
+    + statsRow(s)
     + '<div class="fbc-rar">'+r.label+'</div>'
     + '</div>';
 }
@@ -3495,7 +3505,7 @@ function miniCard(p, slot, eff){
     + '<div class="fbc-top"><div class="fbc-l"><div class="fbc-ovr">'+o+'</div><div class="fbc-pos">'+esc(slot||p.pos)+'</div></div><div class="fbc-flag">'+flag(p.country)+'</div></div>'
     + '<img class="fbc-face" src="'+FACE_SVG+'" alt="">'
     + '<div class="fbc-name">'+esc(p.name)+'</div>'
-    + '<div class="fbc-stats">'+s.pac+' '+s.sho+' '+s.pass+' '+s.dri+' '+s.def+' '+s.phy+'</div>'
+    + statsRow(s)
     + '</div>';
 }
 
@@ -3560,7 +3570,7 @@ function drawCards(forPos, title, capSlot){
   const bestIdx = cands.indexOf(best);
   const years = [2006,2008,2010,2012,2014,2016,2018,2019,2020,2021,2022,2023,2024,2025,2026,2027];
   screen('draft', '<div class="fb-draft">'
-    + '<div class="fb-draft-top">PICK: '+(forPos||'KAPTEN')+'</div>'
+    + '<div class="fb-draft-top">PICK: '+esc(title||forPos||'PEMAIN')+'</div>'
     + '<div class="fb-cards" id="fbCards">' + cands.map((p,i) => '<div class="fb-cardwrap" data-i="'+i+'"><div class="fbc fb-back" id="fbBack'+i+'"><div class="fb-year" id="fbYear'+i+'">20??</div></div><div class="fb-front" id="fbFront'+i+'" style="display:none"></div></div>').join('') + '</div>'
     + '<div class="fb-dr-actions"><button type="button" class="fb-btn fb-alt" id="fbDrReroll">⟳ REROLL</button><button type="button" class="fb-btn fb-ghost" id="fbDraftExit">Exit</button></div>'
     + '</div>');
@@ -3630,10 +3640,10 @@ function showBuilder(){
   $('fbConfirm').onclick = () => { if (allDone) confirmDraft(); };
   bindDrag();
   document.querySelectorAll('.fb-slot:not(.filled)').forEach((el) => {
-    el.onclick = (e) => { if (e._dragged) return; const idx = +el.dataset.i; currentSlot = { type:'main', idx }; drawCards(FORMATIONS[draft.formation].slots[idx], 'PILIH '+FORMATIONS[draft.formation].slots[idx]); };
+    el.onclick = (e) => { if (e._dragged) return; const idx = +el.dataset.i; currentSlot = { type:'main', idx }; drawCards(FORMATIONS[draft.formation].slots[idx], FORMATIONS[draft.formation].slots[idx]); };
   });
   document.querySelectorAll('.fb-bslot:not(.filled)').forEach((el) => {
-    el.onclick = (e) => { if (e._dragged) return; currentSlot = { type:'bench', idx: +el.dataset.i }; drawCards(null, 'PILIH CADANGAN'); };
+    el.onclick = (e) => { if (e._dragged) return; currentSlot = { type:'bench', idx: +el.dataset.i }; drawCards(null, 'CADANGAN'); };
   });
 }
 function vXY(s, i, slots){ // vertikal: gawang sendiri bawah
@@ -3652,14 +3662,14 @@ function vSlotsHTML(){
   }).join('');
 }
 function vBenchHTML(){
-  return draft.bench.map((pid,i) => { const p = pid != null ? byId(pid) : null; return '<div class="fb-bslot '+(p?'filled':'')+'" data-i="'+i+'" data-kind="bench">'+(p?miniCard(p,'CAD',p.ovr):'<div class="fb-plus">+</div>')+'</div>'; }).join('');
+  return draft.bench.map((pid,i) => { const p = pid != null ? byId(pid) : null; return '<div class="fb-bslot '+(p?'filled':'')+'" data-i="'+i+'" data-kind="bench">'+(p?miniCard(p,p.pos,p.ovr):'<div class="fb-plus">+</div>')+'</div>'; }).join('');
 }
 function pickForSlot(p){ if (currentSlot.type==='main') draft.players[currentSlot.idx] = p.id; else draft.bench[currentSlot.idx] = p.id; showBuilder(); }
 
 /* drag & drop tukar posisi (builder + team) */
 let dragSrc = null, dragGhost = null;
 function bindDrag(){
-  document.querySelectorAll('.fb-mini').forEach((el) => {
+  document.querySelectorAll('.mcard, .fb-mini').forEach((el) => {
     el.addEventListener('pointerdown', (e) => {
       const holder = el.closest('.fb-slot, .fb-bslot');
       if (!holder) return;
@@ -3746,7 +3756,7 @@ function teamVSlotsHTML(){
 }
 function teamVBenchHTML(){
   const sq = state.squad;
-  return (sq.bench || []).map((pid,i) => { const p = pid != null ? byId(pid) : null; return '<div class="fb-bslot '+(p?'filled':'')+'" data-i="'+i+'" data-kind="bench">'+(p?miniCard(p,'CAD',p.ovr):'<div class="fb-plus">+</div>')+'</div>'; }).join('');
+  return (sq.bench || []).map((pid,i) => { const p = pid != null ? byId(pid) : null; return '<div class="fb-bslot '+(p?'filled':'')+'" data-i="'+i+'" data-kind="bench">'+(p?miniCard(p,p.pos,p.ovr):'<div class="fb-plus">+</div>')+'</div>'; }).join('');
 }
 
 /* ── INDEX ─ */
@@ -4237,7 +4247,7 @@ function tickReplay(dt){
 }
 function resetKickoff(kick){
   const b = M.ball; b.x=50;b.y=50;b.vx=0;b.vy=0;b.owner=null;b.ownerTeam=null;
-  M.ents.forEach((e)=>{ e.x = e.team===0? e.hx : 100-e.hx; e.y = e.hy; e.celeb=0; });
+  M.ents.forEach((e)=>{ const kx = e.hx*0.5; e.x = e.team===0? kx : 100-kx; e.y = e.hy; e.celeb=0; });
   M.snaps = []; M.attackStart=0; M.pendingOff=null; M.wall=[]; M.shotBy=null; M.assistBy=null;
   M.lastConceded = null;
   M.phase='play'; M.paused=false;
