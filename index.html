@@ -4232,9 +4232,9 @@ function moveAI(e,dt,chaser,cover,decide){
     else {
       /* PERAN BEK pas nyerang */
       if (wide) {
-        /* OVERLAP: bek sayap maju bantu serangan, kasih lebar + opsi umpan */
-        const deep = team.tactic==='longball'?34 : (team.tactic==='counter'?30:26);
-        tx = ownWorldX(e.team, Math.min(88, e.hx+deep));
+        /* OVERLAP: bek sayap maju bantu serangan, kasih lebar + opsi umpan (gak terlalu dalem biar bentuk tim gak jebol) */
+        const deep = team.tactic==='longball'?28 : (team.tactic==='counter'?26:22);
+        tx = ownWorldX(e.team, Math.min(84, e.hx+deep));
         ty = e.hy + (b.y-e.hy)*0.28; /* ikutin aliran bola dikit */
       } else if (e.slotName==='CDM') {
         /* PIVOT: stay di belakang bola jadi opsi umpan aman */
@@ -4258,22 +4258,31 @@ function moveAI(e,dt,chaser,cover,decide){
       tx = carrier.x + (og - carrier.x)*0.28;
       ty = carrier.y + (50 - carrier.y)*0.28;
     } else if (myGroup==='DEF') {
-      /* ZONE DEFENSE: posisi ideal = garis pertahanan + jalur sendiri,
-         geser nutup celah ke arah bola, gak kemana-mana */
+      /* ZONE DEFENSE: GARIS PERTAHANAN GERAK SATU UNIT — semua bek geser bareng,
+         formasi tetep kebentuk, celah ditutup bareng-bareng */
       const homeX = ownWorldX(e.team, e.hx);
-      const ax = homeX + (b.x-50)*0.20*fwd;      /* garis naik-turun tipis ikut bola */
-      const ay = e.hy + (b.y-e.hy)*0.30;         /* geser vertikal nutup sisi bola */
+      const shiftY = Math.max(-10, Math.min(10, (b.y-50)*0.35));      /* geser vertikal SAMA buat semua bek */
+      const lineX  = Math.max(-6, Math.min(10, (b.x-50)*0.16*fwd));   /* garis naik/turun SAMA buat semua bek */
+      const ax = homeX + lineX;
+      const ay = e.hy + shiftY;
       tx = ax; ty = ay;
-      /* TUTUP CELAH: lawan masuk zona deket posisi ideal → keluar goal-side, tapi gak ngejar jauh */
-      const opps = M.ents.filter((o)=>o.team!==e.team && !o.isGK);
-      let threat=null, bd=1e9;
-      for (const o of opps){ const dd=Math.hypot(o.x-ax,o.y-ay); if(dd<bd){bd=dd;threat=o;} }
-      const reachZ = 5 + (e.posQ||0.6)*3.5 + e.per.aggr*3; /* OVR tinggi = lebih jago baca celah */
-      if (threat && bd<reachZ) {
-        const cx = threat.x + (og===2? -1.8:1.8), cy = threat.y;
-        if (Math.hypot(cx-ax,cy-ay) <= reachZ) { tx=cx; ty=cy; } /* jangan sampe bikin garis jebol */
+      /* TUTUP CELAH: cuma 1 bek (yg paling deket ancaman) yg keluar garis, sisanya jaga bentuk.
+         pembawa bola udah diurus chaser, jadi ini buat runner yang nyelip */
+      if (!b.owner || b.owner.team===e.team) {} else {
+        const opps = M.ents.filter((o)=>o.team!==e.team && !o.isGK && o!==b.owner);
+        let threat=null, bd=1e9;
+        for (const o of opps){ const dd=Math.hypot(o.x-ax,o.y-ay); if(dd<bd){bd=dd;threat=o;} }
+        const reachZ = 5 + (e.posQ||0.6)*3 + e.per.aggr*2.5; /* OVR tinggi = lebih jago baca celah */
+        if (threat && bd<reachZ) {
+          let iAmClosest = true;
+          for (const d2 of M.ents){
+            if (d2.team===e.team && d2!==e && !d2.isGK && POSGROUP[d2.slotName]==='DEF'
+              && Math.hypot(threat.x-d2.x,threat.y-d2.y) < bd) { iAmClosest=false; break; }
+          }
+          if (iAmClosest) { tx = threat.x + (og===2? -1.8:1.8); ty = threat.y; }
+        }
       }
-      if (team.tactic==='bus') { tx = ownWorldX(e.team, e.hx) + (og===2? -1:1); ty = e.hy + (b.y-e.hy)*0.2; }
+      if (team.tactic==='bus') { tx = ownWorldX(e.team, e.hx) + (og===2? -1:1); ty = e.hy + shiftY*0.5; }
     } else {
       /* MID/ATT: geser ngikutin bola */
       const homeX = ownWorldX(e.team, e.hx);
