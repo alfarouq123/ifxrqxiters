@@ -4564,7 +4564,7 @@ function saveReplay(){
   if (startI<0) return;
   startI = Math.max(startI, lastI-120);
   if (lastI - startI < 8) return; /* klip kependekan, skip */
-  M.replay = { i:startI, speed:0.5, mode:'save', resume:M.phase };
+  M.replay = { i:startI, speed:0.38, mode:'save', resume:M.phase }; /* slowmo kental */
   M.phase='replay';
 }
 /* ── AI gerak + keputusan ── */
