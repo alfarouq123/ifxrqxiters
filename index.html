@@ -3730,7 +3730,7 @@ function drawCards(forPos, title, capSlot){
   const cands = draw4(forPos);
   const best = cands.reduce((a,b) => (b.ovr > a.ovr ? b : a));
   const bestIdx = cands.indexOf(best);
-  const years = [2006,2008,2010,2012,2014,2016,2018,2019,2020,2021,2022,2023,2024,2025,2026,2027];
+  const years = [1904,1912,1924,1936,1948,1950,1954,1958,1962,1966,1970,1974,1978,1982,1986,1990,1994,1998,2006,2008,2010,2012,2014,2016,2018,2019,2020,2021,2022,2023,2024,2025,2026,2027];
   screen('draft', '<div class="fb-draft">'
     + '<div class="fb-draft-top">PICK: '+esc(title||forPos||'PEMAIN')+'</div>'
     + '<div class="fb-cards" id="fbCards">' + cands.map((p,i) => '<div class="fb-cardwrap" data-i="'+i+'"><div class="fbc fb-back" id="fbBack'+i+'"><div class="fb-year" id="fbYear'+i+'">20??</div></div><div class="fb-front" id="fbFront'+i+'" style="display:none"></div></div>').join('') + '</div>'
@@ -4218,6 +4218,7 @@ function TAC(team){
   }
   return T;
 }
+const TRICK_LABEL = { chop:'RONALDO CHOP', push:'PUSH & RUN', spin:'ROULETTE', antony:'ANTONY TURN', double:'DOUBLE TOUCH', rainbow:'RAINBOW FLICK', elastico:'ELASTICO', nutmeg:'NUTMEG' };
 let M = null;
 function startMatch(cfg){
   const R = cfg.seed != null ? mulberry(cfg.seed) : mulberry(Date.now() & 0x7fffffff);
@@ -4248,7 +4249,7 @@ function startMatch(cfg){
     score:[0,0],
     stats:{ shots:[0,0], sot:[0,0], saves:[0,0], tackles:[0,0], off:[0,0], poss:[0,0], fouls:[0,0], yc:[0,0], rc:[0,0] },
     teams:[ mk(cfg.mySquad,0,0), mk(cfg.oppSquad,1, cfg.mode==='ai' ? Math.max(-6,Math.min(6,(DIV_OVR[state.division]||65)-squadOVR(cfg.oppSquad))) : 0) ],
-    ents:[], ball:{ x:50,y:50,vx:0,vy:0,owner:null,ownerTeam:null },
+    ents:[], ball:{ x:50,y:50,vx:0,vy:0,z:0,owner:null,ownerTeam:null },
     phase:'play', paused:true, over:false, spd:1, raf:null, lastTs:0, startKick:0,
     cam:{ x:50,y:50,z:1.08,shake:0 },
     snaps:[], attackStart:0, varInfo:null, celeb:null, replay:null, shotSnapId:null, snapId:0,
@@ -4466,6 +4467,11 @@ function simTick(dt){
         /* FIRST TOUCH: trap CEPAT (0.25-0.45 dtk) + proteksi bentar biar gak langsung direbut */
         e.ctrl = 0.25 + Math.min(0.2, bspd*0.05);
         e.stealProt = 0.35;
+        /* ANTONY TURN: nerima operan → diem, puterin bola, terus oper akurat (DRI 82+) */
+        if (b.from && b.from.team===e.team && !e.isGK && e.st && e.st.dri>=82 && M.R()<0.45) {
+          e.trick = { type:'antony', t:0.85, dur:0.85, done:false };
+          e.stealProt = Math.max(e.stealProt, 1.05);
+        }
         b.vx*=0.1; b.vy*=0.1;
         b.x += (e.x-b.x)*0.6; b.y += (e.y-b.y)*0.6;
         }
@@ -4473,7 +4479,7 @@ function simTick(dt){
       else { e.touchCd=0.3; b.vx=b.vx*0.55+(M.R()-0.5)*1.4; b.vy=b.vy*0.55+(M.R()-0.5)*1.4; }
     }
   });
-  M.ents.forEach((en)=>{ if(en.ctrl>0)en.ctrl-=dt; if(en.touchCd>0)en.touchCd-=dt; if(en.dribLock>0)en.dribLock-=dt; if(en.stealProt>0)en.stealProt-=dt; if(en.foulCd>0)en.foulCd-=dt; if(en.hold>0)en.hold-=dt; });
+  M.ents.forEach((en)=>{ if(en.ctrl>0)en.ctrl-=dt; if(en.touchCd>0)en.touchCd-=dt; if(en.dribLock>0)en.dribLock-=dt; if(en.stealProt>0)en.stealProt-=dt; if(en.foulCd>0)en.foulCd-=dt; if(en.hold>0)en.hold-=dt; if(en.trick && b.owner!==en) en.trick=null; }); /* bola ilang → stop gocekan */
   if (b.owner && decide) onBall(b.owner, dt);
   /* BAWA BOLA: pemilik LARI terus ke arah serangan, steer hindarin lawan, + BISA NGOCEK */
   if (b.owner && !b.owner.isGK && !b.owner.kick && M.phase==='play') {
@@ -4483,22 +4489,47 @@ function simTick(dt){
     /* ── SKILL MOVES: ada bek nempel + DRI mumpuni → gocek! ── */
     const nearDef = M.ents.find((p)=>p.team!==o.team && !p.isGK && Math.hypot(p.x-o.x,p.y-o.y)<3.2);
     if (!o.trick && nearDef && (o.ctrl||0)<=0 && o.st && o.st.dri>=70 && M.R()<dt*(1.2+o.st.dri/55)) {
-      const mv = M.R();
-      o.trick = mv<0.34? {type:'chop',t:0.42,done:false} : mv<0.67? {type:'push',t:0.5,done:false} : {type:'spin',t:0.55,done:false};
+      const types = ['chop','push','spin','double','rainbow','elastico','nutmeg'];
+      const type = types[Math.floor(M.R()*types.length)];
+      const durMap = {chop:0.42,push:0.5,spin:0.55,double:0.5,rainbow:0.72,elastico:0.42,nutmeg:0.55};
+      o.trick = { type, t:durMap[type], dur:durMap[type], done:false };
       o.stealProt = Math.max(o.stealProt||0, o.trick.t+0.15); /* gak bisa direbut pas lagi gocek */
     }
     if (o.trick) {
       const tr = o.trick; tr.t -= dt;
+      const prog = tr.dur? Math.min(1, 1-(tr.t/tr.dur)) : 1;
       if (tr.type==='chop') { /* RONALDO CHOP: bola ditarik ke samping-belakang, badan balik arah */
         if (!tr.done){ tr.done=true; tr.dir = nearDef && nearDef.y>o.y? -1:1; o.dribA += tr.dir*2.4; }
       } else if (tr.type==='push') { /* PUSH & RUN: dorong bola jauh ke depan, sprint ngejar */
-        if (!tr.done){ tr.done=true; }
         const bx2=o.x+Math.cos(o.dribA)*6.5, by2=o.y+Math.sin(o.dribA)*3.9;
         b.x += (bx2-b.x)*Math.min(1,dt*10); b.y += (by2-b.y)*Math.min(1,dt*10);
-      } else { /* ROULETTE: muter 360°, keluar ke arah beda */
+      } else if (tr.type==='spin') { /* ROULETTE: muter 360°, keluar ke arah beda */
         if (!tr.done){ tr.done=true; tr.dir = M.R()<0.5?-1:1; o.dribA += tr.dir*1.7; }
+      } else if (tr.type==='antony') { /* ANTONY TURN: diem, puterin bola, terus oper akurat */
+        b.z = 5 + Math.abs(Math.sin(prog*Math.PI*3))*4;
+      } else if (tr.type==='double') { /* DOUBLE TOUCH: bola geser kiri → kanan */
+        if (!tr.done){ tr.done=true; tr.dir = M.R()<0.5?-1:1; }
+        const perp = o.dribA + Math.PI/2;
+        const sw = Math.sin(prog*Math.PI*2)*3.2*tr.dir;
+        b.x = o.x + Math.cos(perp)*sw + Math.cos(o.dribA)*1.1;
+        b.y = o.y + Math.sin(perp)*sw*0.6 + Math.sin(o.dribA)*0.66;
+      } else if (tr.type==='rainbow') { /* RAINBOW FLICK: bola di-flick ke atas kepala lawan, sprint lewat */
+        b.z = Math.sin(prog*Math.PI)*22;
+        if (prog>0.35) {
+          const bx3 = o.x+Math.cos(o.dribA)*(2+prog*7), by3=o.y+Math.sin(o.dribA)*(2+prog*7)*0.6;
+          b.x += (bx3-b.x)*Math.min(1,dt*12); b.y += (by3-b.y)*Math.min(1,dt*12);
+        }
+      } else if (tr.type==='elastico') { /* ELASTICO: feint keluar, snap masuk tajam */
+        if (!tr.done){ tr.done=true; tr.dir = nearDef && nearDef.y>o.y? -1:1; o.dribA += tr.dir*0.9; tr.snap=false; }
+        if (!tr.snap && prog>0.45){ tr.snap=true; o.dribA -= tr.dir*2.2; }
+      } else if (tr.type==='nutmeg') { /* NUTMEG: bola dikolongin lewat bek, sprint ngelewatin */
+        const bx4 = o.x+Math.cos(o.dribA)*(3+prog*6), by4=o.y+Math.sin(o.dribA)*(3+prog*6)*0.6;
+        b.x += (bx4-b.x)*Math.min(1,dt*13); b.y += (by4-b.y)*Math.min(1,dt*13);
       }
-      if (tr.t<=0) o.trick=null;
+      if (tr.t<=0) {
+        if (tr.type==='antony') { const tgt=bestPassTarget(o); if (tgt) doPass(o,tgt,0.3); } /* operan akurat */
+        o.trick=null;
+      }
     }
     const ax = o.x + Math.cos(o.dribA)*5.5, ay = o.y + Math.sin(o.dribA)*5.5;
     const blocker = M.ents.find((p)=>p.team!==o.team && !p.isGK && Math.hypot(p.x-ax,p.y-ay)<3);
@@ -4510,18 +4541,25 @@ function simTick(dt){
       let da=want-o.dribA; while(da>Math.PI)da-=2*Math.PI; while(da<-Math.PI)da+=2*Math.PI;
       o.dribA += da*Math.min(1,dt*2.2);
     }
-    /* lari: pas trap (ctrl) pelanin dikit; push trick = SPRINT; roulette pelan di tempat */
+    /* lari: pas trap (ctrl) pelanin dikit; push/nutmeg/rainbow = SPRINT; antony diem */
     let sp = o.spd*(TAC(M.teams[o.team]).counter>0.6?1.2:1.08)*((o.ctrl||0)>0?0.5:1);
-    if (o.trick && o.trick.type==='push') sp *= 1.45;
-    if (o.trick && o.trick.type==='spin') sp *= 0.35;
+    if (o.trick) {
+      if (o.trick.type==='push'||o.trick.type==='nutmeg') sp *= 1.45;
+      else if (o.trick.type==='rainbow') sp *= 1.35;
+      else if (o.trick.type==='spin') sp *= 0.35;
+      else if (o.trick.type==='antony'||o.trick.type==='double'||o.trick.type==='elastico') sp *= 0.4;
+    }
     o.x += Math.cos(o.dribA)*sp*dt; o.y += Math.sin(o.dribA)*sp*dt*0.6;
     o.x=Math.max(2.5,Math.min(97.5,o.x)); o.y=Math.max(3,Math.min(97,o.y));
-    if (!(o.trick && o.trick.type==='push')) {
+    const ballManaged = o.trick && (o.trick.type==='push'||o.trick.type==='double'||o.trick.type==='rainbow'||o.trick.type==='nutmeg');
+    if (!ballManaged) {
       const fx=o.x+Math.cos(o.dribA)*1.2, fy=o.y+Math.sin(o.dribA)*0.72;
       b.x += (fx-b.x)*Math.min(1,dt*16); b.y += (fy-b.y)*Math.min(1,dt*16);
     }
     b.vx=0; b.vy=0;
   }
+  /* tinggi bola visual turun balik ke 0 kalo gak ada trick */
+  if (M.ball.z>0 && !(M.ball.owner && M.ball.owner.trick)) M.ball.z = Math.max(0, M.ball.z - 90*dt);
   /* bola selalu nempel di pemiliknya (kecuali pas ditendang) */
   if (b.owner && dist(b,b.owner)>2.0) { b.x += (b.owner.x-b.x)*Math.min(1,dt*10); b.y += (b.owner.y-b.y)*Math.min(1,dt*10); }
   separate();
@@ -4542,12 +4580,27 @@ function cornerOrKick(defTeam){ /* defTeam = tim yang gawangnya di sisi keluar *
   const byDef = M.touchT[defTeam] > M.touchT[1-defTeam];
   if (byDef) corner(atk, defTeam); else goalKick(defTeam);
 }
+function goalKickPositions(team){
+  /* semua balik formasi dulu */
+  M.ents.forEach((e)=>{
+    if (e.isGK){ const g2=ownGoal(e.team); e.x = g2===2? 4:96; e.y=50; e.dribA=null; e.trick=null; return; }
+    e.x = ownWorldX(e.team, e.hx); e.y = e.hy; e.dribA=null; e.trick=null;
+  });
+  /* 4 pemain terdekat jadi opsi distribusi: 2 di ATAS kotak penalti, 2 di BAWAH (POV penonton) */
+  const bx = penBox(team);
+  const g2 = ownGoal(team);
+  const edge = g2===2? bx.x1+2 : bx.x0-2; /* sisi kotak yg ngadep lapangan */
+  const spots = [[edge, bx.y0+4],[edge, bx.y1-4],[edge+(g2===2?5:-5), bx.y0+4],[edge+(g2===2?5:-5), bx.y1-4]];
+  const near = M.ents.filter((e)=>e.team===team && !e.isGK)
+    .sort((a,b2)=>Math.hypot(a.x-M.ball.x,a.y-M.ball.y)-Math.hypot(b2.x-M.ball.x,b2.y-M.ball.y)).slice(0,4);
+  near.forEach((e,i)=>{ e.x=spots[i][0]; e.y=spots[i][1]; e.dribA=null; });
+}
 function goalKick(team){ /* GOAL KICK: bola mati dulu, kiper baru nendang distribusi */
   const gk = M.ents.find((e)=>e.team===team&&e.isGK); if(!gk) return;
   M.phase='setpiece';
-  const b=M.ball; b.owner=null;b.ownerTeam=null;b.vx=0;b.vy=0;b.curve=0;
+  const b=M.ball; b.owner=null;b.ownerTeam=null;b.vx=0;b.vy=0;b.curve=0;b.z=0;
   b.x=gk.x; b.y=gk.y;
-  setupDeadBallPositions(team);
+  goalKickPositions(team);
   const g2=ownGoal(team); gk.x = g2===2? 4:96; gk.y=50; b.x=gk.x; b.y=gk.y;
   matchMsg('🦵 GOAL KICK — '+tName(team), '');
   M.setpiece={ type:'gk', atkT:team, shooter:gk, t:1.0 };
@@ -4923,12 +4976,12 @@ function clearBall(e){
   touch(e.team,e);
   e.dribA=null;
 }
-function doPass(from, to){
+function doPass(from, to, accB){
   const b = M.ball; b.owner=null; b.ownerTeam=null;
   const kicB = (from.isGK && from.gk)? from.gk.kic/100*0.18 : 0; /* KIC: akurasi distribusi kiper */
   const pasStat = from.st? from.st.pass : 50;
   const eliteP = pasStat>=80; /* pengumpan elit: lebih akurat + umpan lengkung */
-  const acc = Math.max(0.25, Math.min(0.97, 0.5 + from.per.pass*0.4 + kicB + (eliteP?0.12:0) - dist(from,to)*0.004 - (nearestOpp(from,4)?0.08:0)));
+  const acc = Math.max(0.25, Math.min(0.97, 0.5 + from.per.pass*0.4 + kicB + (eliteP?0.12:0) + (accB||0) - dist(from,to)*0.004 - (nearestOpp(from,4)?0.08:0)));
   const ok = M.R() < acc;
   const err = ok? 0 : (0.5-M.R())*(eliteP?6:10);
   const dx = to.x-from.x + (ok?0:err), dy = to.y-from.y + (ok?0:err*0.6);
@@ -4979,6 +5032,20 @@ function doThrough(from, runner, tx, ty){
   }
   touch(from.team, from);
   if (M.assistBy==null || M.assistBy.team!==from.team) M.assistBy = from;
+}
+/* target umpan paling kosong (dipake ANTONY TURN buat operan akurat) */
+function bestPassTarget(o){
+  let best=null, bs=-1e9;
+  const fwd = fwdDir(o.team);
+  for (const m2 of M.ents){
+    if (m2.team!==o.team || m2===o || m2.isGK) continue;
+    if (dist(m2,o)>42) continue;
+    const no = nearestOpp(m2,14);
+    const open = no? Math.min(10,dist(m2,no)) : 10;
+    const s = open + (m2.x-o.x)*fwd*0.01;
+    if (s>bs){ bs=s; best=m2; }
+  }
+  return best;
 }
 function shoot(e){
   const b = M.ball; b.owner=null; b.ownerTeam=null;
@@ -5283,7 +5350,7 @@ function tickReplay(dt){
   }
 }
 function resetKickoff(kick, keepPause){
-  const b = M.ball; b.x=50;b.y=50;b.vx=0;b.vy=0;b.curve=0;b.owner=null;b.ownerTeam=null;
+  const b = M.ball; b.x=50;b.y=50;b.vx=0;b.vy=0;b.curve=0;b.z=0;b.owner=null;b.ownerTeam=null;
   M.touchT = [-999,-999];
   M.ents.forEach((e)=>{ e.x = ownWorldX(e.team, e.hx*0.5); e.y = e.hy; e.celeb=0; e.dribA=null; e.ctrl=0; e.touchCd=0; e.kick=false; e.dribT=0; e.dribLock=0; e.down=0; e.hold=0; e.lastShotId=null; e.trick=null; });
   const kickers = M.ents.filter(e=>e.team===kick && !e.isGK).sort((a,b2)=> ((POSGROUP[b2.slotName]==='ATT')?1:0)-((POSGROUP[a.slotName]==='ATT')?1:0));
@@ -5513,8 +5580,10 @@ function draw(){
     let offy = 0, rot = 0;
     if (e.trick) { /* animasi GOCEK */
       if (e.trick.type==='spin') rot = (performance.now()/90)%(Math.PI*2); /* roulette muter */
-      else if (e.trick.type==='chop') offy = -Math.abs(Math.sin(performance.now()/70))*6; /* chop hop */
-      else offy = -2; /* push & run: condong maju */
+      else if (e.trick.type==='antony') rot = (performance.now()/110)%(Math.PI*2); /* antony turn muter */
+      else if (e.trick.type==='chop'||e.trick.type==='elastico') offy = -Math.abs(Math.sin(performance.now()/70))*6; /* hop */
+      else if (e.trick.type==='rainbow') offy = -Math.abs(Math.sin(performance.now()/90))*5;
+      else offy = -2; /* push/double/nutmeg: condong */
     }
     if (e.celeb) {
       const t = performance.now()/150;
@@ -5524,18 +5593,25 @@ function draw(){
       else if (e.celeb===3) rot = t%6.28; /* putar */
       else offy = -Math.abs(Math.sin(t*0.7))*5;
     }
-    x.save(); x.translate(X, Y+offy); x.rotate(rot);
+    x.save(); x.translate(X, Y+offy);
+    /* badan doang yang muter — nama & angka TETEP TEGAK */
+    x.save(); x.rotate(rot);
     x.beginPath(); x.arc(0,0, e.isGK?13:12, 0, 7);
     x.fillStyle = e.isGK? (e.team===0?'#fbbf24':'#22d3ee') : (e.team===0?'#c084fc':'#f87171');
     x.fill(); x.lineWidth=2.5; x.strokeStyle='#0b0a12'; x.stroke();
+    x.restore();
     x.fillStyle='#fff'; x.font='bold 10px Inter, sans-serif'; x.textAlign='center'; x.fillText(e.ovr, 0, 3.5);
     x.font='600 8px Inter, sans-serif'; x.fillStyle='#ffffffd0'; x.fillText(e.name.split(' ').slice(-1)[0].slice(0,10), 0, -17);
+    if (e.trick && TRICK_LABEL[e.trick.type]) { /* label skill di atas pemain */
+      x.font='bold 9px Inter, sans-serif'; x.fillStyle='#fb923c';
+      x.fillText(TRICK_LABEL[e.trick.type], 0, -28);
+    }
     x.restore();
   });
-  /* bola + bayangan */
+  /* bola + bayangan (b.z = tinggi visual pas rainbow flick/antony) */
   const b = M.ball;
   x.beginPath(); x.ellipse(px(b.x), py(b.y)+6, 5,2,0,0,7); x.fillStyle='rgba(0,0,0,.3)'; x.fill();
-  x.beginPath(); x.arc(px(b.x), py(b.y), 6, 0, 7); x.fillStyle='#fff'; x.fill(); x.strokeStyle='#222'; x.lineWidth=1.5; x.stroke();
+  x.beginPath(); x.arc(px(b.x), py(b.y)-(b.z||0), 6, 0, 7); x.fillStyle='#fff'; x.fill(); x.strokeStyle='#222'; x.lineWidth=1.5; x.stroke();
   /* sorot assist saat replay */
   if (M.phase==='replay' && M.assistBy) {
     x.beginPath(); x.arc(px(M.assistBy.x), py(M.assistBy.y), 16, 0, 7); x.strokeStyle='#ffd75e'; x.lineWidth=2.5; x.setLineDash([4,3]); x.stroke(); x.setLineDash([]);
