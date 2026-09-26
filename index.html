@@ -3956,7 +3956,7 @@ function buildEnts(){
       const x = ownWorldX(ti, hx*0.5);
       const y = hy;
       M.ents.push({ team:ti, idx:k, name:p.name, ovr:p.ovr, per:p.per, trait:p.trait, isGK:p.pos==='GK', slotName:p.pos,
-        hx, hy, x, y, vx:0, vy:0, r:1.2, spd: 4.5 + p.per.pace*2.5, st:p.st||statsOf(p), skill:p.ovr,
+        hx, hy, x, y, vx:0, vy:0, r:1.2, spd: 4.2 + p.per.pace*3.0, st:p.st||statsOf(p), skill:p.ovr,
         decT: rnd()*0.2, celeb:0, celebType:0, cards:0, dribA:null, ctrl:0, touchCd:0 });
     });
   });
@@ -4029,11 +4029,11 @@ function simTick(dt){
     if (e.isGK) { gkMove(e,dt); return; }
     moveAI(e,dt,chaser,decide);
     /* rebut / tackle / foul (kiper gak boleh tekel keluar kotak) */
-    if (b.owner && b.ownerTeam!==e.team && !e.isGK && dist(e,b.owner)<2.9) {
+    if (b.owner && b.ownerTeam!==e.team && !e.isGK && dist(e,b.owner)<2.9 && (b.owner.stealProt||0)<=0) {
       const o = b.owner;
       const steal = dt*(0.35 + e.per.def*0.45 - o.per.drib*0.2);
-      if (M.R()<steal) { b.owner=e; b.ownerTeam=e.team; b.passTarget=null; b.fly=0; M.stats.tackles[e.team]++; touch(e.team,e); M.assistBy=null; e.ctrl=0.6; e.dribA=null; e.gotFrom=null; e.dribLock=0.7; }
-      else if (dist(e,o)<2.5 && M.R() < dt*(0.08 + e.per.aggr*0.40 + (e.trait==='bruiser'?0.12:0))) { foul(e,o); return; }
+      if (M.R()<steal) { b.owner=e; b.ownerTeam=e.team; b.passTarget=null; b.fly=0; M.stats.tackles[e.team]++; touch(e.team,e); M.assistBy=null; e.ctrl=0.6; e.dribA=null; e.gotFrom=null; e.dribLock=0.7; e.stealProt=0.3; }
+      else if (dist(e,o)<2.2 && (e.foulCd||0)<=0 && M.R() < dt*(0.03 + e.per.aggr*0.22 + (e.trait==='bruiser'?0.10:0))) { e.foulCd=2.0; foul(e,o); return; }
     }
     /* ambil bola bebas + offside */
     if (!b.owner && dist(e,b)<1.5) {
@@ -4055,15 +4055,16 @@ function simTick(dt){
         b.owner=e; b.ownerTeam=e.team; b.passTarget=null; b.fly=0; touch(e.team,e); e.dribA=null;
         e.gotFrom = b.from||null; /* inget siapa yang ngumpan, biar gak ping-pong balik */
         e.dribLock = 0.85 + M.R()*0.4; /* komitmen bawa lari dulu, jangan langsung umpan */
-        /* FIRST TOUCH: bola di-trap & dikontrol dulu, gak langsung ditendang */
-        e.ctrl = 0.55 + Math.min(0.45, bspd*0.08);
+        /* FIRST TOUCH: trap CEPAT (0.25-0.45 dtk) + proteksi bentar biar gak langsung direbut */
+        e.ctrl = 0.25 + Math.min(0.2, bspd*0.05);
+        e.stealProt = 0.35;
         b.vx*=0.1; b.vy*=0.1;
         b.x += (e.x-b.x)*0.6; b.y += (e.y-b.y)*0.6;
       }
       else { e.touchCd=0.3; b.vx=b.vx*0.55+(M.R()-0.5)*1.4; b.vy=b.vy*0.55+(M.R()-0.5)*1.4; }
     }
   });
-  M.ents.forEach((en)=>{ if(en.ctrl>0)en.ctrl-=dt; if(en.touchCd>0)en.touchCd-=dt; if(en.dribLock>0)en.dribLock-=dt; });
+  M.ents.forEach((en)=>{ if(en.ctrl>0)en.ctrl-=dt; if(en.touchCd>0)en.touchCd-=dt; if(en.dribLock>0)en.dribLock-=dt; if(en.stealProt>0)en.stealProt-=dt; if(en.foulCd>0)en.foulCd-=dt; });
   if (b.owner && decide) onBall(b.owner, dt);
   /* BAWA BOLA: pemilik LARI terus ke arah serangan (bukan diem doang), steer hindarin lawan */
   if (b.owner && !b.owner.isGK && !b.owner.kick && M.phase==='play') {
@@ -4080,15 +4081,13 @@ function simTick(dt){
       let da=want-o.dribA; while(da>Math.PI)da-=2*Math.PI; while(da<-Math.PI)da+=2*Math.PI;
       o.dribA += da*Math.min(1,dt*2.2);
     }
-    /* first-touch: trap dulu bentar baru lari */
-    if ((o.ctrl||0)<=0) {
-      const sp = o.spd*(M.teams[o.team].tactic==='counter'?1.15:1.03);
-      o.x += Math.cos(o.dribA)*sp*dt; o.y += Math.sin(o.dribA)*sp*dt*0.6;
-      o.x=Math.max(2.5,Math.min(97.5,o.x)); o.y=Math.max(3,Math.min(97,o.y));
-      const fx=o.x+Math.cos(o.dribA)*1.2, fy=o.y+Math.sin(o.dribA)*0.72;
-      b.x += (fx-b.x)*Math.min(1,dt*16); b.y += (fy-b.y)*Math.min(1,dt*16);
-      b.vx=0; b.vy=0;
-    }
+    /* lari: pas trap (ctrl) pelanin dikit, abis itu full speed; kecepatan ikut stat PAC */
+    const sp = o.spd*(M.teams[o.team].tactic==='counter'?1.2:1.08)*((o.ctrl||0)>0?0.5:1);
+    o.x += Math.cos(o.dribA)*sp*dt; o.y += Math.sin(o.dribA)*sp*dt*0.6;
+    o.x=Math.max(2.5,Math.min(97.5,o.x)); o.y=Math.max(3,Math.min(97,o.y));
+    const fx=o.x+Math.cos(o.dribA)*1.2, fy=o.y+Math.sin(o.dribA)*0.72;
+    b.x += (fx-b.x)*Math.min(1,dt*16); b.y += (fy-b.y)*Math.min(1,dt*16);
+    b.vx=0; b.vy=0;
   }
   /* bola selalu nempel di pemiliknya (kecuali pas ditendang) */
   if (b.owner && dist(b,b.owner)>2.0) { b.x += (b.owner.x-b.x)*Math.min(1,dt*10); b.y += (b.owner.y-b.y)*Math.min(1,dt*10); }
