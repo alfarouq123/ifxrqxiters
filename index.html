@@ -632,7 +632,26 @@
   .fb-tacopt.on{ border-color:#c084fc; background:rgba(192,132,252,.1); }
   @media (max-width:520px){ .fb-cards{ grid-template-columns:repeat(2,1fr); } .fb-cf-cards{ grid-template-columns:repeat(3,1fr); } .fb-build.fb-vert{ } }
 
-/* ═══ STUDIO (AI video + image) ═══ */
+  /* gacha v3: center + reroll */
+  .fb-draft{ display:flex; flex-direction:column; justify-content:center; }
+  .fb-cards{ margin:auto; }
+  .fb-dr-actions{ display:flex; gap:8px; max-width:360px; margin:16px auto 0; }
+  .fb-dr-actions .fb-btn{ margin:0; }
+  /* mini card portrait (team/bench) */
+  .mcard{ aspect-ratio:3/4.4; width:100%; padding:3px 2px 0; }
+  .mcard .fbc-ovr{ font-size:12px; } .mcard .fbc-pos{ font-size:7px; } .mcard .fbc-flag{ font-size:10px; }
+  .mcard .fbc-face{ width:54%; } .mcard .fbc-name{ font-size:6.5px; } .mcard .fbc-stats{ font-size:5.5px; }
+  .fb-slot{ width:18%; }
+  .fb-bslot{ flex:0 0 54px; }
+  .fbc-stats{ font-size:6.5px; font-weight:700; letter-spacing:.5px; opacity:.9; }
+  .fb-idx-grid .fbc{ aspect-ratio:3/4.4; }
+  /* match center + aspect */
+  .fb-match{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; background:#0a1208; }
+  #fbMCanvas{ width:min(100%,96vw); aspect-ratio:760/470; height:auto; max-height:64vh; display:block; margin:0 auto; border-radius:10px; }
+  .fb-hud{ top:6px; }
+  .fb-mctrl{ margin-top:8px; }
+
+  /* ═══ STUDIO (AI video + image) ═══ */
   #viewStudio .viewpage{ padding-bottom:40px; }
   .st-chips{ display:flex; gap:8px; margin-bottom:14px; }
   .st-chip{ flex:1; text-align:center; padding:10px; border-radius:14px; background:var(--panel-2); border:1px solid var(--line); color:var(--muted); font-weight:800; font-size:13px; cursor:pointer; }
@@ -3396,9 +3415,23 @@ const GEN_FIRST = { Inggris:['Harry','Jack','Callum','Lewis','Owen','Reece','Tyl
 const GEN_LAST  = { Inggris:['Smith','Johnson','Walker','Wright','Barnes','Hughes','Turner','Clarke','Davies','Bennett','Foster','Palmer','Barnes','Reid','Wood'], Spanyol:['García','Torres','Navarro','Moreno','Ramos','Ortega','Vega','Serrano','Iglesias','Herrera','Castro','Molina','Delgado','Vidal','Cortés'], Prancis:['Martin','Bernard','Dubois','Moreau','Laurent','Girard','Roux','Fontaine','Chevalier','Lambert','Mercier','Renard','Leclerc','Perrin','Marchand'], Brasil:['Silva','Santos','Oliveira','Souza','Pereira','Costa','Almeida','Ferreira','Ribeiro','Carvalho','Gomes','Martins','Rocha','Barbosa','Teixeira'], Argentina:['González','Rodríguez','Fernández','López','Martínez','Díaz','Álvarez','Romero','Molina','Acuña','Paredes','Correa','Sosa','Vera','Aguirre'], Jerman:['Müller','Schmidt','Schneider','Fischer','Weber','Wagner','Becker','Hoffmann','Schulz','Koch','Bauer','Richter','Klein','Wolf','Schröder'], Italia:['Rossi','Russo','Ferrari','Esposito','Bianchi','Romano','Colombo','Ricci','Marino','Greco','Bruno','Gallo','Conti','DeLuca','Costa'], Belanda:['DeJong','Jansen','DeVries','Bakker','Visser','Smit','Meijer','Mulder','Bos','Vos','Peters','Hendriks','Dekker','Dijkstra','Brouwer'], Portugal:['Silva','Costa','Ferreira','Pereira','Oliveira','Sousa','Rodrigues','Martins','Fernandes','Gonçalves','Lopes','Marques','Alves','Ribeiro','Pinto'] };
 const GEN_COUNTRIES = Object.keys(GEN_FIRST);
 const GEN_POS = ['GK','CB','CB','LB','RB','CDM','CM','CM','CAM','LM','RM','LW','RW','ST','ST'];
+const LEGENDS = [
+['Stanley Matthews','RW','Inggris',94,'icon'],['Ferenc Puskás','ST','Hongaria',96,'icon'],['Alfredo Di Stéfano','ST','Spanyol',96,'icon'],['Lev Yashin','GK','Rusia',95,'icon'],['Bobby Charlton','CM','Inggris',93,'legend'],['George Best','RW','Irlandia Utara',93,'legend'],['Garrincha','RW','Brasil',95,'icon'],['Didi','CM','Brasil',92,'legend'],['Nilton Santos','LB','Brasil',92,'legend'],['Zizinho','CAM','Brasil',93,'icon'],['Jairzinho','RW','Brasil',92,'legend'],['Rivelino','CAM','Brasil',92,'legend'],['Tostão','ST','Brasil',91,'legend'],['Carlos Alberto','RB','Brasil',91,'legend'],['Sándor Kocsis','ST','Hongaria',93,'icon'],['Fritz Walter','CAM','Jerman',93,'icon'],['Gerd Müller','ST','Jerman',94,'icon'],['Sepp Maier','GK','Jerman',92,'legend'],['Franz Beckenbauer','CB','Jerman',95,'icon'],['Günter Netzer','CM','Jerman',91,'legend'],['Johan Cruyff','CF','Belanda',96,'icon'],['Johan Neeskens','CM','Belanda',91,'legend'],['Rob Rensenbrink','LW','Belanda',90,'legend'],['Ruud Krol','LB','Belanda',90,'legend'],['Eusébio','ST','Portugal',95,'icon'],['Raymond Kopa','RW','Prancis',92,'legend'],['Just Fontaine','ST','Prancis',92,'legend'],['Michel Platini','CAM','Prancis',95,'icon'],['Gigi Riva','ST','Italia',92,'legend'],['Gianni Rivera','CAM','Italia',91,'legend'],['Dino Zoff','GK','Italia',92,'legend'],['Giacinto Facchetti','LB','Italia',92,'legend'],['Sandro Mazzola','ST','Italia',91,'legend'],['José Altafini','ST','Brasil',90,'legend'],['Omar Sívori','ST','Argentina',91,'legend'],['Diego Maradona','CAM','Argentina',97,'icon'],['Mario Kempes','ST','Argentina',91,'legend'],['Daniel Passarella','CB','Argentina',90,'legend'],['Zico','CAM','Brasil',94,'icon'],['Sócrates','CM','Brasil',91,'legend'],['Falcão','CM','Brasil',91,'legend'],['Cerezo','CM','Brasil',90,'legend'],['Hugo Sánchez','ST','Meksiko',91,'legend'],['Enzo Francescoli','CAM','Uruguay',91,'legend'],['Marcelo Salas','ST','Chile',90,'legend'],['Ivan Zamorano','ST','Chile',90,'legend'],['Carlos Valderrama','CAM','Kolombia',90,'legend'],['René Higuita','GK','Kolombia',89,'gold'],['Marco van Basten','ST','Belanda',94,'icon'],['Ruud Gullit','CAM','Belanda',93,'icon'],['Frank Rijkaard','CDM','Belanda',92,'legend'],['Ronald Koeman','CB','Belanda',91,'legend'],['Paolo Maldini','CB','Italia',94,'icon'],['Franco Baresi','CB','Italia',94,'icon'],['Roberto Baggio','CF','Italia',93,'icon'],['Giuseppe Bergomi','CB','Italia',90,'legend'],['Paulo Futre','LW','Portugal',90,'legend'],['Hristo Stoichkov','ST','Bulgaria',92,'legend'],['Gheorghe Hagi','CAM','Rumania',92,'legend'],['George Weah','ST','Liberia',92,'legend'],['Romário','ST','Brasil',94,'icon'],['Bebeto','ST','Brasil',91,'legend'],['Dunga','CDM','Brasil',90,'legend'],['Zinedine Zidane','CAM','Prancis',96,'icon'],['Ronaldo Nazário','ST','Brasil',96,'icon'],['Rivaldo','LW','Brasil',92,'legend'],['Ronaldinho','LW','Brasil',95,'icon'],['Luis Figo','RW','Portugal',93,'icon'],['Pavel Nedvěd','LW','Ceko',91,'legend'],['Andriy Shevchenko','ST','Ukraina',93,'icon'],['Thierry Henry','ST','Prancis',94,'icon'],['Dennis Bergkamp','CF','Belanda',91,'legend'],['Eric Cantona','ST','Prancis',92,'legend'],['Ryan Giggs','LW','Wales',91,'legend'],['Paul Scholes','CM','Inggris',91,'legend'],['Steven Gerrard','CM','Inggris',91,'legend'],['Frank Lampard','CM','Inggris',91,'legend'],['David Beckham','RM','Inggris',90,'legend'],['Wayne Rooney','ST','Inggris',91,'legend'],['Raúl','ST','Spanyol',92,'legend'],['Iker Casillas','GK','Spanyol',93,'icon'],['Xavi','CM','Spanyol',93,'icon'],['Andrés Iniesta','CM','Spanyol',94,'icon'],['Carles Puyol','CB','Spanyol',91,'legend'],['Fernando Torres','ST','Spanyol',90,'legend'],["Samuel Eto'o","ST","Kamerun",92,"legend"],['Didier Drogba','ST','Pantai Gading',92,'legend'],['Yaya Touré','CM','Pantai Gading',91,'legend'],['Michael Ballack','CM','Jerman',90,'legend'],['Philipp Lahm','RB','Jerman',92,'legend'],['Miroslav Klose','ST','Jerman',91,'legend'],['Manuel Neuer','GK','Jerman',92,'legend'],['Luka Modrić','CM','Kroasia',91,'legend'],['Gareth Bale','RW','Wales',91,'legend'],['Sergio Ramos','CB','Spanyol',92,'legend'],['Xabi Alonso','CDM','Spanyol',91,'legend'],['David Villa','ST','Spanyol',91,'legend'],['Ibrahimović','ST','Swedia',92,'legend']
+];
+function clampStat(v){ return Math.max(30, Math.min(99, Math.round(v))); }
+function statsOf(p){
+  const q = mulberry(p.id*97+13); const o = p.ovr; const g = POSGROUP[p.pos]; const j = () => (q()-0.5)*10;
+  let pac=o-3+j(), sho=o, pas=o, dri=o, def=o, phy=o;
+  if (g==='GK'){ sho=o-25; dri=o-20; pac=o-12; def=o+5; pas=o-10; phy=o+2; }
+  else if (g==='DEF'){ def=o+6; phy=o+4; sho=o-12; dri=o-6; pas=o-4; pac=o+3; }
+  else if (g==='MID'){ pas=o+6; dri=o+4; sho=o-2; def=o-4; pac=o+2; phy=o-2; }
+  else { sho=o+6; dri=o+4; pac=o+5; def=o-12; pas=o-2; phy=o-2; }
+  return { pac:clampStat(pac), sho:clampStat(sho), pass:clampStat(pas), dri:clampStat(dri), def:clampStat(def), phy:clampStat(phy) };
+}
 function buildDB(){
   const out = [];
   const seen = new Set();
+  for (const L of LEGENDS){ if (seen.has(L[0])) continue; seen.add(L[0]); out.push({ id:out.length, name:L[0], pos:L[1], country:L[2], ovr:L[3], r:L[4] }); }
   for (const line of DB_RAW) {
     const parts = line.split('|');
     if (parts.length < 5 || parts[4] === 'x') continue;
@@ -3410,7 +3443,7 @@ function buildDB(){
   /* generated: dari 350-an target 500 */
   const g = mulberry(20260922);
   let guard = 0;
-  while (out.length < 500 && guard < 3000) {
+  while (out.length < 1000 && guard < 12000) {
     guard++;
     const c = GEN_COUNTRIES[Math.floor(g() * GEN_COUNTRIES.length)];
     let name = GEN_FIRST[c][Math.floor(g() * 15)] + ' ' + GEN_LAST[c][Math.floor(g() * 15)];
@@ -3446,18 +3479,24 @@ const FACE_SVG = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="ht
 function cardHTML(p, opts){
   opts = opts || {};
   if (opts.mystery) return '<div class="fbc fbr-mystery'+(opts.cls||'')+'"><div class="fbc-q">?</div></div>';
-  const r = RAR[p.r];
+  const r = RAR[p.r]; const s = statsOf(p);
   return '<div class="fbc '+r.cls+(opts.cls||'')+'" data-pid="'+p.id+'">'
     + '<div class="fbc-top"><div class="fbc-l"><div class="fbc-ovr">'+p.ovr+'</div><div class="fbc-pos">'+esc(p.pos)+'</div></div><div class="fbc-flag">'+flag(p.country)+'</div></div>'
     + '<img class="fbc-face" src="'+FACE_SVG+'" alt="">'
     + '<div class="fbc-name">'+esc(p.name)+'</div>'
+    + '<div class="fbc-stats">'+s.pac+' '+s.sho+' '+s.pass+' '+s.dri+' '+s.def+' '+s.phy+'</div>'
     + '<div class="fbc-rar">'+r.label+'</div>'
     + '</div>';
 }
 /* mini card di pitch/bench — warna ikut rarity (fix bug silver→gold) */
 function miniCard(p, slot, eff){
-  const o = eff != null ? eff : p.ovr;
-  return '<div class="fb-mini '+RAR[p.r].cls+'"><b>'+o+'</b><i>'+esc(slot)+'</i><span>'+flag(p.country)+' '+esc(p.name.split(' ').slice(-1)[0])+'</span></div>';
+  const o = eff != null ? eff : p.ovr; const s = statsOf(p);
+  return '<div class="fbc mcard '+RAR[p.r].cls+'">'
+    + '<div class="fbc-top"><div class="fbc-l"><div class="fbc-ovr">'+o+'</div><div class="fbc-pos">'+esc(slot||p.pos)+'</div></div><div class="fbc-flag">'+flag(p.country)+'</div></div>'
+    + '<img class="fbc-face" src="'+FACE_SVG+'" alt="">'
+    + '<div class="fbc-name">'+esc(p.name)+'</div>'
+    + '<div class="fbc-stats">'+s.pac+' '+s.sho+' '+s.pass+' '+s.dri+' '+s.def+' '+s.phy+'</div>'
+    + '</div>';
 }
 
 /* ── state akun ── */
@@ -3503,7 +3542,7 @@ function uid8(){ return myUid.slice(0,8) || 'guest'; }
 
 /* ── DRAFT ── */
 let draft = null;
-function startDraft(){ draft = { formation:null, players:Array(11).fill(null), bench:Array(5).fill(null) }; drawCards(null, 'PILIH KAPTEN TIM ANDA', 'captain'); }
+function startDraft(){ draft = { formation:null, players:Array(11).fill(null), bench:Array(5).fill(null) }; showFormationSelect(); }
 function draw4(forPos){
   let pool = PLAYERS;
   if (forPos) { const exact = PLAYERS.filter((p) => p.pos === forPos); pool = exact.length >= 4 ? exact : PLAYERS.filter((p) => POSGROUP[p.pos] === POSGROUP[forPos]); }
@@ -3513,7 +3552,9 @@ function draw4(forPos){
   return out;
 }
 let currentSlot = null;
+let lastDraw = { forPos:null, title:'' };
 function drawCards(forPos, title, capSlot){
+  lastDraw = { forPos, title };
   const cands = draw4(forPos);
   const best = cands.reduce((a,b) => (b.ovr > a.ovr ? b : a));
   const bestIdx = cands.indexOf(best);
@@ -3521,9 +3562,10 @@ function drawCards(forPos, title, capSlot){
   screen('draft', '<div class="fb-draft">'
     + '<div class="fb-draft-top">PICK: '+(forPos||'KAPTEN')+'</div>'
     + '<div class="fb-cards" id="fbCards">' + cands.map((p,i) => '<div class="fb-cardwrap" data-i="'+i+'"><div class="fbc fb-back" id="fbBack'+i+'"><div class="fb-year" id="fbYear'+i+'">20??</div></div><div class="fb-front" id="fbFront'+i+'" style="display:none"></div></div>').join('') + '</div>'
-    + '<button type="button" class="fb-btn fb-ghost fb-dr-exit" id="fbDraftExit">Exit</button>'
+    + '<div class="fb-dr-actions"><button type="button" class="fb-btn fb-alt" id="fbDrReroll">⟳ REROLL</button><button type="button" class="fb-btn fb-ghost" id="fbDraftExit">Exit</button></div>'
     + '</div>');
-  $('fbDraftExit').onclick = showLobby;
+  $('fbDrReroll').onclick = () => drawCards(lastDraw.forPos, lastDraw.title);
+  $('fbDraftExit').onclick = showBuilder;
   const spin = {};
   cands.forEach((_,i) => { spin[i] = setInterval(() => { const y = $('fbYear'+i); if (!y) { clearInterval(spin[i]); return; } y.textContent = pick(years); }, 70); });
   setTimeout(() => {
@@ -3550,7 +3592,7 @@ function showFormationSelect(){
   screen('form', '<div class="fb-draft"><div class="fb-draft-top">PILIH FORMASI</div><div class="fb-formgrid">'
     + Object.entries(FORMATIONS).map(([k,f]) => '<div class="fb-formcard" data-f="'+k+'">'+formationSVG(k)+'<b>'+f.label+'</b></div>').join('')
     + '</div><button type="button" class="fb-btn fb-ghost" id="fbFormBack">← Ulang kapten</button></div>');
-  $('fbFormBack').onclick = startDraft;
+  $('fbFormBack').onclick = showLobby;
   document.querySelectorAll('.fb-formcard').forEach((el) => { el.onclick = () => { draft.formation = el.dataset.f; showBuilder(); }; });
 }
 function formationSVG(key){
@@ -3657,6 +3699,7 @@ function swapCells(a, b, isDraft){
 }
 
 function confirmDraft(){
+  if (!draft.captain) { const ids = draft.players.filter((x)=>x!=null); draft.captain = ids.sort((a,b)=>byId(b).ovr-byId(a).ovr)[0]; }
   const squad = { formation: draft.formation, players: draft.players, bench: draft.bench, captain: draft.captain, createdBy: uid8() };
   const indexAdd = [...squad.players, ...squad.bench].filter((x) => x != null);
   const ovr = squadOVR(squad), chem = squadChem(squad);
@@ -3890,8 +3933,10 @@ function dist(a,b){ return Math.hypot(a.x-b.x, a.y-b.y); }
 function nearestOpp(e, rad){ let best=null; M.ents.forEach((o)=>{ if(o.team!==e.team && (!rad||dist(o,e)<rad)) { if(!best||dist(o,e)<dist(best,e)) best=o; } }); return best; }
 function loop(ts){
   if (!M || M.over) return;
-  if (M.lastTs) { const dt = Math.min(0.05,(ts-M.lastTs)/1000)*M.spd; if (!M.paused) simTick(dt); }
-  M.lastTs = ts; draw();
+  try {
+    if (M.lastTs) { const dt = Math.min(0.05,(ts-M.lastTs)/1000)*M.spd; if (!M.paused) simTick(dt); }
+    M.lastTs = ts; draw();
+  } catch(e) { /* jangan freeze */ }
   M.raf = requestAnimationFrame(loop);
 }
 function simTick(dt){
