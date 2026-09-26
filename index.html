@@ -3912,13 +3912,14 @@ function startMatch(cfg){
     stats:{ shots:[0,0], sot:[0,0], saves:[0,0], tackles:[0,0], off:[0,0], poss:[0,0], fouls:[0,0] },
     teams:[ mk(cfg.mySquad,0,0), mk(cfg.oppSquad,1, cfg.mode==='ai' ? Math.max(-6,Math.min(6,(DIV_OVR[state.division]||65)-squadOVR(cfg.oppSquad))) : 0) ],
     ents:[], ball:{ x:50,y:50,vx:0,vy:0,owner:null,ownerTeam:null },
-    phase:'play', paused:true, over:false, spd:1, raf:null, lastTs:0,
+    phase:'play', paused:true, over:false, spd:1, raf:null, lastTs:0, startKick:0,
     cam:{ x:50,y:50,z:1.08,shake:0 },
     snaps:[], attackStart:0, varInfo:null, celeb:null, replay:null,
     setpiece:null, pendingOff:null, wall:[], assistBy:null, lastTouchBy:[null,null],
     tacticCD:0, decT:0,
   };
   buildEnts();
+  resetKickoff(0, true);
   screen('match', '<div class="fb-match">'
     + '<canvas id="fbMCanvas" width="760" height="470"></canvas>'
     + '<div class="fb-hud"><b id="fbMHome">'+esc(myName)+'</b><span id="fbMScore">0 - 0</span><b id="fbMAway">'+esc(cfg.oppName)+'</b><i id="fbMMin">0\'</i></div>'
@@ -3936,7 +3937,7 @@ function buildEnts(){
     team.onField.forEach((pi,k) => {
       const p = team.players[pi];
       const [hx,hy] = POSXY[p.pos];
-      const kx = hx*0.5; const x = ti===0 ? kx : 100-kx;
+      const x = ownWorldX(ti, hx*0.5);
       const y = hy;
       M.ents.push({ team:ti, idx:k, name:p.name, ovr:p.ovr, per:p.per, trait:p.trait, isGK:p.pos==='GK', slotName:p.pos,
         hx, hy, x, y, vx:0, vy:0, r:2.4, spd: 4.5 + p.per.pace*2.5, st:p.st||statsOf(p), skill:p.ovr,
@@ -3945,6 +3946,10 @@ function buildEnts(){
   });
 }
 const goalX = (ti) => (ti===0?98:2);
+const atkGoal = (ti)=> (M.half===1)? (ti===0?98:2) : (ti===0?2:98);
+const ownGoal = (ti)=> (M.half===1)? (ti===0?2:98) : (ti===0?98:2);
+const ownWorldX = (ti,d)=> (ownGoal(ti)===2)? d : 98-d;
+const fwdDir = (ti)=> (atkGoal(ti)===98)?1:-1;
 const ownGoalX = (ti) => (ti===0?2:98);
 function dist(a,b){ return Math.hypot(a.x-b.x, a.y-b.y); }
 function nearestOpp(e, rad){ let best=null; M.ents.forEach((o)=>{ if(o.team!==e.team && (!rad||dist(o,e)<rad)) { if(!best||dist(o,e)<dist(best,e)) best=o; } }); return best; }
@@ -3998,14 +4003,21 @@ function simTick(dt){
     }
     /* ambil bola bebas + offside */
     if (!b.owner && dist(e,b)<1.5) {
-      if (M.pendingOff && M.pendingOff.receiver===e) { triggerVar(); return; }
+      if (M.pendingOff && M.pendingOff.receiver===e) { const po = M.pendingOff; M.pendingOff=null; if (!po.onside) { M.phase='var'; M.varInfo = { ...po, t:2.2 }; M.stats.off[e.team]++; M.cam.shake=2; return; } }
       b.owner=e; b.ownerTeam=e.team; M.lastTouchBy[e.team]=e;
     }
   });
   if (b.owner && decide) onBall(b.owner);
+  separate();
   if (b.ownerTeam!=null) M.stats.poss[b.ownerTeam]+=dt;
   updUI();
   updCam(dt, b.x, b.y, 1.12);
+}
+function separate(){
+  for (let i=0;i<M.ents.length;i++) for (let j=i+1;j<M.ents.length;j++){
+    const a=M.ents[i], c=M.ents[j]; const dx=c.x-a.x, dy=c.y-a.y; const d=Math.hypot(dx,dy); const min=a.r+c.r;
+    if (d<min && d>0.001){ const push=(min-d)/2; const ux=dx/d, uy=dy/d; a.x-=ux*push; a.y-=uy*push; c.x+=ux*push; c.y+=uy*push; }
+  }
 }
 function cornerOrKick(defTeam){ /* defTeam = tim yang gawangnya di sisi keluar */
   const atk = defTeam===0?1:0;
@@ -4015,7 +4027,7 @@ function cornerOrKick(defTeam){ /* defTeam = tim yang gawangnya di sisi keluar *
 function goalKick(team){ /* sederhana: kiper pegang */ const gk = M.ents.find((e)=>e.team===team&&e.isGK); M.ball.owner=gk; M.ball.ownerTeam=team; M.ball.x=gk.x; M.ball.y=gk.y; M.ball.vx=0;M.ball.vy=0; }
 function gkMove(e,dt){
   const b = M.ball;
-  const gx = ownGoalX(e.team);
+  const gx = ownGoal(e.team);
   const ty = 50 + (b.y-50)*0.35;
   e.x += (gx - e.x)*dt*3; e.y += (ty-e.y)*dt*3;
   const sp = Math.hypot(b.vx,b.vy);
@@ -4030,36 +4042,33 @@ function trySave(gk){
 /* ── AI gerak + keputusan ── */
 function moveAI(e,dt,chaser,decide){
   const b = M.ball; const team = M.teams[e.team];
-  if (b.owner===e) { /* bawa bola: dribble di-handle onBall; gerak pelan maju */ return; }
-  const iChase = chaser[e.team]===e;
-  let tx,ty;
-  const myGroup = POSGROUP[e.slotName];
+  if (b.owner===e) return;
+  const iChase = chaser[e.team]===e; const fwd = fwdDir(e.team);
+  let tx,ty; const myGroup = POSGROUP[e.slotName];
   if (b.ownerTeam===e.team) {
-    /* menyerang: cari ruang */
-    if (myGroup==='ATT') { /* run ke ruang depan */ tx = e.hxAdj!=null?e.hxAdj: (e.team===0? e.hx+18 : 100-(e.hx-18)); ty = e.hy + (b.y>50? -8:8)*(e.slotName==='ST'?0.5:1);
-      if (team.tactic==='longball' && (e.slotName==='LW'||e.slotName==='RW')) tx = e.team===0? 84 : 16;
-    } else if (myGroup==='MID') { /* support */ const bx=b.x, by=b.y; const fwd = e.team===0?1:-1; tx = bx + fwd*10; ty = by + (e.hy>50? -10:10); if (team.tactic==='bus') tx = bx - fwd*8; }
-    else { tx = (e.team===0? e.hx+16 : 100-(e.hx-16)); ty = e.hy; }
-    if (team.tactic==='counter' && b.ownerTeam===e.team) { const fwd=e.team===0?1:-1; tx += fwd*8; }
-  } else if (b.ownerTeam!=null ? b.ownerTeam!==e.team : true) {
-    /* bertahan: bentuk */
-    if (iChase && (b.owner || !b.owner)) { tx = b.owner? b.owner.x : b.x; ty = b.owner? b.owner.y : b.y; }
+    if (myGroup==='ATT') { tx = ownWorldX(e.team, e.hx+18); ty = e.hy + (b.y>50? -8:8)*(e.slotName==='ST'?0.5:1);
+      if (team.tactic==='longball' && (e.slotName==='LW'||e.slotName==='RW')) tx = ownWorldX(e.team, 84);
+    } else if (myGroup==='MID') { tx = b.x + fwd*10; ty = b.y + (e.hy>50? -10:10); if (team.tactic==='bus') tx = b.x - fwd*8; }
+    else { tx = ownWorldX(e.team, e.hx+16); ty = e.hy; }
+    if (team.tactic==='counter' && b.ownerTeam===e.team) tx += fwd*8;
+  } else {
+    if (iChase) { tx = b.owner? b.owner.x : b.x; ty = b.owner? b.owner.y : b.y; }
     else {
-      const shift = (b.x-50)*0.22*(e.team===0?1:-1);
-      const homeX = e.team===0? e.hx : 100-e.hx;
-      tx = homeX + shift + (team.tactic==='bus' && (myGroup==='MID')? -8:0);
+      const homeX = ownWorldX(e.team, e.hx);
+      const shift = (b.x-50)*0.22*fwd;
+      tx = homeX + shift + (team.tactic==='bus' && myGroup==='MID'? -8*fwd:0);
       ty = e.hy + (b.y-50)*0.18;
-      if (team.tactic==='bus' && myGroup!=='ATT') tx -= (e.team===0?6:-6);
+      if (team.tactic==='bus' && myGroup!=='ATT') tx -= 6*fwd;
     }
-  } else { tx = e.x; ty = e.y; }
+  }
   tx = Math.max(3,Math.min(97,tx)); ty = Math.max(5,Math.min(95,ty));
   const dx=tx-e.x, dy=ty-e.y, d=Math.hypot(dx,dy);
-  const sp = e.spd*(b.owner===e?0.85:1)*(team.tactic==='counter'&&b.ownerTeam===e.team?1.2:1);
+  const sp = e.spd*(team.tactic==='counter'&&b.ownerTeam===e.team?1.2:1);
   if (d>0.4){ e.x += dx/d*sp*dt; e.y += dy/d*sp*dt; }
 }
 function onBall(e){
   const b = M.ball; const team = M.teams[e.team];
-  const gx = goalX(e.team);
+  const gx = atkGoal(e.team);
   const dGoal = Math.hypot(gx-e.x, 50-e.y);
   const press = nearestOpp(e, 6); const pressD = press? dist(e,press):99;
   /* opsi skor */
@@ -4067,7 +4076,7 @@ function onBall(e){
   const shootS = dGoal<24 ? (0.5 + e.skill/260 - dGoal/70) : (dGoal<32? 0.1:0);
   best = { t:'shoot', s: shootS };
   /* dribble kalo ada ruang */
-  const fwd = e.team===0?1:-1;
+  const fwd = fwdDir(e.team);
   const space = !M.ents.some((o)=>o.team!==e.team && o.x*fwd> e.x*fwd && Math.abs(o.y-e.y)<6 && Math.abs(o.x-e.x)<8);
   const dribS = (space?0.55:0.15) * (0.4+e.per.drib) * (e.trait==='dribbler'?1.5:1) * (pressD<2.5?0.6:1);
   if (dribS > best.s) best = { t:'drib', s: dribS };
@@ -4118,7 +4127,7 @@ function doPass(from, to){
 }
 function shoot(e){
   const b = M.ball; b.owner=null; b.ownerTeam=null;
-  const gx = goalX(e.team);
+  const gx = atkGoal(e.team);
   const acc = (e.st? e.st.sho : e.skill)/100;
   const ty = 50 + (M.R()-0.5)*30*(1.2-acc);
   const dx = gx-b.x, dy = ty-b.y; const d = Math.hypot(dx,dy)||1;
@@ -4154,10 +4163,13 @@ function startFreeKick(atkT, x, y){
   x = Math.max(14, Math.min(86, x)); y = Math.max(8, Math.min(92,y));
   b.x=x; b.y=y;
   /* pagar: 3 bek bertahan antara bola & gawang */
-  const defT = atkT===0?1:0; const gx = goalX(atkT);
+  const defT = atkT===0?1:0; const gx = atkGoal(atkT);
   const wallE = M.ents.filter((e)=>e.team===defT && !e.isGK).sort((a,b2)=>dist(a,b)-dist(b2,b)).slice(0,3);
   const ang = Math.atan2(50-y, gx-x);
   M.wall = wallE.map((e,i)=>{ e.x = x + Math.cos(ang)*8; e.y = y + Math.sin(ang)*8 + (i-1)*3; return e; });
+  const inAtkHalf = (atkGoal(atkT)===98)? (x>50) : (x<50);
+  if (inAtkHalf) { M.wall.forEach((w2)=>{ /* udah diposisi di atas */ }); }
+  else { M.wall = []; }
   const shooter = M.ents.filter((e)=>e.team===atkT && !e.isGK).sort((a,b2)=>b2.skill-a.skill)[0];
   shooter.x = x - Math.cos(ang)*2; shooter.y = y - Math.sin(ang)*2;
   M.setpiece = { type:'fk', atkT, shooter, t:1.2 };
@@ -4189,7 +4201,7 @@ function runSetPiece(){
     return;
   }
   if (sp.type==='fk') {
-    const gx = goalX(atkT); const d = Math.hypot(gx-b.x,50-b.y);
+    const gx = atkGoal(atkT); const d = Math.hypot(gx-b.x,50-b.y);
     if (d<30) { /* tembak langsung */
       M.stats.shots[atkT]++;
       const over = M.R() < 0.4 + sp.shooter.skill/250;
@@ -4201,7 +4213,7 @@ function runSetPiece(){
     }
     return;
   }
-  if (sp.type==='ck') { doCross(atkT, sp.shooter, goalX(atkT), 50); return; }
+  if (sp.type==='ck') { doCross(atkT, sp.shooter, atkGoal(atkT), 50); return; }
 }
 function doCross(atkT, from, tx, ty){
   const b = M.ball; 
@@ -4253,12 +4265,15 @@ function tickReplay(dt){
   }
   if (r.i >= M.snaps.length-1) { M.replay=null; resetKickoff(M.lastConceded===0?1:0); }
 }
-function resetKickoff(kick){
+function resetKickoff(kick, keepPause){
   const b = M.ball; b.x=50;b.y=50;b.vx=0;b.vy=0;b.owner=null;b.ownerTeam=null;
-  M.ents.forEach((e)=>{ const kx = e.hx*0.5; e.x = e.team===0? kx : 100-kx; e.y = e.hy; e.celeb=0; });
-  M.snaps = []; M.attackStart=0; M.pendingOff=null; M.wall=[]; M.shotBy=null; M.assistBy=null;
-  M.lastConceded = null;
-  M.phase='play'; M.paused=false;
+  M.ents.forEach((e)=>{ e.x = ownWorldX(e.team, e.hx*0.5); e.y = e.hy; e.celeb=0; });
+  const kickers = M.ents.filter(e=>e.team===kick && !e.isGK).sort((a,b2)=> ((POSGROUP[b2.slotName]==='ATT')?1:0)-((POSGROUP[a.slotName]==='ATT')?1:0));
+  const kk = kickers[0];
+  if (kk){ kk.x = ownWorldX(kick, 49); kk.y = 50; b.owner = kk; b.ownerTeam = kick; }
+  M.snaps=[]; M.attackStart=0; M.pendingOff=null; M.wall=[]; M.shotBy=null; M.assistBy=null;
+  M.lastConceded=null;
+  M.phase='play'; M.paused = !!keepPause;
 }
 /* ── HT / FT ── */
 function halftime(){
@@ -4283,8 +4298,8 @@ function halftime(){
     hideOverlay();
     if (M.cfg.mode!=='ai' && M.cfg.mid) {
       let waited=0; showOverlay('JEDA','nunggu lawan siap... (30)',[]);
-      const tick = setInterval(async ()=>{ waited++; try { const d = await fbPost({action:'matchReady',mid:M.cfg.mid}); if (d.both||waited>=30){ clearInterval(tick); hideOverlay(); M.half=2; M.phase='play'; M.paused=false; } else showOverlay('JEDA','nunggu lawan siap... ('+(30-waited)+')',[]); } catch(e){ clearInterval(tick); hideOverlay(); M.half=2; M.phase='play'; M.paused=false; } },1000);
-    } else { M.half=2; M.phase='play'; M.paused=false; }
+      const tick = setInterval(async ()=>{ waited++; try { const d = await fbPost({action:'matchReady',mid:M.cfg.mid}); if (d.both||waited>=30){ clearInterval(tick); hideOverlay(); M.half=2; resetKickoff(1-(M.startKick||0)); } else showOverlay('JEDA','nunggu lawan siap... ('+(30-waited)+')',[]); } catch(e){ clearInterval(tick); hideOverlay(); M.half=2; resetKickoff(1-(M.startKick||0)); } },1000);
+    } else { M.half=2; resetKickoff(1-(M.startKick||0)); }
   };
   $('fbHTGo').onclick = go;
 }
