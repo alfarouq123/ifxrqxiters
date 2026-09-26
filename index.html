@@ -3911,7 +3911,7 @@ function startMatch(cfg){
     stats:{ shots:[0,0], sot:[0,0], saves:[0,0], tackles:[0,0], off:[0,0], poss:[0,0], fouls:[0,0] },
     teams:[ mk(cfg.mySquad,0,0), mk(cfg.oppSquad,1, cfg.mode==='ai' ? Math.max(-6,Math.min(6,(DIV_OVR[state.division]||65)-squadOVR(cfg.oppSquad))) : 0) ],
     ents:[], ball:{ x:50,y:50,vx:0,vy:0,owner:null,ownerTeam:null },
-    phase:'kick', paused:true, over:false, spd:1, raf:null, lastTs:0,
+    phase:'play', paused:true, over:false, spd:1, raf:null, lastTs:0,
     cam:{ x:50,y:50,z:1.08,shake:0 },
     snaps:[], attackStart:0, varInfo:null, celeb:null, replay:null,
     setpiece:null, pendingOff:null, wall:[], assistBy:null, lastTouchBy:[null,null],
@@ -3927,7 +3927,7 @@ function startMatch(cfg){
     + '</div>');
   $('fbMTactic').onclick = openTactics;
   $('fbMSkip').onclick = () => { M.spd = 30; };
-  showOverlay('KICK OFF', esc(myName)+' vs '+esc(cfg.oppName), [{ label:'MULAI', fn: () => { hideOverlay(); M.paused = false; loop(performance.now()); } }]);
+  showOverlay('KICK OFF', esc(myName)+' vs '+esc(cfg.oppName), [{ label:'MULAI', fn: () => { hideOverlay(); M.phase='play'; M.paused = false; loop(performance.now()); } }]);
 }
 function buildEnts(){
   M.ents = [];
@@ -3935,7 +3935,7 @@ function buildEnts(){
     team.onField.forEach((pi,k) => {
       const p = team.players[pi];
       const [hx,hy] = POSXY[p.pos];
-      const x = ti===0 ? hx : 100-hx;
+      const kx = hx*0.5; const x = ti===0 ? kx : 100-kx;
       const y = hy;
       M.ents.push({ team:ti, idx:k, name:p.name, ovr:p.ovr, per:p.per, trait:p.trait, isGK:p.pos==='GK', slotName:p.pos,
         hx, hy, x, y, vx:0, vy:0, r:2.4, spd: 5.0 + (p.ovr-60)/11 + p.per.pace*0.8, skill:p.ovr,
