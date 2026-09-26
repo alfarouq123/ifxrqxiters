@@ -3405,6 +3405,81 @@ document.addEventListener('click', (e) => {
    UI style: roblox-ish (chunky, tebal, playful)
    ═══════════════════════════════════════════════════════════════════ */
 /* ═══ IFZRQ FC v2 — full rewrite (FC26 cards, vertical builder, engine realistis) ═══ */
+/* ═══════════ SOUND SYSTEM — suara stadion + komentator ═══════════
+   SFX: crowd gol, cheering selebrasi, ambience stadion, peluit, tendangan (dari internet, CC/free archive)
+   + chime gacha sintesis (Web Audio, biar selalu jalan) + komentator (speechSynthesis id-ID) */
+const SFX = {
+  on: true,
+  urls: {
+    goal: 'https://archive.org/download/FootballSoccerSound/Football%20-%20Soccer%20-%20Goal%20Sound%20-%20Sound%20Effects%20FX.mp3',
+    cheer: 'https://archive.org/download/FootballSoccerSound/Sports%20Stadium%20Crowd%20Cheering.mp3',
+    ambience: 'https://archive.org/download/FootballSoccerSound/Soccer%20Stadium%20Sound%20Effect.mp3',
+    kick: 'https://archive.org/download/FootballSoccerSound/Soccer%20Player%20Kicking%20A%20Soccer%20Ball%20Sound%20Effect.mp3',
+    whistle: 'https://upload.wikimedia.org/wikipedia/commons/f/f2/Whistle.ogg',
+  },
+  amb: null,
+  ac: null,
+  play(name, vol, maxDur){
+    if (!this.on) return;
+    try {
+      const a = new Audio(this.urls[name]);
+      a.volume = Math.min(1, vol||0.7);
+      a.play().catch(()=>{});
+      if (maxDur) setTimeout(()=>{ try{ a.pause(); }catch(e){} }, maxDur);
+    } catch(e){}
+  },
+  ambStart(){
+    if (!this.on) return;
+    try {
+      if (!this.amb) { this.amb = new Audio(this.urls.ambience); this.amb.loop = true; }
+      this.amb.volume = 0.16;
+      this.amb.play().catch(()=>{});
+    } catch(e){}
+  },
+  ambStop(){ try { if (this.amb) this.amb.pause(); } catch(e){} },
+  toggle(){
+    this.on = !this.on;
+    if (!this.on) { this.ambStop(); if (window.speechSynthesis) speechSynthesis.cancel(); }
+    else if (typeof M!=='undefined' && M && !M.over) this.ambStart();
+    return this.on;
+  },
+  /* chime gacha sintesis — gak butuh file external */
+  chime(big){
+    if (!this.on) return;
+    try {
+      const AC = window.AudioContext||window.webkitAudioContext; if (!AC) return;
+      if (!this.ac) this.ac = new AC();
+      const c = this.ac; if (c.state==='suspended') c.resume();
+      const notes = big? [523.25,659.25,783.99,1046.5,1318.5] : [659.25,783.99,987.77];
+      const t0 = c.currentTime;
+      notes.forEach((f,i)=>{
+        const o=c.createOscillator(), g=c.createGain();
+        o.type='triangle'; o.frequency.value=f;
+        const st=t0+i*0.1;
+        g.gain.setValueAtTime(0.0001, st);
+        g.gain.exponentialRampToValueAtTime(0.22, st+0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, st+0.6);
+        o.connect(g); g.connect(c.destination);
+        o.start(st); o.stop(st+0.65);
+      });
+    } catch(e){}
+  },
+};
+/* KOMENTATOR: text-to-speech bahasa indonesia */
+function say(text){
+  if (!SFX.on || !window.speechSynthesis) return;
+  try {
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'id-ID';
+    const v = speechSynthesis.getVoices().find((x)=>x.lang && (x.lang==='id-ID'||x.lang.startsWith('id')));
+    if (v) u.voice = v;
+    u.rate = 1.15; u.pitch = 1.05; u.volume = 0.95;
+    speechSynthesis.speak(u);
+  } catch(e){}
+}
+if (window.speechSynthesis && speechSynthesis.onvoiceschanged!==undefined) speechSynthesis.onvoiceschanged = ()=>{};
+
 window.FB = (function(){
 'use strict';
 const $ = (id) => document.getElementById(id);
@@ -3623,6 +3698,8 @@ function drawCards(forPos, title, capSlot){
   }, 1200);
   /* fase 2: JEDA dulu (~0.8 dtk) setelah tahun dapet, baru munculin card */
   setTimeout(() => {
+    const best = cands[bestIdx];
+    SFX.chime(best && (best.r==='gold'||best.r==='legend'||best.r==='icon')); /* suara reveal gacha */
     cands.forEach((p,i) => {
       const bk = $('fbBack'+i), front = $('fbFront'+i);
       if (!bk || !front || !document.body.contains(front)) return;
@@ -4093,12 +4170,13 @@ function startMatch(cfg){
     + '<canvas id="fbMCanvas" width="760" height="470"></canvas>'
     + '<div class="fb-hud"><b id="fbMHome">'+esc(myName)+'</b><span id="fbMScore">0 - 0</span><b id="fbMAway">'+esc(cfg.oppName)+'</b><i id="fbMMin">0\'</i></div>'
     + '<div class="fb-mtimer"><i id="fbMTimeBar"></i></div>'
-    + '<div class="fb-mctrl"><button type="button" class="fb-btn fb-alt" id="fbMTactic">TACTICS</button><span id="fbMTacNow">Balance</span><span class="fb-mcd" id="fbMCD"></span><button type="button" class="fb-btn fb-ghost" id="fbMSkip">⏩ Skip</button></div>'
+    + '<div class="fb-mctrl"><button type="button" class="fb-btn fb-alt" id="fbMTactic">TACTICS</button><span id="fbMTacNow">Balance</span><span class="fb-mcd" id="fbMCD"></span><button type="button" class="fb-btn fb-ghost" id="fbMSound">🔊</button><button type="button" class="fb-btn fb-ghost" id="fbMSkip">⏩ Skip</button></div>'
     + '<div class="fb-moverlay" id="fbMOverlay"></div>'
     + '</div>');
   $('fbMTactic').onclick = openTactics;
   $('fbMSkip').onclick = () => { M.spd = 30; };
-  showOverlay('KICK OFF', esc(myName)+' vs '+esc(cfg.oppName), [{ label:'MULAI', fn: () => { hideOverlay(); M.phase='play'; M.paused = false; loop(performance.now()); } }]);
+  $('fbMSound').onclick = () => { const on = SFX.toggle(); $('fbMSound').textContent = on? '🔊':'🔇'; };
+  showOverlay('KICK OFF', esc(myName)+' vs '+esc(cfg.oppName), [{ label:'MULAI', fn: () => { hideOverlay(); M.phase='play'; M.paused = false; SFX.ambStart(); SFX.play('whistle',0.8,1600); say('Pertandingan dimulai!'); loop(performance.now()); } }]);
 }
 /* posisi dasar + spread vertikal kalo ada pos dobel (CB-CB, CM-CM, ST-ST, dll) biar formasi beneran kebentuk */
 function slotPos(team, pi){
@@ -4463,6 +4541,17 @@ function moveAI(e,dt,chaser,cover,decide){
       if (team.tactic==='bus' && myGroup==='DEF') tx = ownWorldX(e.team, e.hx); /* bus: bek gak maju */
     }
     if (team.tactic==='counter' && b.ownerTeam===e.team && myGroup!=='DEF') tx += fwd*8;
+  } else if (!b.owner) {
+    /* BOLA BEBAS: jangan patung! 2 pemain terdekat converg rebutan, yang deket bola ikut ngejar,
+       sisanya geser ke zona bola (bukan diem di tempat) */
+    if (iChase || iCover) {
+      tx = b.x; ty = b.y;
+    } else {
+      const homeX = ownWorldX(e.team, e.hx);
+      tx = homeX + (b.x-50)*0.28*fwd;
+      ty = e.hy + (b.y-e.hy)*0.32;
+      if (Math.hypot(b.x-e.x, b.y-e.y) < 14) { tx = b.x; ty = b.y; } /* deket bola? ikut rebutan */
+    }
   } else {
     /* lagi bertahan */
     const carrier = b.owner || b;
@@ -4670,6 +4759,7 @@ function shoot(e){
   b.vx = dx/d*pow; b.vy = dy/d*pow; M.shotBy = e; e.dribA=null;
   /* CURVE SHOT: bola melengkung ke pojok */
   b.curve = elite? (ty<50? -1:1)*Math.sign(b.vx||1)*Math.min(0.6, 0.35+(shoStat-80)*0.025) : 0;
+  SFX.play('kick', 0.35); /* suara tendangan */
   M.shotN=(M.shotN||0)+1; b.shotId=M.shotN; /* id tembakan biar kiper cuma roll 1x */
   M.shotSnapId = M.snapId||0; /* frame tendangan, buat slowmo di replay */
   M.stats.shots[e.team]++;
@@ -4693,6 +4783,7 @@ function foul(e, o){
   if (M.phase!=='play') return;
   M.stats.fouls[e.team]++;
   M.cam.shake = 6;
+  SFX.play('whistle', 0.4, 1100); /* peluit pelanggaran */
   const b = M.ball; b.vx*=0.2; b.vy*=0.2;
   /* KEKERASAN: makin agresif/bruiser makin gede peluang kena kartu (merah rare, kuning kadang2) */
   const sev = M.R() + e.per.aggr*0.55 + (e.trait==='bruiser'?0.14:0);
@@ -4761,6 +4852,7 @@ function startCorner(atkT, defT){
 function corner(atkT, defT){ startCorner(atkT, defT); }
 function startPenalty(atkT){
   M.phase='setpiece';
+  SFX.play('whistle', 0.7, 1400); say('Penalti!');
   const b = M.ball; b.owner=null;b.ownerTeam=null;b.vx=0;b.vy=0;b.curve=0;
   const gx = atkGoal(atkT); const x = gx===98? 87:13;
   b.x=x; b.y=50;
@@ -4842,7 +4934,12 @@ function goal(ti){
   /* 2 temen terdekat ikut */
   M.celeb.mates = M.ents.filter((e)=>e.team===ti && e!==scorer && !e.isGK).sort((a,b)=>dist(a,scorer)-dist(b,scorer)).slice(0,2);
   M.ball.owner=null; M.ball.ownerTeam=null; M.ball.vx=0;M.ball.vy=0;
+  M.ball.curve=0;
   M.cam.shake = 8;
+  /* SOUND: raungan gol + sorakan selebrasi + komentator */
+  SFX.play('goal', 0.9);
+  setTimeout(()=>{ if (SFX.on) SFX.play('cheer', 0.65); }, 900);
+  say('Gool! '+(scorer?scorer.name:'')+' menjebol gawang '+(ti===0? (M.cfg.oppName||'lawan') : myName)+'!');
 }
 function tickCeleb(dt){
   const c = M.celeb; c.t += dt;
@@ -4908,6 +5005,7 @@ function resetKickoff(kick, keepPause){
 /* ── HT / FT ── */
 function halftime(){
   M.paused=true; M.phase='ht';
+  SFX.play('whistle', 0.7, 2000); say('Peluit babak pertama! Waktunya istirahat.');
   const t2 = M.teams[0];
   const f = FORMATIONS[(t2.squad&&t2.squad.formation)||'433-attack'];
   const slots = f.slots;
@@ -5015,6 +5113,7 @@ function halftime(){
 }
 function fulltime(){
   M.over=true; M.paused=true; M.phase='ft'; cancelAnimationFrame(M.raf);
+  SFX.play('whistle', 0.85, 3000); say('Peluit panjang! Pertandingan berakhir.');
   const [a,b2]=M.score; const outcome = a>b2?'w':a<b2?'l':'d';
   const poss = M.stats.poss[0]+M.stats.poss[1]||1;
   $('fbMOverlay').innerHTML = '<div class="fb-ovl-card big"><h3>FULL TIME — '+a+' : '+b2+'</h3><div class="fb-stats">'
@@ -5029,6 +5128,7 @@ function fulltime(){
     + '</div><button type="button" class="fb-btn" id="fbFTNext">LANJUT</button></div>';
   $('fbMOverlay').classList.add('show');
   $('fbFTNext').onclick = async () => {
+    SFX.ambStop();
     try {
       const d = await fbPost({ action:'report', mode:M.cfg.mode, outcome, my:a, opp:b2, oppName:M.cfg.oppName });
       state = d.state;
