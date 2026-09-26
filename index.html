@@ -4152,6 +4152,20 @@ function onBall(e, dt){
     if (tgt) doPass(e, tgt);
     return;
   }
+  /* KICKOFF: pemegang bola di tengah langsung umpan pendek ke temen, jangan diem nunggu dipress */
+  if (e.kick) {
+    e.kick = false;
+    const fwd = fwdDir(e.team);
+    const mates = M.ents.filter((o)=>o.team===e.team && !o.isGK && o!==e);
+    let tgt = null, bs = -1e9;
+    for (const m2 of mates){
+      const back = (m2.x - e.x)*fwd <= 2 ? 1 : 0; /* prioritas yang di belakang/samping, bukan ke depan */
+      const s = back*2 + (POSGROUP[m2.slotName]==='MID'?1:0) + (m2.slotName==='ST'?0.3:0) - dist(e,m2)*0.03;
+      if (s>bs){ bs=s; tgt=m2; }
+    }
+    if (tgt){ doPass(e, tgt); }
+    return;
+  }
   const gx = atkGoal(e.team);
   const dGoal = Math.hypot(gx-e.x, 50-e.y);
   const press = nearestOpp(e, 6); const pressD = press? dist(e,press):99;
