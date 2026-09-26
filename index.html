@@ -3420,8 +3420,9 @@ const SFX = {
   },
   amb: null, ultra: null,
   ac: null,
+  skipping(){ try { return window.FB && window.FB.M && window.FB.M.spd>1; } catch(e){ return false; } },
   play(name, vol, maxDur){
-    if (!this.on) return;
+    if (!this.on || this.skipping()) return; /* lagi SKIP → gak ada sound (biar gak nimpa-nimpa) */
     try {
       const a = new Audio(this.urls[name]);
       a.volume = Math.min(1, vol||0.7);
@@ -3453,7 +3454,7 @@ const SFX = {
   },
   /* chime gacha sintesis — gak butuh file external */
   chime(big){
-    if (!this.on) return;
+    if (!this.on || this.skipping()) return;
     try {
       const AC = window.AudioContext||window.webkitAudioContext; if (!AC) return;
       if (!this.ac) this.ac = new AC();
@@ -3514,7 +3515,13 @@ const GEN_LAST  = { Inggris:['Smith','Johnson','Walker','Wright','Barnes','Hughe
 const GEN_COUNTRIES = Object.keys(GEN_FIRST);
 const GEN_POS = ['GK','CB','CB','LB','RB','CDM','CM','CM','CAM','LM','RM','LW','RW','ST','ST'];
 const LEGENDS = [
-['Stanley Matthews','RW','Inggris',94,'icon'],['Ferenc Puskás','ST','Hongaria',96,'icon'],['Alfredo Di Stéfano','ST','Spanyol',96,'icon'],['Lev Yashin','GK','Rusia',95,'icon'],['Bobby Charlton','CM','Inggris',93,'legend'],['George Best','RW','Irlandia Utara',93,'legend'],['Garrincha','RW','Brasil',95,'icon'],['Didi','CM','Brasil',92,'legend'],['Nilton Santos','LB','Brasil',92,'legend'],['Zizinho','CAM','Brasil',93,'icon'],['Jairzinho','RW','Brasil',92,'legend'],['Rivelino','CAM','Brasil',92,'legend'],['Tostão','ST','Brasil',91,'legend'],['Carlos Alberto','RB','Brasil',91,'legend'],['Sándor Kocsis','ST','Hongaria',93,'icon'],['Fritz Walter','CAM','Jerman',93,'icon'],['Gerd Müller','ST','Jerman',94,'icon'],['Sepp Maier','GK','Jerman',92,'legend'],['Franz Beckenbauer','CB','Jerman',95,'icon'],['Günter Netzer','CM','Jerman',91,'legend'],['Johan Cruyff','CF','Belanda',96,'icon'],['Johan Neeskens','CM','Belanda',91,'legend'],['Rob Rensenbrink','LW','Belanda',90,'legend'],['Ruud Krol','LB','Belanda',90,'legend'],['Eusébio','ST','Portugal',95,'icon'],['Raymond Kopa','RW','Prancis',92,'legend'],['Just Fontaine','ST','Prancis',92,'legend'],['Michel Platini','CAM','Prancis',95,'icon'],['Gigi Riva','ST','Italia',92,'legend'],['Gianni Rivera','CAM','Italia',91,'legend'],['Dino Zoff','GK','Italia',92,'legend'],['Giacinto Facchetti','LB','Italia',92,'legend'],['Sandro Mazzola','ST','Italia',91,'legend'],['José Altafini','ST','Brasil',90,'legend'],['Omar Sívori','ST','Argentina',91,'legend'],['Diego Maradona','CAM','Argentina',97,'icon'],['Mario Kempes','ST','Argentina',91,'legend'],['Daniel Passarella','CB','Argentina',90,'legend'],['Zico','CAM','Brasil',94,'icon'],['Sócrates','CM','Brasil',91,'legend'],['Falcão','CM','Brasil',91,'legend'],['Cerezo','CM','Brasil',90,'legend'],['Hugo Sánchez','ST','Meksiko',91,'legend'],['Enzo Francescoli','CAM','Uruguay',91,'legend'],['Marcelo Salas','ST','Chile',90,'legend'],['Ivan Zamorano','ST','Chile',90,'legend'],['Carlos Valderrama','CAM','Kolombia',90,'legend'],['René Higuita','GK','Kolombia',89,'gold'],['Marco van Basten','ST','Belanda',94,'icon'],['Ruud Gullit','CAM','Belanda',93,'icon'],['Frank Rijkaard','CDM','Belanda',92,'legend'],['Ronald Koeman','CB','Belanda',91,'legend'],['Paolo Maldini','CB','Italia',94,'icon'],['Franco Baresi','CB','Italia',94,'icon'],['Roberto Baggio','CF','Italia',93,'icon'],['Giuseppe Bergomi','CB','Italia',90,'legend'],['Paulo Futre','LW','Portugal',90,'legend'],['Hristo Stoichkov','ST','Bulgaria',92,'legend'],['Gheorghe Hagi','CAM','Rumania',92,'legend'],['George Weah','ST','Liberia',92,'legend'],['Romário','ST','Brasil',94,'icon'],['Bebeto','ST','Brasil',91,'legend'],['Dunga','CDM','Brasil',90,'legend'],['Zinedine Zidane','CAM','Prancis',96,'icon'],['Ronaldo Nazário','ST','Brasil',96,'icon'],['Rivaldo','LW','Brasil',92,'legend'],['Ronaldinho','LW','Brasil',95,'icon'],['Luis Figo','RW','Portugal',93,'icon'],['Pavel Nedvěd','LW','Ceko',91,'legend'],['Andriy Shevchenko','ST','Ukraina',93,'icon'],['Thierry Henry','ST','Prancis',94,'icon'],['Dennis Bergkamp','CF','Belanda',91,'legend'],['Eric Cantona','ST','Prancis',92,'legend'],['Ryan Giggs','LW','Wales',91,'legend'],['Paul Scholes','CM','Inggris',91,'legend'],['Steven Gerrard','CM','Inggris',91,'legend'],['Frank Lampard','CM','Inggris',91,'legend'],['David Beckham','RM','Inggris',90,'legend'],['Wayne Rooney','ST','Inggris',91,'legend'],['Raúl','ST','Spanyol',92,'legend'],['Iker Casillas','GK','Spanyol',93,'icon'],['Xavi','CM','Spanyol',93,'icon'],['Andrés Iniesta','CM','Spanyol',94,'icon'],['Carles Puyol','CB','Spanyol',91,'legend'],['Fernando Torres','ST','Spanyol',90,'legend'],["Samuel Eto'o","ST","Kamerun",92,"legend"],['Didier Drogba','ST','Pantai Gading',92,'legend'],['Yaya Touré','CM','Pantai Gading',91,'legend'],['Michael Ballack','CM','Jerman',90,'legend'],['Philipp Lahm','RB','Jerman',92,'legend'],['Miroslav Klose','ST','Jerman',91,'legend'],['Manuel Neuer','GK','Jerman',92,'legend'],['Luka Modrić','CM','Kroasia',91,'legend'],['Gareth Bale','RW','Wales',91,'legend'],['Sergio Ramos','CB','Spanyol',92,'legend'],['Xabi Alonso','CDM','Spanyol',91,'legend'],['David Villa','ST','Spanyol',91,'legend'],['Ibrahimović','ST','Swedia',92,'legend']
+['Stanley Matthews','RW','Inggris',94,'icon'],['Ferenc Puskás','ST','Hongaria',96,'icon'],['Alfredo Di Stéfano','ST','Spanyol',96,'icon'],['Lev Yashin','GK','Rusia',95,'icon'],['Bobby Charlton','CM','Inggris',93,'legend'],['George Best','RW','Irlandia Utara',93,'legend'],['Garrincha','RW','Brasil',95,'icon'],['Didi','CM','Brasil',92,'legend'],['Nilton Santos','LB','Brasil',92,'legend'],['Zizinho','CAM','Brasil',93,'icon'],['Jairzinho','RW','Brasil',92,'legend'],['Rivelino','CAM','Brasil',92,'legend'],['Tostão','ST','Brasil',91,'legend'],['Carlos Alberto','RB','Brasil',91,'legend'],['Sándor Kocsis','ST','Hongaria',93,'icon'],['Fritz Walter','CAM','Jerman',93,'icon'],['Gerd Müller','ST','Jerman',94,'icon'],['Sepp Maier','GK','Jerman',92,'legend'],['Franz Beckenbauer','CB','Jerman',95,'icon'],['Günter Netzer','CM','Jerman',91,'legend'],['Johan Cruyff','CF','Belanda',96,'icon'],['Johan Neeskens','CM','Belanda',91,'legend'],['Rob Rensenbrink','LW','Belanda',90,'legend'],['Ruud Krol','LB','Belanda',90,'legend'],['Eusébio','ST','Portugal',95,'icon'],['Raymond Kopa','RW','Prancis',92,'legend'],['Just Fontaine','ST','Prancis',92,'legend'],['Michel Platini','CAM','Prancis',95,'icon'],['Gigi Riva','ST','Italia',92,'legend'],['Gianni Rivera','CAM','Italia',91,'legend'],['Dino Zoff','GK','Italia',92,'legend'],['Giacinto Facchetti','LB','Italia',92,'legend'],['Sandro Mazzola','ST','Italia',91,'legend'],['José Altafini','ST','Brasil',90,'legend'],['Omar Sívori','ST','Argentina',91,'legend'],['Diego Maradona','CAM','Argentina',97,'icon'],['Mario Kempes','ST','Argentina',91,'legend'],['Daniel Passarella','CB','Argentina',90,'legend'],['Zico','CAM','Brasil',94,'icon'],['Sócrates','CM','Brasil',91,'legend'],['Falcão','CM','Brasil',91,'legend'],['Cerezo','CM','Brasil',90,'legend'],['Hugo Sánchez','ST','Meksiko',91,'legend'],['Enzo Francescoli','CAM','Uruguay',91,'legend'],['Marcelo Salas','ST','Chile',90,'legend'],['Ivan Zamorano','ST','Chile',90,'legend'],['Carlos Valderrama','CAM','Kolombia',90,'legend'],['René Higuita','GK','Kolombia',89,'gold'],['Marco van Basten','ST','Belanda',94,'icon'],['Ruud Gullit','CAM','Belanda',93,'icon'],['Frank Rijkaard','CDM','Belanda',92,'legend'],['Ronald Koeman','CB','Belanda',91,'legend'],['Paolo Maldini','CB','Italia',94,'icon'],['Franco Baresi','CB','Italia',94,'icon'],['Roberto Baggio','CF','Italia',93,'icon'],['Giuseppe Bergomi','CB','Italia',90,'legend'],['Paulo Futre','LW','Portugal',90,'legend'],['Hristo Stoichkov','ST','Bulgaria',92,'legend'],['Gheorghe Hagi','CAM','Rumania',92,'legend'],['George Weah','ST','Liberia',92,'legend'],['Romário','ST','Brasil',94,'icon'],['Bebeto','ST','Brasil',91,'legend'],['Dunga','CDM','Brasil',90,'legend'],['Zinedine Zidane','CAM','Prancis',96,'icon'],['Ronaldo Nazário','ST','Brasil',96,'icon'],['Rivaldo','LW','Brasil',92,'legend'],['Ronaldinho','LW','Brasil',95,'icon'],['Luis Figo','RW','Portugal',93,'icon'],['Pavel Nedvěd','LW','Ceko',91,'legend'],['Andriy Shevchenko','ST','Ukraina',93,'icon'],['Thierry Henry','ST','Prancis',94,'icon'],['Dennis Bergkamp','CF','Belanda',91,'legend'],['Eric Cantona','ST','Prancis',92,'legend'],['Ryan Giggs','LW','Wales',91,'legend'],['Paul Scholes','CM','Inggris',91,'legend'],['Steven Gerrard','CM','Inggris',91,'legend'],['Frank Lampard','CM','Inggris',91,'legend'],['David Beckham','RM','Inggris',90,'legend'],['Wayne Rooney','ST','Inggris',91,'legend'],['Raúl','ST','Spanyol',92,'legend'],['Iker Casillas','GK','Spanyol',93,'icon'],['Xavi','CM','Spanyol',93,'icon'],['Andrés Iniesta','CM','Spanyol',94,'icon'],['Carles Puyol','CB','Spanyol',91,'legend'],['Fernando Torres','ST','Spanyol',90,'legend'],["Samuel Eto'o","ST","Kamerun",92,"legend"],['Didier Drogba','ST','Pantai Gading',92,'legend'],['Yaya Touré','CM','Pantai Gading',91,'legend'],['Michael Ballack','CM','Jerman',90,'legend'],['Philipp Lahm','RB','Jerman',92,'legend'],['Miroslav Klose','ST','Jerman',91,'legend'],['Manuel Neuer','GK','Jerman',92,'legend'],['Luka Modrić','CM','Kroasia',91,'legend'],['Gareth Bale','RW','Wales',91,'legend'],['Sergio Ramos','CB','Spanyol',92,'legend'],['Xabi Alonso','CDM','Spanyol',91,'legend'],['David Villa','ST','Spanyol',91,'legend'],['Ibrahimović','ST','Swedia',92,'legend'],
+/* ── ERA MODERN: icon ── */
+['Lionel Messi','CAM','Argentina',97,'icon'],['Cristiano Ronaldo','ST','Portugal',96,'icon'],['Kylian Mbappé','LW','Prancis',95,'icon'],['Erling Haaland','ST','Norwegia',94,'icon'],['Vinícius Júnior','LW','Brasil',94,'icon'],['Jude Bellingham','CAM','Inggris',93,'icon'],['Kevin De Bruyne','CAM','Belgia',94,'icon'],['Robert Lewandowski','ST','Polandia',93,'icon'],['Mohamed Salah','RW','Mesir',93,'icon'],['Neymar Jr','LW','Brasil',93,'icon'],
+/* ── ERA MODERN: legend ── */
+['Antoine Griezmann','CAM','Prancis',91,'legend'],['Harry Kane','ST','Inggris',92,'legend'],['Son Heung-min','LW','Korea Selatan',91,'legend'],['Toni Kroos','CM','Jerman',91,'legend'],['Sergio Busquets','CDM','Spanyol',90,'legend'],['Virgil van Dijk','CB','Belanda',92,'legend'],['Rodri','CDM','Spanyol',92,'legend'],['Bukayo Saka','RW','Inggris',90,'legend'],['Phil Foden','CAM','Inggris',90,'legend'],['Joshua Kimmich','CDM','Jerman',90,'legend'],['Jamal Musiala','CAM','Jerman',91,'legend'],['Florian Wirtz','CAM','Jerman',91,'legend'],['Victor Osimhen','ST','Nigeria',90,'legend'],['Lautaro Martínez','ST','Argentina',91,'legend'],['Nicolò Barella','CM','Italia',89,'gold'],['Theo Hernández','LB','Prancis',89,'gold'],['Rafael Leão','LW','Portugal',90,'legend'],['Rodrygo','RW','Brasil',89,'gold'],['Federico Valverde','CM','Uruguay',90,'legend'],['Pedri','CM','Spanyol',89,'gold'],['Gavi','CM','Spanyol',87,'gold'],['Lamine Yamal','RW','Spanyol',90,'legend'],['Gianluigi Buffon','GK','Italia',92,'legend'],['Thibaut Courtois','GK','Belgia',91,'legend'],['Alisson Becker','GK','Brasil',91,'legend'],['Jan Oblak','GK','Slovenia',91,'legend'],['Gianluigi Donnarumma','GK','Italia',90,'legend'],['Mike Maignan','GK','Prancis',89,'gold'],['Ederson Moraes','GK','Brasil',90,'legend'],['Marc-André ter Stegen','GK','Jerman',90,'legend'],['Emiliano Martínez','GK','Argentina',90,'legend'],['Wojciech Szczęsny','GK','Polandia',87,'gold'],['Casemiro','CDM','Brasil',89,'gold'],['Raphaël Varane','CB','Prancis',88,'gold'],['Antonio Rüdiger','CB','Jerman',88,'gold'],['Éder Militão','CB','Brasil',88,'gold'],['Rúben Dias','CB','Portugal',90,'legend'],['John Stones','CB','Inggris',88,'gold'],['Trent Alexander-Arnold','RB','Inggris',89,'gold'],['Andrew Robertson','LB','Skotlandia',88,'gold'],['Khvicha Kvaratskhelia','LW','Georgia',89,'gold'],['Ousmane Dembélé','RW','Prancis',89,'gold'],['Federico Chiesa','RW','Italia',86,'gold'],['Declan Rice','CDM','Inggris',90,'legend'],['Bruno Fernandes','CAM','Portugal',90,'legend'],['Bernardo Silva','CAM','Portugal',89,'gold'],
+/* ── ERA MODERN: gold ── */
+['Leroy Sané','LW','Jerman',86,'gold'],['Serge Gnabry','RW','Jerman',84,'gold'],['Christopher Nkunku','CAM','Prancis',85,'gold'],['Ollie Watkins','ST','Inggris',85,'gold'],['Alexander Isak','ST','Swedia',86,'gold'],['Viktor Gyökeres','ST','Swedia',86,'gold'],['Bradley Barcola','LW','Prancis',84,'gold'],['Francisco Conceição','RW','Portugal',83,'gold'],['João Neves','CM','Portugal',83,'gold'],['Eduardo Camavinga','CM','Prancis',86,'gold'],['Aurélien Tchouaméni','CDM','Prancis',86,'gold'],['Ronald Araújo','CB','Uruguay',87,'gold'],['William Saliba','CB','Prancis',88,'gold'],['Joško Gvardiol','CB','Kroasia',86,'gold'],['Jeremie Frimpong','RB','Belanda',84,'gold'],['Ryan Gravenberch','CM','Belanda',85,'gold'],['Dominik Szoboszlai','CAM','Hungaria',85,'gold'],['Lucas Paquetá','CAM','Brasil',85,'gold'],['Anthony Gordon','LW','Inggris',84,'gold'],['Cole Palmer','CAM','Inggris',87,'gold'],['Enzo Fernández','CM','Argentina',86,'gold'],['Moisés Caicedo','CDM','Ekuador',86,'gold'],['Alexis Mac Allister','CM','Argentina',85,'gold'],['Luis Díaz','LW','Kolombia',86,'gold'],['Diogo Jota','ST','Portugal',84,'gold'],['Cody Gakpo','LW','Belanda',84,'gold'],['Donyell Malen','RW','Belanda',83,'gold'],['Karim Adeyemi','RW','Jerman',82,'gold'],['Serhou Guirassy','ST','Guinea',84,'gold'],['Victor Boniface','ST','Nigeria',83,'gold'],['Benjamin Šeško','ST','Slovenia',83,'gold'],['Rasmus Højlund','ST','Denmark',82,'gold'],['Joshua Zirkzee','ST','Belanda',82,'gold'],['Alejandro Garnacho','LW','Argentina',83,'gold'],['Kobbie Mainoo','CM','Inggris',82,'gold'],['Nico Williams','LW','Spanyol',85,'gold'],['Dani Olmo','CAM','Spanyol',85,'gold'],['Álvaro Morata','ST','Spanyol',84,'gold'],['Marcus Thuram','ST','Prancis',84,'gold'],['Dušan Vlahović','ST','Serbia',84,'gold'],['Paulo Dybala','CAM','Argentina',85,'gold'],['Lorenzo Pellegrini','CAM','Italia',84,'gold'],['Sandro Tonali','CM','Italia',84,'gold'],['Davide Frattesi','CM','Italia',82,'gold'],['Matteo Politano','RW','Italia',82,'gold'],['Giacomo Raspadori','ST','Italia',82,'gold'],['Youssoufa Moukoko','ST','Jerman',80,'gold'],['Mathys Tel','ST','Prancis',80,'gold'],['Evan Ferguson','ST','Irlandia',81,'gold'],['Darwin Núñez','ST','Uruguay',85,'gold'],['Curtis Jones','CM','Inggris',82,'gold'],['Harvey Elliott','CAM','Inggris',81,'gold'],['Alex Grimaldo','LB','Spanyol',84,'gold'],['Nuno Mendes','LB','Portugal',85,'gold'],['Alphonso Davies','LB','Kanada',85,'gold'],['Achraf Hakimi','RB','Maroko',87,'gold'],['Kyle Walker','RB','Inggris',85,'gold'],['Reece James','RB','Inggris',84,'gold'],['Ben White','RB','Inggris',83,'gold'],['Gabriel Magalhães','CB','Brasil',87,'gold'],['Marquinhos','CB','Brasil',87,'gold'],['Alessandro Bastoni','CB','Italia',86,'gold'],['Matthijs de Ligt','CB','Belanda',86,'gold'],['Presnel Kimpembe','CB','Prancis',83,'gold'],['Pau Torres','CB','Spanyol',83,'gold'],['Robin Le Normand','CB','Spanyol',84,'gold'],['Dani Carvajal','RB','Spanyol',85,'gold'],['Jesús Navas','RB','Spanyol',81,'gold'],['Unai Simón','GK','Spanyol',85,'gold'],['David Raya','GK','Spanyol',84,'gold'],['Gregor Kobel','GK','Swiss',85,'gold'],['Diogo Costa','GK','Portugal',85,'gold'],['Guglielmo Vicario','GK','Italia',84,'gold'],['Andriy Lunin','GK','Ukraina',82,'gold'],['Álex Remiro','GK','Spanyol',82,'gold']
 ];
 function clampStat(v){ return Math.max(30, Math.min(99, Math.round(v))); }
 function statsOf(p){
@@ -3590,6 +3597,35 @@ function squadOVR(sq){ if (!sq) return 0; const slots = FORMATIONS[sq.formation]
 function squadChem(sq){ if (!sq) return 0; const slots = FORMATIONS[sq.formation].slots; let pts=0; sq.players.forEach((pid,i)=>{ const p=pid!=null?byId(pid):null; if(!p)return; if (sq.players.some((q,j)=>j!==i&&q!=null&&byId(q)&&byId(q).country===p.country)) pts++; if (p.pos===slots[i]) pts++; }); return Math.min(100, Math.round(pts/22*100)); }
 
 const FACE_SVG = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><rect width="80" height="80" fill="#3a4150"/><circle cx="40" cy="30" r="14" fill="#8b94a3"/><path d="M12 78 Q14 52 40 52 Q66 52 68 78 Z" fill="#8b94a3"/></svg>');
+/* FOTO PEMAIN prosedural (unik per pemain, dipake di card gold/legend/icon) */
+function portraitOf(p){
+  if (p._face) return p._face;
+  const q = mulberry(p.id*131+17);
+  const skins = ['#8d5524','#c68642','#e0ac69','#f1c27d','#ffdbac','#a5694f','#70421f'];
+  const hairs = ['#0f0f0f','#2c1b0e','#4a2f1b','#6b4226','#1a1a2e','#3d3d3d','#8a6d3b','#5a3825'];
+  const skin = skins[Math.floor(q()*skins.length)];
+  const hair = hairs[Math.floor(q()*hairs.length)];
+  const hairStyle = Math.floor(q()*4); /* 0 cepak, 1 belah, 2 kribo, 3 plontos */
+  const beard = q()<0.45;
+  const jersey = p.r==='icon'? '#ffd75e' : p.r==='legend'? '#c084fc' : '#f59e0b';
+  let hairEl = '';
+  if (hairStyle===0) hairEl = '<path d="M23 27 Q23 12 40 12 Q57 12 57 27 L57 30 Q49 21 40 21 Q31 21 23 30 Z" fill="'+hair+'"/>';
+  else if (hairStyle===1) hairEl = '<path d="M21 31 Q18 9 40 9 Q62 9 59 31 L55 26 Q53 17 40 17 Q27 17 25 26 Z" fill="'+hair+'"/>';
+  else if (hairStyle===2) hairEl = '<circle cx="40" cy="17" r="14" fill="'+hair+'"/><circle cx="27" cy="23" r="8" fill="'+hair+'"/><circle cx="53" cy="23" r="8" fill="'+hair+'"/>';
+  const beardEl = beard? '<path d="M27 42 Q26 60 40 62 Q54 60 53 42 L53 48 Q53 58 40 59 Q27 58 27 48 Z" fill="'+hair+'" opacity=".85"/>':'';
+  const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80">'
+    + '<rect width="80" height="80" fill="#151a24"/>'
+    + '<path d="M8 80 Q11 57 40 57 Q69 57 72 80 Z" fill="'+jersey+'"/>'
+    + '<circle cx="40" cy="34" r="17" fill="'+skin+'"/>'
+    + hairEl + beardEl
+    + '<circle cx="34" cy="33" r="1.9" fill="#141414"/><circle cx="46" cy="33" r="1.9" fill="#141414"/>'
+    + '<path d="M33 29 Q35 27.5 37 29" stroke="#141414" stroke-width="1" fill="none"/><path d="M43 29 Q45 27.5 47 29" stroke="#141414" stroke-width="1" fill="none"/>'
+    + '<path d="M36 38.5 Q40 40.5 44 38.5" stroke="#8a5a3b" stroke-width="1.6" fill="none" stroke-linecap="round"/>'
+    + '<path d="M40 34 L39 38" stroke="#00000022" stroke-width="1.4"/>'
+    + '</svg>';
+  return p._face = 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+}
+const faceFor = (p) => (p.r==='gold'||p.r==='legend'||p.r==='icon')? portraitOf(p) : FACE_SVG;
 
 /* kartu gaya FC26/27: shield, OVR+POS kiri, bendera, nama */
 function cardHTML(p, opts){
@@ -3598,7 +3634,7 @@ function cardHTML(p, opts){
   const r = RAR[p.r]; const s = statsOf(p);
   return '<div class="fbc '+r.cls+(opts.cls||'')+'" data-pid="'+p.id+'">'
     + '<div class="fbc-top"><div class="fbc-l"><div class="fbc-ovr">'+p.ovr+'</div><div class="fbc-pos">'+esc(p.pos)+'</div></div><div class="fbc-flag">'+flag(p.country)+'</div></div>'
-    + '<img class="fbc-face" src="'+FACE_SVG+'" alt="">'
+    + '<img class="fbc-face" src="'+faceFor(p)+'" alt="">'
     + '<div class="fbc-name">'+esc(p.name)+'</div>'
     + (POSGROUP[p.pos]==='GK'? gkStatsRow(gkStatsOf(p)) : statsRow(s))
     + '<div class="fbc-rar">'+r.label+'</div>'
@@ -3609,7 +3645,7 @@ function miniCard(p, slot, eff){
   const o = eff != null ? eff : p.ovr; const s = statsOf(p);
   return '<div class="fbc mcard '+RAR[p.r].cls+'">'
     + '<div class="fbc-top"><div class="fbc-l"><div class="fbc-ovr">'+o+'</div><div class="fbc-pos">'+esc(slot||p.pos)+'</div></div><div class="fbc-flag">'+flag(p.country)+'</div></div>'
-    + '<img class="fbc-face" src="'+FACE_SVG+'" alt="">'
+    + '<img class="fbc-face" src="'+faceFor(p)+'" alt="">'
     + '<div class="fbc-name">'+esc(p.name)+'</div>'
     + (POSGROUP[p.pos]==='GK'? gkStatsRow(gkStatsOf(p)) : statsRow(s))
     + '</div>';
@@ -4196,7 +4232,7 @@ function startMatch(cfg){
     cam:{ x:50,y:50,z:1.08,shake:0 },
     snaps:[], attackStart:0, varInfo:null, celeb:null, replay:null, shotSnapId:null, snapId:0,
     setpiece:null, pendingOff:null, wall:[], assistBy:null, lastTouchBy:[null,null], touchT:[-999,-999], lastConceded:null,
-    tacticCD:0, decT:0,
+    tacticCD:0, decT:0, ftPending:false, ftWait:0,
   };
   /* AI lawan pake gaya main random biar variatif */
   const tacKeys = Object.keys(TACTICS);
@@ -4283,7 +4319,15 @@ function simTick(dt){
   M.t += dt; M.min = Math.min(90+M.added, M.t*0.5); /* 90 menit = 180 detik real */
   if (M.tacticCD>0) M.tacticCD = Math.max(0, M.tacticCD-dt);
   if (M.half===1 && M.min>=45) { M.half=2; halftime(); return; }
-  if (M.min>=90+M.added) { fulltime(); return; }
+  if (M.min>=90+M.added) {
+    /* INJURY TIME abis: kalo masih ada serangan/bola hidup → tunggu bola MATI dulu baru full time */
+    const b2 = M.ball;
+    const attackLive = (b2.owner && !b2.owner.isGK) || (!b2.owner && Math.hypot(b2.vx,b2.vy)>1.0);
+    if (M.ftPending) M.ftWait = (M.ftWait||0)+dt;
+    if (!attackLive || (M.ftWait||0)>25) { fulltime(); return; } /* batas 25 dtk biar gak forever */
+    if (!M.ftPending) { M.ftPending=true; M.ftWait=0; matchMsg('⏱️ PERTAMBAHAN WAKTU HABIS — nunggu bola mati...', ''); }
+    return;
+  }
   const b = M.ball;
   /* bola fisik */
   b.x += b.vx*dt*10; b.y += b.vy*dt*10; b.vx*=0.985; b.vy*=0.985;
@@ -4679,7 +4723,10 @@ function moveAI(e,dt,chaser,cover,third,decide){
   tx = Math.max(3,Math.min(97,tx)); ty = Math.max(5,Math.min(95,ty));
   const dx=tx-e.x, dy=ty-e.y, d=Math.hypot(dx,dy);
   const pressing = (iChase||iCover||(iThird&&T.press>0.85)) && b.owner && b.ownerTeam!==e.team;
-  const sp = e.spd*(T.counter>0.6 && b.ownerTeam===e.team?1.2:1)*(pressing?1.18:1);
+  /* bek/mid di paruh sendiri pas diserang → lari lebih cepet nutup ruang (fix bek lemot) */
+  const inOwnHalf = (og===2)? b.x<50 : b.x>50;
+  const defBoost = (b.ownerTeam!==null && b.ownerTeam!==e.team && inOwnHalf) ? (myGroup==='DEF'?1.3 : myGroup==='MID'?1.12:1) : 1;
+  const sp = e.spd*(T.counter>0.6 && b.ownerTeam===e.team?1.2:1)*(pressing?1.18:1)*defBoost;
   if (d>0.4){ e.x += dx/d*sp*dt; e.y += dy/d*sp*dt; }
 }
 function onBall(e, dt){
@@ -5063,14 +5110,14 @@ function pushSnap(){
 }
 function startReplay(){
   M.phase='replay';
-  let from = Math.max(0, M.snaps.length-480);
-  const lastI = M.snaps.length-1;
+  const lastI = Math.max(0, M.snaps.length-1);
+  let from = Math.max(0, lastI-480);
   let slowAt = null;
   if (M.shotSnapId!=null) {
     const sIdx = M.snaps.findIndex((s)=>s.id===M.shotSnapId); /* cari via id, aman dari buffer shift */
-    if (sIdx>=0) { slowAt = sIdx; from = Math.max(0, Math.min(from, sIdx-30)); }
+    if (sIdx>=0) { slowAt = sIdx; from = Math.max(0, sIdx-40); } /* mulai pas momen nendang — bukan dari jauh sebelumnya */
   }
-  M.replay = { i: from, mode:'goal', slowAt }; /* gak dipercepat: normal + slowmo pas nendang */
+  M.replay = { i: from, mode:'goal', slowAt }; /* mulai dari tendangan, slowmo pas momen nendang */
 }
 function tickReplay(dt){
   const r = M.replay;
@@ -5105,7 +5152,7 @@ function resetKickoff(kick, keepPause){
   const kk = kickers[0];
   if (kk){ kk.x = ownWorldX(kick, 49); kk.y = 50; b.owner = kk; b.ownerTeam = kick; kk.dribA=null; kk.kick=true; touch(kick,kk); }
   M.snaps=[]; M.attackStart=0; M.pendingOff=null; M.wall=[]; M.shotBy=null; M.assistBy=null; M.shotSnapId=null;
-  M.lastConceded=null;
+  M.lastConceded=null; M.ftPending=false; M.ftWait=0;
   M.phase='play'; M.paused = !!keepPause;
 }
 /* ── HT / FT ── */
@@ -5269,6 +5316,10 @@ function updUI(){
   $('fbMMin').textContent = Math.floor(M.min)+"'";
   $('fbMTimeBar').style.width = Math.min(100, M.min/(90+M.added)*100)+'%';
   $('fbMCD').textContent = M.tacticCD>0? 'taktik '+Math.ceil(M.tacticCD)+'s' : '';
+  /* lagi SKIP → semua sound (termasuk ambience loop) di-mute biar gak nimpa-nimpa */
+  const sk = M.spd>1;
+  if (SFX.amb) SFX.amb.volume = sk? 0 : 0.12;
+  if (SFX.ultra) SFX.ultra.volume = sk? 0 : 0.19;
 }
 function updCam(dt, tx, ty, tz){
   const c = M.cam;
