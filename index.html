@@ -4785,7 +4785,7 @@ function startMatch(cfg){
     stats:{ shots:[0,0], sot:[0,0], saves:[0,0], tackles:[0,0], off:[0,0], poss:[0,0], fouls:[0,0], yc:[0,0], rc:[0,0] },
     teams:[ mk(t0Squad,0,t0Boost), mk(t1Squad,1,t1Boost) ],
     ents:[], ball:{ x:50,y:50,vx:0,vy:0,z:0,owner:null,ownerTeam:null },
-    phase:'play', paused:true, over:false, spd:1, raf:null, lastTs:0, startKick:0,
+    phase:'play', paused:true, over:false, spd:1, raf:null, lastTs:0, startKick:0, forceShoot:false, _forceShootTeam:null,
     cam:{ x:50,y:50,z:1.08,shake:0 }, camMode:'normal',
     antonyTeamUsed:[false,false], lastOwnerTeam:null,
     snaps:[], attackStart:0, varInfo:null, celeb:null, replay:null, shotSnapId:null, snapId:0, lastTrick:null, assistSnapId:null, goalTrick:null,
