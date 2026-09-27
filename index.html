@@ -4252,6 +4252,13 @@ function showPreMatch(cfg){
             cfg.seed = m.seed;
             cfg.oppSquad = (imA? m.b.squad : m.a.squad) || cfg.oppSquad;
             cfg.oppName = (imA? m.b.name : m.a.name) || cfg.oppName;
+            /* tentuin tim home/away DARI SERVER (m.home), biar 2 HP sama */
+            const imHome = (m.home===0 && imA) || (m.home===1 && !imA);
+            cfg.myTeam = imHome?0:1;
+            cfg.homeSquad = m.home===0 ? m.a.squad : m.b.squad;
+            cfg.awaySquad = m.home===0 ? m.b.squad : m.a.squad;
+            cfg.homeName = m.home===0 ? m.a.name : m.b.name;
+            cfg.awayName = m.home===0 ? m.b.name : m.a.name;
             if (m.readyPreA && m.readyPreB) startNow();
           }
         } catch(e){}
@@ -4273,6 +4280,13 @@ function showPreMatch(cfg){
             const imHost = r.host.uid===myUid || r.host.name===myName;
             cfg.oppSquad = (imHost? (r.guest&&r.guest.squad) : (r.host&&r.host.squad)) || cfg.oppSquad;
             cfg.seed = r.seed;
+            /* tentuin tim home/away DARI SERVER (r.home), biar 2 HP sama */
+            const imHome = (r.home===0 && imHost) || (r.home===1 && !imHost);
+            cfg.myTeam = imHome?0:1;
+            cfg.homeSquad = r.home===0 ? r.host.squad : r.guest.squad;
+            cfg.awaySquad = r.home===0 ? r.guest.squad : r.host.squad;
+            cfg.homeName = r.home===0 ? r.host.name : r.guest.name;
+            cfg.awayName = r.home===0 ? r.guest.name : r.host.name;
             if (r.readyA && r.readyB) startNow();
           }
         } catch(e){}
@@ -4613,7 +4627,13 @@ function playPvp(){
         const m = d.match;
         const imA = m.a.uid === myUid || m.a.name === myName;
         const me = imA ? m.a : m.b, opp = imA ? m.b : m.a;
-        showPreMatch({ mode:'pvp', mySquad: me.squad || state.squad, oppSquad: opp.squad || genAITeam(state.division), oppName: opp.name, mid: m.mid, seed: m.seed });
+        /* tentuin home/away DARI SERVER (m.home) */
+        const imHome = (m.home===0 && imA) || (m.home===1 && !imA);
+        const homeSquad = m.home===0 ? m.a.squad : m.b.squad;
+        const awaySquad = m.home===0 ? m.b.squad : m.a.squad;
+        const homeName = m.home===0 ? m.a.name : m.b.name;
+        const awayName = m.home===0 ? m.b.name : m.a.name;
+        showPreMatch({ mode:'pvp', mySquad: me.squad || state.squad, oppSquad: opp.squad || genAITeam(state.division), oppName: opp.name, mid: m.mid, seed: m.seed, myTeam: imHome?0:1, homeSquad, awaySquad, homeName, awayName });
       } else if (secs > 30) { clearInterval(pvpTimer); fbPost({ action:'queueLeave' }).catch(()=>{}); alert('gak ada player yang nyari match — pencarian dibatalkan'); showPlay(); }
       else $('fbPvpInfo').textContent = 'nyari player... ('+secs+'/30 dtk)';
     } catch (e) {}
@@ -4637,19 +4657,25 @@ function showFriendMenu(){
   };
 }
 function friendLobby(roomId, isHost){
-  screen('room', '<div class="fb-playmenu"><div class="fb-draft-top">ROOM '+esc(roomId)+'</div><div class="fb-roomstatus" id="fbRoomStat">nunggu pemain...</div><div class="fb-btnrow">'+(isHost?'<button type="button" class="fb-btn" id="fbRoomStart" style="display:none">Mulai Match</button>':'')+'<button type="button" class="fb-btn fb-warn" id="fbRoomLeave">Keluar Room</button></div></div>');
+  screen('room', '<div class="fb-playmenu"><div class="fb-draft-top">ROOM '+esc(roomId)+'</div><div class="fb-roomstatus" id="fbRoomStat">nunggu pemain...</div><div class="fb-btnrow"><button type="button" class="fb-btn fb-warn" id="fbRoomLeave">Keluar Room</button></div></div>');
   $('fbRoomLeave').onclick = () => { clearInterval(roomTimer); fbPost({ action:'roomLeave', roomId }).catch(()=>{}); showFriendMenu(); };
   roomTimer = setInterval(async () => {
     try {
       const d = await fbPost({ action:'roomPoll', roomId });
       const r = d.room;
       if (r.status === 'waiting') $('fbRoomStat').innerHTML = 'bagikan ID <b>'+esc(roomId)+'</b> ke temen lu';
-      else if (r.status === 'ready') { $('fbRoomStat').innerHTML = 'lawan: <b>'+esc(r.guest.name)+'</b> — siap!'; const sb = $('fbRoomStart'); if (sb) { sb.style.display = ''; sb.onclick = () => fbPost({ action:'roomStart', roomId }).catch(()=>{}); } }
+      else if (r.status === 'ready') { $('fbRoomStat').innerHTML = 'lawan: <b>'+esc(r.guest.name)+'</b><br>setelah keduanya pencet SIAP, match mulai otomatis!'; }
       else if (r.status === 'playing') {
         clearInterval(roomTimer);
         const imHost = r.host.uid === myUid || r.host.name === myName;
         const me = imHost ? r.host : r.guest, opp = imHost ? r.guest : r.host;
-        showPreMatch({ mode:'friend', mySquad: me.squad || state.squad, oppSquad: opp.squad || genAITeam(5), oppName: opp.name, roomId, seed: r.seed });
+        /* tentuin tim home/away DARI SERVER (r.home), biar 2 HP sama */
+        const imHome = (r.home===0 && imHost) || (r.home===1 && !imHost);
+        const homeSquad = r.home===0 ? r.host.squad : r.guest.squad;
+        const awaySquad = r.home===0 ? r.guest.squad : r.host.squad;
+        const homeName = r.home===0 ? r.host.name : r.guest.name;
+        const awayName = r.home===0 ? r.guest.name : r.host.name;
+        showPreMatch({ mode:'friend', mySquad: me.squad || state.squad, oppSquad: opp.squad || genAITeam(5), oppName: opp.name, roomId, seed: r.seed, myTeam: imHome?0:1, homeSquad, awaySquad, homeName, awayName });
       }
     } catch (e) { clearInterval(roomTimer); alert('room closed'); showFriendMenu(); }
   }, 2000);
@@ -4713,6 +4739,7 @@ const TRICK_DUR = { chop:0.42, push:0.5, spin:0.55, double:0.5, rainbow:0.72, el
 let M = null;
 function startMatch(cfg){
   const R = cfg.seed != null ? mulberry(cfg.seed) : mulberry(Date.now() & 0x7fffffff);
+  /* pvpHomeAwayFixed v21 — home/away DITENTUIN SERVER, gak ada desync */
   const mk = (squad, side, boost) => {
     const f = FORMATIONS[squad.formation] || FORMATIONS['433-attack'];
     const slots = f.slots;
@@ -4734,12 +4761,28 @@ function startMatch(cfg){
     });
     return { squad, side, tactic:'balance', players: ps, onField: ps.map((_,i)=>i), bench:(squad.bench||[]).map((pid)=>byId(pid)).filter(Boolean) };
   };
+  /* PVP/FRIEND: tim0 = HOME (DITENTUIN SERVER), tim1 = AWAY. myTeam = tim mana yang LU pegang.
+     Ini yang bikin 2 HP SINKRON: urutan tim sama untuk semua client, RNG konsisten. */
+  let t0Squad, t1Squad, t0Boost, t1Boost, myTeam, homeName, awayName;
+  if (cfg.mode==='pvp' || cfg.mode==='friend') {
+    t0Squad = cfg.homeSquad || cfg.mySquad;
+    t1Squad = cfg.awaySquad || cfg.oppSquad;
+    t0Boost = 0; t1Boost = 0;
+    myTeam = cfg.myTeam != null ? cfg.myTeam : 0;
+    homeName = cfg.homeName || myName;
+    awayName = cfg.awayName || cfg.oppName;
+  } else {
+    t0Squad = cfg.mySquad; t1Squad = cfg.oppSquad;
+    t0Boost = 0; t1Boost = Math.max(-6,Math.min(6,(DIV_OVR[state.division]||65)-squadOVR(cfg.oppSquad)));
+    myTeam = 0; homeName = myName; awayName = cfg.oppName;
+  }
   M = {
-    cfg, R,
+    cfg, R, myTeam,
     t:0, min:0, half:1, added: 2+Math.floor(R()*3),
     score:[0,0],
     stats:{ shots:[0,0], sot:[0,0], saves:[0,0], tackles:[0,0], off:[0,0], poss:[0,0], fouls:[0,0], yc:[0,0], rc:[0,0] },
-    teams:[ mk(cfg.mySquad,0,0), mk(cfg.oppSquad,1, cfg.mode==='ai' ? Math.max(-6,Math.min(6,(DIV_OVR[state.division]||65)-squadOVR(cfg.oppSquad))) : 0) ],    ents:[], ball:{ x:50,y:50,vx:0,vy:0,z:0,owner:null,ownerTeam:null },
+    teams:[ mk(t0Squad,0,t0Boost), mk(t1Squad,1,t1Boost) ],
+    ents:[], ball:{ x:50,y:50,vx:0,vy:0,z:0,owner:null,ownerTeam:null },
     phase:'play', paused:true, over:false, spd:1, raf:null, lastTs:0, startKick:0,
     cam:{ x:50,y:50,z:1.08,shake:0 }, camMode:'normal',
     antonyTeamUsed:[false,false], lastOwnerTeam:null,
@@ -4747,25 +4790,43 @@ function startMatch(cfg){
     setpiece:null, pendingOff:null, wall:[], assistBy:null, lastTouchBy:[null,null], touchT:[-999,-999], lastConceded:null,
     tacticCD:0, decT:0, ftPending:false, ftWait:0,
   };
-  /* taktik default tim lu (dari layar pre-match) + AI lawan pake gaya main random biar variatif */
-  if (cfg.tactic && TACTICS[cfg.tactic]) M.teams[0].tactic = cfg.tactic;
-  const tacKeys = Object.keys(TACTICS);
-  M.teams[1].tactic = tacKeys[Math.floor(R()*tacKeys.length)];
+  /* urutan RNG TIDAK BOLEH BERUBAH: di AI mode, tim0 pake cfg.tactic (NO RNG), tim1 random (1x R)
+     di PVP/FRIEND mode: tim0 (HOME) pake taktik home player kalo kita home, else random DULUAN (1x R),
+     kemudian tim1 (AWAY) pake taktik kita kalo kita away, else random (1x R) — urutan SELALU tim0→tim1 di 2 device */
+  if (cfg.mode==='pvp' || cfg.mode==='friend') {
+    const tacKeys = Object.keys(TACTICS);
+    if (myTeam===0) {
+      /* kita home: tim0 pake taktik kita (NO RNG), tim1 random */
+      if (cfg.tactic && TACTICS[cfg.tactic]) M.teams[0].tactic = cfg.tactic;
+      else M.teams[0].tactic = tacKeys[Math.floor(R()*tacKeys.length)];
+      M.teams[1].tactic = tacKeys[Math.floor(R()*tacKeys.length)];
+    } else {
+      /* kita away: tim0 random DULU, tim1 pake taktik kita (NO RNG) */
+      M.teams[0].tactic = tacKeys[Math.floor(R()*tacKeys.length)];
+      if (cfg.tactic && TACTICS[cfg.tactic]) M.teams[1].tactic = cfg.tactic;
+      else M.teams[1].tactic = tacKeys[Math.floor(R()*tacKeys.length)];
+    }
+  } else {
+    /* vs AI: PERTAHANKAN urutan RNG LAMA biar gak rusak test lama */
+    if (cfg.tactic && TACTICS[cfg.tactic]) M.teams[0].tactic = cfg.tactic;
+    const tacKeys = Object.keys(TACTICS);
+    M.teams[1].tactic = tacKeys[Math.floor(R()*tacKeys.length)];
+  }
   buildEnts();
   resetKickoff(0, true);
   screen('match', '<div class="fb-match">'
     + '<canvas id="fbMCanvas" width="760" height="470"></canvas>'
-    + '<div class="fb-hud"><b id="fbMHome">'+esc(myName)+'</b><span id="fbMScore">0 - 0</span><b id="fbMAway">'+esc(cfg.oppName)+'</b><i id="fbMMin">0\'</i></div>'
+    + '<div class="fb-hud"><b id="fbMHome">'+esc(homeName)+'</b><span id="fbMScore">0 - 0</span><b id="fbMAway">'+esc(awayName)+'</b><i id="fbMMin">0\'</i></div>'
     + '<div class="fb-mtimer"><i id="fbMTimeBar"></i></div>'
     + '<div class="fb-mctrl"><button type="button" class="fb-btn fb-alt" id="fbMTactic">TACTICS</button><span id="fbMTacNow">Balance</span><span class="fb-mcd" id="fbMCD"></span><button type="button" class="fb-btn fb-ghost" id="fbMSound">🔊</button><button type="button" class="fb-btn fb-alt" id="fbMShoot" style="background:#7f1d1d;border-color:#ef4444">⚽ SHOOT</button><button type="button" class="fb-btn fb-ghost" id="fbMCam">🎥 NORMAL</button><button type="button" class="fb-btn fb-ghost" id="fbMFull">🖥 FULL</button><button type="button" class="fb-btn fb-ghost" id="fbMSkip">⏩ Skip</button></div>'
     + '<div class="fb-moverlay" id="fbMOverlay"></div>'
     + '<div class="fb-rotatehint">📱 fullscreen: putar HP lu dulu (landscape)</div>'
     + '</div>');
   $('fbMTactic').onclick = openTactics;
-  $('fbMTacNow').textContent = TACTICS[M.teams[0].tactic].label; /* FIX: tampilkan taktik yg beneran dipake (bukan selalu Balance) */
+  $('fbMTacNow').textContent = TACTICS[M.teams[M.myTeam].tactic].label; /* tampilkan taktik TIM LU */
   $('fbMSkip').onclick = () => { M.spd = 30; };
   $('fbMShoot').onclick = () => { /* cuma bisa dipencet pas pemain tim lu pegang bola (tombol ijo) */
-    if (M && !M.over && M.phase==='play' && M.ball.owner && M.ball.owner.team===0 && !M.ball.owner.isGK) M.forceShoot = true;
+    if (M && !M.over && M.phase==='play' && M.ball.owner && M.ball.owner.team===M.myTeam && !M.ball.owner.isGK) M.forceShoot = true;
   };
   $('fbMCam').onclick = () => { /* ganti mode kamera: NORMAL → WIDE → DUEL (zoom bola) */
     M.camMode = (M.camMode||'normal')==='normal'? 'wide' : M.camMode==='wide'? 'duel' : 'normal';
@@ -4817,7 +4878,10 @@ function dist(a,b){ return Math.hypot(a.x-b.x, a.y-b.y); }
 /* catatan sentuhan terakhir (buat corner/goal kick/throw-in) */
 function touch(team,e){ M.lastTouchBy[team]=e; M.touchT[team]=M.t; }
 function lastTouchTeam(){ return M.touchT[0]>=M.touchT[1]? 0:1; }
-const tName = (ti) => (ti===0? myName : ((M&&M.cfg)? M.cfg.oppName : 'LAWAN'));
+const tName = (ti) => {
+  if (!M) return ti===0? myName : 'LAWAN';
+  return ti===M.myTeam? myName : (M.cfg.mode==='pvp'||M.cfg.mode==='friend'? (ti===0? M.cfg.homeName : M.cfg.awayName) : M.cfg.oppName);
+};
 /* kotak penalti (ikuti sisi, aware half swap) */
 function gkBox(ti){ const gx = ownGoal(ti); /* KOTAK KECIL (goal area) — kiper stay deket gawang biar gampang nepis */
   return gx===2? {x0:2,x1:8,y0:38,y1:62} : {x0:92,x1:98,y0:38,y1:62}; }
@@ -5076,7 +5140,7 @@ function simTick(dt){
     const gx = atkGoal(o.team);
     if (o.dribA==null) o.dribA = Math.atan2((50-o.y)*0.3, (gx-o.x)||0.001);
     /* tombol SHOOT manual: maksa pemain tim lu yang lagi pegang bola buat nendang */
-    if (M.forceShoot) { M.forceShoot=false; if (o.team===0) shoot(o); }
+    if (M.forceShoot) { M.forceShoot=false; if (o.team===M.myTeam) shoot(o); }
     if (b.owner===o) { /* masih pegang bola (belum nembak) */
     /* ── SKILL MOVES: semua gocek bisa dipake siapa aja (gak ada syarat lagi),
        tapi FREKUENSI/cooldown ikut OVR DRI — makin tinggi DRI makin sering gocek.
@@ -6295,7 +6359,7 @@ function resetKickoff(kick, keepPause){
 function halftime(){
   M.paused=true; M.phase='ht';
   SFX.whistle(2, 0.7);
-  const t2 = M.teams[0];
+  const t2 = M.teams[M.myTeam];
   const f = FORMATIONS[(t2.squad&&t2.squad.formation)||'433-attack'];
   const slots = f.slots;
   let sel = null;
@@ -6324,19 +6388,19 @@ function halftime(){
     t2.players[slotIdx] = { name:bp.name, pos:bp.pos, ovr:bp.ovr, r:bp.r||'gold', country:bp.country||'?', id:bp.id, st:st2,
       gk: bp.pos==='GK'? gkStatsOf(bp):null, slot:oldSlot,
       per:{ drib:st2.dri/100, pass:st2.pass/100, def:st2.def/100, aggr:(st2.def+st2.phy)/200, pace:st2.pac/100 }, trait:'none' };
-    const ent = M.ents.find((e)=>e.team===0 && e.idx===slotIdx);
+    const ent = M.ents.find((e)=>e.team===M.myTeam && e.idx===slotIdx);
     if (ent){
       ent.name=bp.name; ent.ovr=bp.ovr; ent.skill=bp.ovr;
       ent.spd = 4.2 + st2.pac/100*3.0;
       ent.slotName = oldSlot; ent.isGK = bp.pos==='GK';
       ent.st = st2; ent.per = t2.players[slotIdx].per;
       ent.gk = bp.pos==='GK'? gkStatsOf(bp) : null;
-      if (ent.isGK){ const bx=gkBox(0); ent.x = ownGoal(0)===2? 4:96; ent.y = 50; }
+      if (ent.isGK){ const bx=gkBox(M.myTeam); ent.x = ownGoal(M.myTeam)===2? 4:96; ent.y = 50; }
     }
   }
   function swapSlots(i,j){
     const tmp = t2.players[j]; t2.players[j]=t2.players[i]; t2.players[i]=tmp;
-    const ei = M.ents.find((e)=>e.team===0&&e.idx===i), ej = M.ents.find((e)=>e.team===0&&e.idx===j);
+    const ei = M.ents.find((e)=>e.team===M.myTeam&&e.idx===i), ej = M.ents.find((e)=>e.team===M.myTeam&&e.idx===j);
     if (ei&&ej){
       let ts=ei.slotName; ei.slotName=ej.slotName; ej.slotName=ts;
       let tx=ei.hx; ei.hx=ej.hx; ej.hx=tx;
@@ -6444,11 +6508,11 @@ function fulltime(){
 function openTactics(){
   if (M.tacticCD>0 || !M || M.paused || M.over) return;
   $('fbMOverlay').innerHTML = '<div class="fb-ovl-card"><h3>TACTICS — GAYA BERMAIN</h3><div class="fb-taclist">'
-    + Object.entries(TACTICS).map(([k,t]) => '<div class="fb-tacopt '+(M.teams[0].tactic===k?'on':'')+'" data-t="'+k+'"><b>'+t.label+'</b><span>'+t.short+'</span></div>').join('')
+    + Object.entries(TACTICS).map(([k,t]) => '<div class="fb-tacopt '+(M.teams[M.myTeam].tactic===k?'on':'')+'" data-t="'+k+'"><b>'+t.label+'</b><span>'+t.short+'</span></div>').join('')
     + '</div><div class="fb-hint">taktik cuma bisa diganti tiap 20 dtk</div><button type="button" class="fb-btn fb-ghost" id="fbTacClose">Tutup</button></div>';
   $('fbMOverlay').classList.add('show');
   $('fbTacClose').onclick = () => $('fbMOverlay').classList.remove('show');
-  document.querySelectorAll('.fb-tacopt').forEach((el)=>{ el.onclick = () => { M.teams[0].tactic = el.dataset.t; M.tacticCD=20; $('fbMTacNow').textContent = TACTICS[el.dataset.t].label; $('fbMOverlay').classList.remove('show'); }; });
+  document.querySelectorAll('.fb-tacopt').forEach((el)=>{ el.onclick = () => { M.teams[M.myTeam].tactic = el.dataset.t; M.tacticCD=20; $('fbMTacNow').textContent = TACTICS[el.dataset.t].label; $('fbMOverlay').classList.remove('show'); }; });
 }
 function showOverlay(title, sub, btns){
   const ov = $('fbMOverlay');
@@ -6664,7 +6728,7 @@ function draw(){
   /* tombol SHOOT: MERAH = belum bisa, HIJAU = pemain lu lagi pegang bola */
   const sb = document.getElementById('fbMShoot');
   if (sb) {
-    const can = M.phase==='play' && M.ball.owner && M.ball.owner.team===0 && !M.ball.owner.isGK;
+    const can = M.phase==='play' && M.ball.owner && M.ball.owner.team===M.myTeam && !M.ball.owner.isGK;
     if (can !== sb._on) {
       sb._on = can;
       if (can) { sb.style.background='#14532d'; sb.style.borderColor='#22c55e'; sb.style.color='#86efac'; }
