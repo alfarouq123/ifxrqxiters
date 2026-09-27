@@ -3601,6 +3601,28 @@ const GOAT_PLAYERS = [
   ['AL Farouq','GK','Indonesia',99,'goat','gk'],
   ['Zaky Mirza','ST','Indonesia',99,'goat','st'],
 ];
+/* ═══ TAMBAHAN DB: pemain INDONESIA (aktif + legenda) & bintang dunia yang belum ada.
+   DI-APPEND paling akhir biar ID pemain lama gak geser ═══ */
+const NEW_PLAYERS = [
+/* Indonesia aktif */
+['Maarten Paes','GK','Indonesia',78,'gold'],['Ernando Ari','GK','Indonesia',76,'gold'],['Nadeo Argawinata','GK','Indonesia',74,'silver'],
+['Jay Idzes','CB','Indonesia',80,'gold'],['Mees Hilgers','CB','Indonesia',79,'gold'],['Justin Hubner','CB','Indonesia',76,'gold'],['Rizky Ridho','CB','Indonesia',75,'gold'],['Jordi Amat','CB','Indonesia',74,'silver'],['Muhammad Ferrari','CB','Indonesia',73,'silver'],['Wahyu Prasetyo','CB','Indonesia',72,'silver'],['Nathan Tjoe-A-On','CB','Indonesia',76,'gold'],
+['Kevin Diks','RB','Indonesia',78,'gold'],['Sandy Walsh','RB','Indonesia',77,'gold'],['Asnawi Mangkualam','RB','Indonesia',74,'silver'],
+['Calvin Verdonk','LB','Indonesia',78,'gold'],['Dean James','LB','Indonesia',76,'gold'],['Shayne Pattynama','LB','Indonesia',75,'gold'],['Pratama Arhan','LB','Indonesia',73,'silver'],['Edo Febriansyah','LB','Indonesia',72,'silver'],
+['Thom Haye','CM','Indonesia',79,'gold'],['Ivar Jenner','CM','Indonesia',76,'gold'],['Marc Klok','CM','Indonesia',75,'gold'],['Ricky Kambuaya','CM','Indonesia',73,'silver'],
+['Marselino Ferdinan','CAM','Indonesia',77,'gold'],['Beckham Putra','CAM','Indonesia',72,'silver'],['Stefano Lilipaly','CAM','Indonesia',73,'silver'],
+['Egy Maulana Vikri','RW','Indonesia',74,'silver'],['Yakob Sayuri','RW','Indonesia',74,'silver'],['Witan Sulaeman','RW','Indonesia',73,'silver'],['Miliano Jonathans','RW','Indonesia',74,'silver'],
+['Ragnar Oratmangoen','LW','Indonesia',76,'gold'],['Saddil Ramdani','LW','Indonesia',72,'silver'],
+['Ole Romeny','ST','Indonesia',78,'gold'],['Rafael Struick','ST','Indonesia',75,'gold'],['Mauro Zijlstra','ST','Indonesia',74,'silver'],['Ramadhan Sananta','ST','Indonesia',73,'silver'],['Dimas Drajad','ST','Indonesia',72,'silver'],['Hokky Caraka','ST','Indonesia',71,'silver'],
+/* legenda Indonesia */
+['Bambang Pamungkas','ST','Indonesia',86,'legend'],['Boaz Solossa','ST','Indonesia',83,'legend'],['Kurniawan Dwi Yulianto','ST','Indonesia',83,'legend'],['Widodo C Putro','ST','Indonesia',82,'legend'],['Budi Sudarsono','ST','Indonesia',81,'legend'],['Rochi Putiray','ST','Indonesia',81,'legend'],
+['Firman Utina','CM','Indonesia',81,'legend'],['Ponaryo Astaman','CM','Indonesia',80,'legend'],['Hendro Kartiko','GK','Indonesia',80,'legend'],['Ismed Sofyan','RB','Indonesia',79,'legend'],['Charis Yulianto','CB','Indonesia',79,'legend'],['Elie Aiboy','RW','Indonesia',78,'legend'],['Agung Setyabudi','CB','Indonesia',78,'legend'],['Kurnia Sandy','GK','Indonesia',78,'legend'],
+/* bintang dunia tambahan */
+['Aurélien Tchouaméni','CDM','Prancis',84,'gold'],['Eduardo Camavinga','CM','Prancis',84,'gold'],['Moisés Caicedo','CDM','Ekuador',85,'gold'],['Enzo Fernández','CM','Argentina',84,'gold'],['Martín Ødegaard','CAM','Norwegia',86,'gold'],['Gabriel Martinelli','LW','Brasil',82,'gold'],['Mikel Oyarzabal','LW','Spanyol',82,'gold'],['Fabián Ruiz','CM','Spanyol',83,'gold'],['Mikel Merino','CM','Spanyol',81,'gold'],
+['Wojciech Szczęsny','GK','Polandia',82,'gold'],['Yann Sommer','GK','Swiss',83,'gold'],
+['Estêvão Willian','RW','Brasil',80,'gold'],['Alejandro Garnacho','LW','Argentina',80,'gold'],['Savinho','RW','Brasil',80,'gold'],['João Neves','CM','Portugal',82,'gold'],['Vitinha','CM','Portugal',84,'gold'],['Gonçalo Ramos','ST','Portugal',80,'gold'],
+['Rasmus Højlund','ST','Denmark',79,'gold'],['Benjamin Šeško','ST','Slovenia',81,'gold'],['Jonathan David','ST','Kanada',80,'gold'],['Cody Gakpo','LW','Belanda',82,'gold'],['Donyell Malen','RW','Belanda',79,'gold'],['Memphis Depay','ST','Belanda',80,'gold'],
+];
 function clampStat(v){ return Math.max(30, Math.min(99, Math.round(v))); }
 function statsOf(p){
   if (p.customSt) return p.customSt; /* stats custom dari ADMIN PANEL */
@@ -3659,6 +3681,8 @@ function buildDB(){
   }
   /* GOAT: ditaruh PALING AKHIR biar ID pemain lain gak geser (squad user aman) */
   for (const L of GOAT_PLAYERS){ if (seen.has(L[0])) continue; seen.add(L[0]); out.push({ id: out.length, name:L[0], pos:L[1], country:L[2], ovr:L[3], r:L[4], goat:L[5] }); }
+  /* pemain baru (Indonesia dkk) — juga di akhir biar ID stabil */
+  for (const L of NEW_PLAYERS){ if (seen.has(L[0])) continue; seen.add(L[0]); out.push({ id: out.length, name:L[0], pos:L[1], country:L[2], ovr:L[3], r:L[4] }); }
   return out;
 }
 const PLAYERS = buildDB();
@@ -3681,25 +3705,27 @@ function squadChem(sq){ if (!sq) return 0; const slots = FORMATIONS[sq.formation
 
 const FACE_SVG = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><rect width="80" height="80" fill="#3a4150"/><circle cx="40" cy="30" r="14" fill="#8b94a3"/><path d="M12 78 Q14 52 40 52 Q66 52 68 78 Z" fill="#8b94a3"/></svg>');
 /* FOTO PEMAIN prosedural (unik per pemain, dipake di card gold/legend/icon) */
-function portraitOf(p){
-  if (p._face) return p._face;
-  const q = mulberry(p.id*131+17);
-  const skins = ['#8d5524','#c68642','#e0ac69','#f1c27d','#ffdbac','#a5694f','#70421f'];
-  const hairs = ['#0f0f0f','#2c1b0e','#4a2f1b','#6b4226','#1a1a2e','#3d3d3d','#8a6d3b','#5a3825'];
-  const skin = skins[Math.floor(q()*skins.length)];
-  const hair = hairs[Math.floor(q()*hairs.length)];
-  const hairStyle = Math.floor(q()*4); /* 0 cepak, 1 belah, 2 kribo, 3 plontos */
-  const beard = q()<0.45;
-  const jersey = p.r==='goat'? '#f5c518' : p.r==='icon'? '#ffd75e' : p.r==='legend'? '#c084fc' : '#f59e0b';
-  let hairEl = '';
-  if (hairStyle===0) hairEl = '<path d="M23 27 Q23 12 40 12 Q57 12 57 27 L57 30 Q49 21 40 21 Q31 21 23 30 Z" fill="'+hair+'"/>';
-  else if (hairStyle===1) hairEl = '<path d="M21 31 Q18 9 40 9 Q62 9 59 31 L55 26 Q53 17 40 17 Q27 17 25 26 Z" fill="'+hair+'"/>';
-  else if (hairStyle===2) hairEl = '<circle cx="40" cy="17" r="14" fill="'+hair+'"/><circle cx="27" cy="23" r="8" fill="'+hair+'"/><circle cx="53" cy="23" r="8" fill="'+hair+'"/>';
-  const beardEl = beard? '<path d="M27 42 Q26 60 40 62 Q54 60 53 42 L53 48 Q53 58 40 59 Q27 58 27 48 Z" fill="'+hair+'" opacity=".85"/>':'';
-  const goatShadow = p.r==='goat'? '<text x="46" y="78" font-size="34" opacity="0.3" fill="#f5c518">🐐</text>' : '';
-  const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80">'
-    + '<rect width="80" height="80" fill="'+(p.r==='goat'? '#171204':'#151a24')+'"/>'
-    + goatShadow
+/* gaya rambut: 0 cepak, 1 belah samping, 2 kribo, 3 plontos, 4 buzzcut, 5 halland-bun, 6 spiky, 7 gondrong, 8 curly-fade */
+const SKINS = ['#8d5524','#c68642','#e0ac69','#f1c27d','#ffdbac','#a5694f','#70421f'];
+const HAIRS = ['#0f0f0f','#2c1b0e','#4a2f1b','#6b4226','#1a1a2e','#3d3d3d','#8a6d3b','#5a3825','#c9a86a','#d8c08a','#151515','#7a2e12'];
+function hairSVG(style, hair){
+  if (style===0) return '<path d="M23 27 Q23 12 40 12 Q57 12 57 27 L57 30 Q49 21 40 21 Q31 21 23 30 Z" fill="'+hair+'"/>'; /* cepak */
+  if (style===1) return '<path d="M21 31 Q18 9 40 9 Q62 9 59 31 L55 26 Q53 17 40 17 Q27 17 25 26 Z" fill="'+hair+'"/>'; /* belah samping */
+  if (style===2) return '<circle cx="40" cy="17" r="14" fill="'+hair+'"/><circle cx="27" cy="23" r="8" fill="'+hair+'"/><circle cx="53" cy="23" r="8" fill="'+hair+'"/>'; /* kribo */
+  if (style===3) return ''; /* plontos */
+  if (style===4) return '<path d="M24 27 Q24 14 40 14 Q56 14 56 27 L56 28 Q48 22 40 22 Q32 22 24 28 Z" fill="'+hair+'" opacity=".92"/>'; /* buzzcut */
+  if (style===5) return '<path d="M23 29 Q21 12 40 12 Q59 12 57 29 L53 25 Q51 17 40 17 Q29 17 27 25 Z" fill="'+hair+'"/><circle cx="40" cy="10.5" r="4.6" fill="'+hair+'"/>'; /* halland bun */
+  if (style===6) return '<path d="M24 28 L26 15 L30 24 L33 11 L37 22 L40 9 L43 22 L47 11 L50 24 L54 15 L56 28 Q48 20 40 20 Q32 20 24 28 Z" fill="'+hair+'"/>'; /* spiky */
+  if (style===7) return '<path d="M21 30 Q18 8 40 8 Q62 8 59 30 L59 47 Q57 53 52 53 L52 33 Q52 18 40 18 Q28 18 28 33 L28 53 Q23 53 21 47 Z" fill="'+hair+'"/>'; /* gondrong */
+  return '<circle cx="31" cy="19" r="6" fill="'+hair+'"/><circle cx="40" cy="16" r="6.6" fill="'+hair+'"/><circle cx="49" cy="19" r="6" fill="'+hair+'"/><circle cx="26" cy="25" r="4.6" fill="'+hair+'"/><circle cx="54" cy="25" r="4.6" fill="'+hair+'"/>'; /* curly fade */
+}
+function buildFaceSVG(cfg, jersey){
+  const skin=cfg.skin, hair=cfg.hair;
+  const hairEl = hairSVG(cfg.style|0, hair);
+  const beardEl = cfg.beard? '<path d="M27 42 Q26 60 40 62 Q54 60 53 42 L53 48 Q53 58 40 59 Q27 58 27 48 Z" fill="'+hair+'" opacity=".85"/>':'';
+  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80">'
+    + '<rect width="80" height="80" fill="'+(jersey==='#f5c518'? '#171204':'#151a24')+'"/>'
+    + (cfg.goatShadow? '<text x="46" y="78" font-size="34" opacity="0.3" fill="#f5c518">🐐</text>':'')
     + '<path d="M8 80 Q11 57 40 57 Q69 57 72 80 Z" fill="'+jersey+'"/>'
     + '<circle cx="40" cy="34" r="17" fill="'+skin+'"/>'
     + hairEl + beardEl
@@ -3708,6 +3734,17 @@ function portraitOf(p){
     + '<path d="M36 38.5 Q40 40.5 44 38.5" stroke="#8a5a3b" stroke-width="1.6" fill="none" stroke-linecap="round"/>'
     + '<path d="M40 34 L39 38" stroke="#00000022" stroke-width="1.4"/>'
     + '</svg>';
+}
+function portraitOf(p){
+  if (p._face) return p._face;
+  const q = mulberry(p.id*131+17);
+  const skin = SKINS[Math.floor(q()*SKINS.length)];
+  const hair = HAIRS[Math.floor(q()*HAIRS.length)];
+  const hairStyle = Math.floor(q()*9); /* 9 gaya rambut */
+  const beard = q()<0.45;
+  const jersey = p.r==='goat'? '#f5c518' : p.r==='icon'? '#ffd75e' : p.r==='legend'? '#c084fc' : '#f59e0b';
+  const beardEl = beard? '<path d="M27 42 Q26 60 40 62 Q54 60 53 42 L53 48 Q53 58 40 59 Q27 58 27 48 Z" fill="'+hair+'" opacity=".85"/>':'';
+  const svg = buildFaceSVG({ skin, hair, style:hairStyle, beard, goatShadow: p.r==='goat' }, jersey);
   return p._face = 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
 }
 const faceFor = (p) => (p.r==='gold'||p.r==='legend'||p.r==='icon'||p.r==='goat')? portraitOf(p) : FACE_SVG;
@@ -3785,6 +3822,7 @@ const PEAK_YEAR = {
 'Giuseppe Meazza':1934,'Silvio Piola':1938,'Gunnar Nordahl':1950,'Ricardo Zamora':1934,'Josep Samitier':1929,'Telmo Zarra':1950,'László Kubala':1952,'Ladislao Kubala':1952,'Juan Alberto Schiaffino':1950,'Obdulio Varela':1950,'Alcides Ghiggia':1950,'Gunnar Gren':1948,'Nils Liedholm':1958,'Alex James':1930,'Dixie Dean':1928,'Tommy Lawton':1939,'Raich Carter':1936,'Nat Lofthouse':1953,'Billy Wright':1954,'Duncan Edwards':1957,'Nándor Hidegkuti':1953,'József Bozsik':1954,'Zoltán Czibor':1954,'Wilf Mannion':1950,'Danny Blanchflower':1961,'Jock Stein':1967,'Roger Byrne':1957,'Héctor Rial':1956,'Felix Krohn':1938,
 'Luis Suárez Miramontes':1960,'José Santamaría':1960,'Amancio Amaro':1966,'Tarcisio Burgnich':1970,'Angelo Domenghini':1970,'Gérard Hausser':1966,'Albert Brülls':1962,'Helmut Haller':1966,'Karl-Heinz Schnellinger':1970,'Uli Hoeneß':1974,'Berti Vogts':1974,'Hans-Georg Schwarzenbeck':1974,'Johnny Rep':1974,'Arie Haan':1978,'Wim Suurbier':1974,'Piet Schrijvers':1978,'Alan Ball':1966,'Martin Peters':1966,'Geoff Hurst':1966,'Roger Hunt':1966,'Trevor Brooking':1980,'Graeme Souness':1981,'Archie Gemmill':1978,'Alain Giresse':1984,'Jean Tigana':1984,'Luis Fernández':1984,'Manuel Amoros':1984,'Joël Bats':1986,'Luigi Riva':1970,'Uwe Seeler':1966,'Wolfgang Overath':1974,'Paul Breitner':1974,'Kevin Keegan':1979,'Peter Shilton':1980,'Bobby Moore':1966,'Kenny Dalglish':1983,
 'Lothar Matthäus':1990,'Jürgen Klinsmann':1996,'Rudi Völler':1990,'Andreas Brehme':1990,'Thomas Häßler':1996,'Jürgen Kohler':1996,'Guido Buchwald':1990,'Bodo Illgner':1990,'Torsten Frings':2006,'Cafu':2002,'Kaká':2007,'Adriano':2005,'Robinho':2007,'Júlio César':2010,'Maicon':2010,'Lúcio':2010,'Juan':2007,'Gabriel Batistuta':1999,'Diego Simeone':1996,'Juan Román Riquelme':2007,'Hernán Crespo':2000,'Javier Zanetti':2010,'Roberto Ayala':2004,'Óscar Córdoba':2001,'Faustino Asprilla':1995,'Elias Figueroa':1974,'Diego Forlán':2010,'Álvaro Recoba':2003,'Ian Rush':1984,'Neville Southall':1985,'Pat Jennings':1973,'Gordon Banks':1966,'Gary Lineker':1986,'Peter Beardsley':1990,'John Barnes':1988,'Paul Gascoigne':1990,'David Seaman':1998,'Tony Adams':1998,'Sol Campbell':2002,'Ashley Cole':2004,'Michael Owen':2001,'Rio Ferdinand':2008,'John Terry':2005,'Petr Čech':2005,'Karel Poborský':1996,'Milan Baroš':2004,'Thomas Rosický':2002,'Fabio Cannavaro':2006,'Alessandro Nesta':2000,'Andrea Pirlo':2006,'Gennaro Gattuso':2006,'Alessandro Del Piero':2006,'Filippo Inzaghi':2007,'Christian Vieri':2003,'Gianluca Zambrotta':2006,'Fabio Grosso':2006,'Mauro Camoranesi':2006,'Simone Perrotta':2006,'Gaetano Scirea':1982,'Marco Tardelli':1982,'Bruno Conti':1982,'Paolo Rossi':1982,'Roberto Bettega':1978,'Claudio Gentile':1982,'Antonio Cabrini':1982,
+'Bambang Pamungkas':2007,'Boaz Solossa':2013,'Kurniawan Dwi Yulianto':1998,'Widodo C Putro':1997,'Budi Sudarsono':2008,'Rochi Putiray':1994,'Firman Utina':2010,'Ponaryo Astaman':2004,'Hendro Kartiko':2000,'Ismed Sofyan':2002,'Charis Yulianto':2004,'Elie Aiboy':2004,'Agung Setyabudi':1998,'Kurnia Sandy':1998,
 'Sadio Mané':2019,'Paul Pogba':2018,"N'Golo Kanté":2018,'Eden Hazard':2015,'Romelu Lukaku':2021,'Ángel Di María':2014,'Javier Mascherano':2014,'Sergio Romero':2014,'Luis Suárez':2016,'Diego Godín':2014,'Alexis Sánchez':2015,'Arturo Vidal':2015,'Claudio Bravo':2016,'Park Ji-sung':2008,'Takefusa Kubo':2024,'Kaoru Mitoma':2023,'Daichi Kamada':2022,'Shinji Kagawa':2012,'Keisuke Honda':2011,'Yuto Nagatomo':2013,'Maya Yoshida':2018,'Eiji Kawashima':2010
 };
 /* tahun edisi card = tahun puncak pemain ±2 thn; pemain aktif/generated = era modern */
@@ -4014,7 +4052,7 @@ function teamVBenchHTML(){
 function showIndex(){
   fbRefresh().then(() => {
     const owned = new Set(state.index || []);
-    const rars = ['icon','legend','gold','silver','bronze'];
+    const rars = ['goat','icon','legend','gold','silver','bronze']; /* GOAT paling pertama */
     screen('index', '<div class="fb-index"><div class="fb-draft-top">INDEX PEMAIN</div>'
       + '<div class="fb-idx-tabs" id="fbIdxTabs">'+rars.map((r,i) => '<div class="fb-idx-tab '+(i===0?'on':'')+'" data-r="'+r+'">'+RAR[r].label+' <span>'+PLAYERS.filter((p)=>p.r===r&&owned.has(p.id)).length+'/'+PLAYERS.filter((p)=>p.r===r).length+'</span></div>').join('')+'</div>'
       + '<div class="fb-idx-grid" id="fbIdxGrid"></div>'
@@ -4279,17 +4317,20 @@ function loadPlayerOverrides(){
 }
 function showAdmin(){
   if (myUid !== ADMIN_UID) return;
-  const farouq = PLAYERS.find((p)=>p.name==='AL Farouq');
-  const zaky = PLAYERS.find((p)=>p.name==='Zaky Mirza');
   screen('admin', '<div class="fb-playmenu" style="max-width:640px;margin:0 auto;padding:16px">'
     + '<div style="position:relative"><button type="button" class="fb-btn fb-ghost" id="fbAdmBack" style="position:absolute;left:0;top:-4px;z-index:5">← EXIT</button><div class="fb-draft-top">ADMIN PANEL 🐐</div></div>'
-    + '<h3 style="color:#f5c518;margin:14px 0 6px">GOAT PLAYERS</h3>'
-    + '<div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">'
-    + (farouq? '<div>'+cardHTML(farouq)+'<div class="fb-hint" style="max-width:180px">GOAT GK: nepis 100% semua tendangan — lari nyamain kecepatan bola (gak teleport)</div></div>' :'')
-    + (zaky? '<div>'+cardHTML(zaky)+'<div class="fb-hint" style="max-width:180px">GOAT ST: tiap tendangan PASTI gol (lewatin pemain depan), gocek unlimited</div></div>' :'')
-    + '</div>'
-    + '<div class="fb-hint" style="margin:6px 0">Kekuatan GOAT ikut POSISI: CB nutup ruang cepet · LB/RB/CM/RM/LM trivela akurat 100% ke striker · RW/LW blitz curler 100% gol · lari semua GOAT tetep sesuai stats PAC</div>'
-    + '<div class="fb-btnrow" style="margin-top:10px"><button type="button" class="fb-btn fb-ready" id="fbAdmGoat">MASUKKAN GOAT KE SQUAD-KU</button></div>'
+    + '<h3 style="color:#f5c518;margin:14px 0 6px">BUAT PEMAIN BARU</h3>'
+    + '<div class="fb-row"><span>Nama</span><input class="fb-input" id="fbCrName" placeholder="nama pemain" style="max-width:200px"></div>'
+    + '<div class="fb-row"><span>Posisi</span><select class="fb-input" id="fbCrPos">'+Object.keys(POSXY).map((k)=>'<option value="'+k+'">'+k+'</option>').join('')+'</select></div>'
+    + '<div class="fb-row"><span>Negara</span><input class="fb-input" id="fbCrCountry" value="Indonesia" style="max-width:150px"></div>'
+    + '<div class="fb-row"><span>OVR</span><input class="fb-input" id="fbCrOvr" type="number" min="30" max="99" value="80" style="max-width:90px"></div>'
+    + '<div class="fb-row"><span>Jenis Card</span><select class="fb-input" id="fbCrRar">'+Object.entries(RAR).map(([k,v])=>'<option value="'+k+'">'+v.label+'</option>').join('')+'</select></div>'
+    + '<div class="fb-row"><span>Warna Kulit</span><select class="fb-input" id="fbCrSkin">'+['gelap','coklat','sawo matang','kuning langsat','terang','coklat tua','sangat gelap'].map((n,i)=>'<option value="'+i+'">'+n+'</option>').join('')+'</select></div>'
+    + '<div class="fb-row"><span>Warna Rambut</span><select class="fb-input" id="fbCrHair">'+['hitam pekat','coklat tua','coklat','coklat muda','hitam kebiruan','abu','pirang','kastanye','pirang emas','pirang platina','hitam murni','coklat kemerahan'].map((n,i)=>'<option value="'+i+'">'+n+'</option>').join('')+'</select></div>'
+    + '<div class="fb-row"><span>Gaya Rambut</span><select class="fb-input" id="fbCrStyle">'+['cepak','belah samping','kribo','plontos','buzzcut','halland bun','spiky','gondrong','curly fade'].map((n,i)=>'<option value="'+i+'">'+n+'</option>').join('')+'</select></div>'
+    + '<div class="fb-row"><span>Brewok</span><select class="fb-input" id="fbCrBeard"><option value="0">gak ada</option><option value="1">ada</option></select></div>'
+    + '<div style="display:flex;justify-content:center;margin:8px 0"><img id="fbCrPrev" width="110" style="border-radius:12px;border:2px solid #f5c518" alt=""></div>'
+    + '<div class="fb-btnrow"><button type="button" class="fb-btn fb-ready" id="fbCrSave">💾 SIMPAN PEMAIN BARU (masuk INDEX & gacha)</button></div>'
     + '<div id="fbAdmMsg" class="fb-hint" style="min-height:18px"></div>'
     + '<h3 style="color:#f5c518;margin:14px 0 6px">EDIT TIM USER (sendiri / orang lain)</h3>'
     + '<div class="fb-row"><span>User</span><select id="fbAdmUser" class="fb-input"><option value="">— pilih user —</option></select></div>'
@@ -4298,17 +4339,26 @@ function showAdmin(){
     + '</div>');
   const msg = (t)=>{ const m=$('fbAdmMsg'); if(m) m.textContent=t; };
   $('fbAdmBack').onclick = showLobby;
-  $('fbAdmGoat').onclick = async () => {
-    if (!state.squad || !farouq || !zaky) { msg('bikin squad dulu di DRAFT'); return; }
-    const sq = JSON.parse(JSON.stringify(state.squad));
-    const slots = FORMATIONS[sq.formation].slots;
-    const gkI = slots.indexOf('GK');
-    let stI = slots.indexOf('ST'); if (stI<0) stI = slots.findIndex((s)=>POSGROUP[s]==='ATT');
-    const benchNew = (sq.bench||[]).filter((id)=>id!=null && id!==farouq.id && id!==zaky.id);
-    if (gkI>=0 && sq.players[gkI]!==farouq.id){ if(sq.players[gkI]!=null) benchNew.push(sq.players[gkI]); sq.players[gkI]=farouq.id; }
-    if (stI>=0 && sq.players[stI]!==zaky.id){ if(sq.players[stI]!=null) benchNew.push(sq.players[stI]); sq.players[stI]=zaky.id; }
-    sq.bench = benchNew.slice(0,5);
-    try { await fbPost({action:'saveSquad', squad:sq}); state.squad=sq; msg('✅ GOAT masuk squad-mu: AL Farouq jadi kiper, Zaky Mirza jadi striker'); } catch(e){ msg('gagal: '+e.message); }
+  /* ── CREATE PLAYER ── */
+  const SKIN_N=['gelap','coklat','sawo matang','kuning langsat','terang','coklat tua','sangat gelap'];
+  const crCfg = () => ({ skin:SKINS[+$('fbCrSkin').value||0], hair:HAIRS[+$('fbCrHair').value||0], style:+$('fbCrStyle').value||0, beard:$('fbCrBeard').value==='1', goatShadow:$('fbCrRar').value==='goat' });
+  const updPrev = () => {
+    const rar=$('fbCrRar').value;
+    const jersey= rar==='goat'? '#f5c518' : rar==='icon'? '#ffd75e' : rar==='legend'? '#c084fc' : '#f59e0b';
+    $('fbCrPrev').src='data:image/svg+xml;utf8,'+encodeURIComponent(buildFaceSVG(crCfg(), jersey));
+  };
+  ['fbCrSkin','fbCrHair','fbCrStyle','fbCrBeard','fbCrRar'].forEach((id)=>{ $(id).onchange=updPrev; });
+  updPrev();
+  $('fbCrSave').onclick = async () => {
+    const cfg=crCfg();
+    const player={ name:$('fbCrName').value.trim(), pos:$('fbCrPos').value, country:($('fbCrCountry').value.trim()||'Indonesia'), ovr:+$('fbCrOvr').value||75, r:$('fbCrRar').value, face:{ skin:cfg.skin, hair:cfg.hair, style:cfg.style, beard:cfg.beard } };
+    if(!player.name){ msg('isi namanya dulu!'); return; }
+    try {
+      await fbPost({action:'adminCreatePlayer', player});
+      await loadCustomPlayers();
+      msg('✅ '+player.name+' berhasil dibuat ('+RAR[player.r].label+' · OVR '+player.ovr+') — sekarang ada di INDEX & bisa didapet dari gacha');
+      $('fbCrName').value='';
+    } catch(e){ msg('❌ gagal: '+e.message); }
   };
   fbPost({action:'adminUsers'}).then((d)=>{
     const sel=$('fbAdmUser'); if(!sel) return;
@@ -4607,12 +4657,13 @@ function startMatch(cfg){
     + '<canvas id="fbMCanvas" width="760" height="470"></canvas>'
     + '<div class="fb-hud"><b id="fbMHome">'+esc(myName)+'</b><span id="fbMScore">0 - 0</span><b id="fbMAway">'+esc(cfg.oppName)+'</b><i id="fbMMin">0\'</i></div>'
     + '<div class="fb-mtimer"><i id="fbMTimeBar"></i></div>'
-    + '<div class="fb-mctrl"><button type="button" class="fb-btn fb-alt" id="fbMTactic">TACTICS</button><span id="fbMTacNow">Balance</span><span class="fb-mcd" id="fbMCD"></span><button type="button" class="fb-btn fb-ghost" id="fbMSound">🔊</button><button type="button" class="fb-btn fb-ghost" id="fbMSkip">⏩ Skip</button></div>'
+    + '<div class="fb-mctrl"><button type="button" class="fb-btn fb-alt" id="fbMTactic">TACTICS</button><span id="fbMTacNow">Balance</span><span class="fb-mcd" id="fbMCD"></span><button type="button" class="fb-btn fb-ghost" id="fbMSound">🔊</button><button type="button" class="fb-btn fb-alt" id="fbMShoot" style="background:#7f1d1d;border-color:#ef4444">⚽ SHOOT</button><button type="button" class="fb-btn fb-ghost" id="fbMSkip">⏩ Skip</button></div>'
     + '<div class="fb-moverlay" id="fbMOverlay"></div>'
     + '</div>');
   $('fbMTactic').onclick = openTactics;
   $('fbMTacNow').textContent = TACTICS[M.teams[0].tactic].label; /* FIX: tampilkan taktik yg beneran dipake (bukan selalu Balance) */
   $('fbMSkip').onclick = () => { M.spd = 30; };
+  $('fbMShoot').onclick = () => { if (M && !M.over) M.forceShoot = true; }; /* maksa pemain tim lu yg pegang bola buat nendang */
   if (cfg.mode==='pvp' || cfg.mode==='friend') $('fbMSkip').style.display = 'none'; /* PVP: skip dimatiin biar 2 HP tetep live bareng */
   $('fbMSound').onclick = () => { const on = SFX.toggle(); $('fbMSound').textContent = on? '🔊':'🔇'; };
   showOverlay('KICK OFF', esc(myName)+' vs '+esc(cfg.oppName), [{ label:'MULAI', fn: () => { hideOverlay(); M.phase='play'; M.paused = false; SFX.ambStart(); SFX.whistle(1, 0.8); bgWatchdog(); loop(performance.now()); } }]);
@@ -4731,6 +4782,11 @@ function simTick(dt){
     const tot=Math.abs(b.bendTarget.x-(b.sx!=null?b.sx:b.x))||1;
     const pr=Math.max(0,Math.min(1,Math.abs(b.x-(b.sx!=null?b.sx:b.x))/tot));
     b.z=Math.sin(pr*Math.PI)*(b.lobH||12);
+  } else if (!b.lob && (b.flyMax||0)>0.25 && (b.fly||0)>0.02) { /* visual UMPAN LAMBUNG: naik terus turun */
+    const pr2=Math.max(0,Math.min(1,1-b.fly/b.flyMax));
+    b.z=Math.sin(pr2*Math.PI)*(b.lobH2||10);
+  } else if ((b.fly||0)<=0.02 && !b.lob && !(b.owner&&b.owner.trick)) {
+    b.z=0; /* udah mendarat */
   }
   /* KNUCKLEBALL: goyang/dip tak terduga di udara */
   if (b.knuckle && !b.owner && (Math.abs(b.vx)+Math.abs(b.vy))>1) {
@@ -4832,6 +4888,11 @@ function simTick(dt){
       const cdx=cvX-e.x, cdy=cvY-e.y, cdd=Math.hypot(cdx,cdy);
       if (cdd>1.2){ const step=Math.min(cdd*Math.min(1,dt*2.5), e.spd*dt*1.3); e.x+=cdx/cdd*step; e.y+=cdy/cdd*step; }
     }
+    /* lawan lagi GOCEK: bek gak boleh cuma diem nonton — pelan-pelan ngepung/ngepress (biar gak keliatan freeze) */
+    if (b.owner && b.owner.trick && b.ownerTeam!==e.team && !e.isGK && e!==b.owner) {
+      const pd=dist(e,b.owner);
+      if (pd>2.3){ const ax2=(b.owner.x-e.x)/pd, ay2=(b.owner.y-e.y)/pd; const stp=Math.min(pd-2.3, e.spd*dt*0.85); e.x+=ax2*stp; e.y+=ay2*stp; }
+    }
     if (e.tackleCd>0) e.tackleCd-=dt;
     /* TACKLE: bek deket pembawa bola → dash ke arah bola (kiper gak boleh tekel).
        Hasil (rebut / kena pemain = pelanggaran) diputusin di resolveTackle */
@@ -4919,6 +4980,9 @@ function simTick(dt){
     const o = b.owner;
     const gx = atkGoal(o.team);
     if (o.dribA==null) o.dribA = Math.atan2((50-o.y)*0.3, (gx-o.x)||0.001);
+    /* tombol SHOOT manual: maksa pemain tim lu yang lagi pegang bola buat nendang */
+    if (M.forceShoot) { M.forceShoot=false; if (o.team===0) shoot(o); }
+    if (b.owner===o) { /* masih pegang bola (belum nembak) */
     /* ── SKILL MOVES: semua gocek bisa dipake siapa aja (gak ada syarat lagi),
        tapi FREKUENSI/cooldown ikut OVR DRI — makin tinggi DRI makin sering gocek.
        ATURAN: gocek cuma boleh di PARUH LAWAN — di area sendiri gak ada gocekan ── */
@@ -5008,6 +5072,7 @@ function simTick(dt){
       b.x += (fx-b.x)*Math.min(1,dt*16); b.y += (fy-b.y)*Math.min(1,dt*16);
     }
     b.vx=0; b.vy=0;
+    } /* akhir blok masih-pegang-bola */
   }
   /* tinggi bola visual turun balik ke 0 kalo gak ada trick */
   if (M.ball.z>0 && !(M.ball.owner && M.ball.owner.trick)) M.ball.z = Math.max(0, M.ball.z - 90*dt);
@@ -5491,8 +5556,12 @@ function doPass(from, to, accB, forceOk){ /* forceOk=true → umpan PASTI nyampe
   const ok = forceOk===true || M.R() < acc;
   const err = ok? 0 : (0.5-M.R())*(eliteP?6:10);
   const dx = to.x-from.x + (ok?0:err), dy = to.y-from.y + (ok?0:err*0.6);
-  const d = Math.hypot(dx,dy)||1; const pow = 2.4 + d*0.055;
-  b.vx = dx/d*pow; b.vy = dy/d*pow; b.passTarget = ok? to : null; b.from = from; b.fly = 0.16; /* bola terbang dulu, gak langsung nyangkut di org depan */
+  const d = Math.hypot(dx,dy)||1;
+  const lob = d > 26; /* umpan JAUH = TENDANGAN LAMBUNG (bola melayang) */
+  const pow = lob? 2.2 + d*0.045 : 2.4 + d*0.055;
+  b.vx = dx/d*pow; b.vy = dy/d*pow; b.passTarget = ok? to : null; b.from = from;
+  b.fly = lob? Math.max(0.6, Math.min(1.5, d*0.028)) : 0.16; /* bola terbang dulu, gak langsung nyangkut di org depan */
+  if (lob) { b.flyMax = b.fly; b.lobH2 = Math.min(13, d*0.26); } else { b.flyMax = 0; }
   from.skillLabel = { label:'PASS', t:1.0 }; /* umpan biasa = label PASS (bukan TRIVELA lagi) */
   /* CURVE PASS. TRIVELA (PAS 85+): kaki luar, belokan 180°→360° ikut PAS.
      cuma belok kalo umpan SUKSES — umpan gagal gak bengkok biar gak keluar-keluar.
@@ -5777,7 +5846,11 @@ function startFreeKick(atkT, x, y){
   const ang = Math.atan2(50-y, gx-x);
   if (inAtkHalf) {
     const wallE = M.ents.filter((e)=>e.team===defT && !e.isGK).sort((a,b2)=>dist(a,b)-dist(b2,b)).slice(0,3);
-    M.wall = wallE.map((e,i)=>{ e.x = x + Math.cos(ang)*8; e.y = y + Math.sin(ang)*8 + (i-1)*3; return e; });
+    M.wall = wallE.map((e,i)=>{ /* pagar SEJAJAR garis bola→gawang (ngadep bola), nutupin jalur ke gawang */
+      const off=(i-1)*3;
+      e.x = x + Math.cos(ang)*8 - Math.sin(ang)*off;
+      e.y = y + Math.sin(ang)*8 + Math.cos(ang)*off;
+      return e; });
   } else { M.wall = []; }
   const shooter = M.ents.filter((e)=>e.team===atkT && !e.isGK).sort((a,b2)=>b2.skill-a.skill)[0];
   if (shooter){ shooter.x = x - Math.cos(ang)*2; shooter.y = y - Math.sin(ang)*2; shooter.dribA=null; }
@@ -6372,9 +6445,26 @@ function draw(){
   }
 }
 /* ── INIT ── */
+/* pemain hasil CREATE admin — di-append ke PLAYERS (ID = urutan, sama di semua device) */
+function loadCustomPlayers(){
+  return fbPost({ action:'customPlayers' }).then((d)=>{
+    (d.players||[]).forEach((cp)=>{
+      const id = PLAYERS.length;
+      const p = { id, name:cp.name, pos:cp.pos, country:cp.country, ovr:cp.ovr, r:cp.r };
+      if (cp.r==='goat') p.goat = true;
+      if (cp.face && cp.face.skin) {
+        const jersey = cp.r==='goat'? '#f5c518' : cp.r==='icon'? '#ffd75e' : cp.r==='legend'? '#c084fc' : '#f59e0b';
+        p._face = 'data:image/svg+xml;utf8,' + encodeURIComponent(buildFaceSVG({
+          skin:cp.face.skin, hair:cp.face.hair||'#0f0f0f', style:+cp.face.style||0, beard:!!cp.face.beard, goatShadow:cp.r==='goat'
+        }, jersey));
+      }
+      PLAYERS.push(p);
+    });
+  }).catch(()=>{});
+}
 async function init(){
   if (!document.getElementById('fbRoot')) return;
-  try { await fbRefresh(); await loadPlayerOverrides(); renderLobby(); }
+  try { await fbRefresh(); await loadPlayerOverrides(); await loadCustomPlayers(); renderLobby(); }
   catch (e) { $('fbRoot').innerHTML = '<div class="fb-empty">'+esc(e.message)+'</div>'; }
 }
 return { init, showLobby, get M(){ return M; }, PLAYERS, FORMATIONS, state: () => state, _startMatch: startMatch, _draw4: draw4, _squadOVR: squadOVR };
