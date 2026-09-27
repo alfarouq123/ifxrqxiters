@@ -4312,9 +4312,15 @@ let overridesLoaded = false;
 function applyPlayerOverride(pid, o){
   const p = PLAYERS[pid]; if (!p || !o) return;
   if (o.name) p.name = o.name;
-  if (o.pos && POSGROUP[o.pos]) { p.pos = o.pos; }
+  if (o.pos && POSGROUP[o.pos]) { p.pos = o.pos; delete p._gk; }
   if (o.r && RAR[o.r]) { p.r = o.r; p._face = null; }
   if (o.ovr != null) p.ovr = Math.max(30, Math.min(99, +o.ovr || 60));
+  if (o.face && o.face.skin) { /* foto custom dari admin */
+    const jersey = p.r==='goat'? '#f5c518' : p.r==='icon'? '#ffd75e' : p.r==='legend'? '#c084fc' : '#f59e0b';
+    p._face = 'data:image/svg+xml;utf8,' + encodeURIComponent(buildFaceSVG({
+      skin:o.face.skin, hair:o.face.hair||'#0f0f0f', style:+o.face.style||0, beard:!!o.face.beard, goatShadow:p.r==='goat'
+    }, jersey));
+  }
   if (o.st && typeof o.st === 'object') p.customSt = { pac:+o.st.pac||60, sho:+o.st.sho||60, pass:+o.st.pass||60, dri:+o.st.dri||60, def:+o.st.def||60, phy:+o.st.phy||60 };
   if (o.gk && typeof o.gk === 'object') p.customGk = { div:+o.gk.div||60, han:+o.gk.han||60, kic:+o.gk.kic||60, ref:+o.gk.ref||60, spd:+o.gk.spd||60, pos:+o.gk.pos||60 };
 }
@@ -4330,7 +4336,9 @@ function showAdmin(){
   if (myUid !== ADMIN_UID) return;
   screen('admin', '<div class="fb-playmenu" style="max-width:640px;margin:0 auto;padding:16px">'
     + '<div style="position:relative"><button type="button" class="fb-btn fb-ghost" id="fbAdmBack" style="position:absolute;left:0;top:-4px;z-index:5">← EXIT</button><div class="fb-draft-top">ADMIN PANEL 🐐</div></div>'
-    + '<h3 style="color:#f5c518;margin:14px 0 6px">BUAT PEMAIN BARU</h3>'
+    + '<div class="fb-idx-tabs" id="fbAdmTabs" style="margin-top:10px"><div class="fb-idx-tab on" data-admtab="buat">➕ BUAT PEMAIN</div><div class="fb-idx-tab" data-admtab="editp">✏️ EDIT PEMAIN</div><div class="fb-idx-tab" data-admtab="editt">👥 EDIT TIM</div></div>'
+    + '<div id="fbAdmMsg" class="fb-hint" style="min-height:18px"></div>'
+    + '<div id="fbAdmPaneBuat">'
     + '<div class="fb-row"><span>Nama</span><input class="fb-input" id="fbCrName" placeholder="nama pemain" style="max-width:200px"></div>'
     + '<div class="fb-row"><span>Posisi</span><select class="fb-input" id="fbCrPos">'+Object.keys(POSXY).map((k)=>'<option value="'+k+'">'+k+'</option>').join('')+'</select></div>'
     + '<div class="fb-row"><span>Negara</span><input class="fb-input" id="fbCrCountry" value="Indonesia" style="max-width:150px"></div>'
@@ -4342,14 +4350,94 @@ function showAdmin(){
     + '<div class="fb-row"><span>Brewok</span><select class="fb-input" id="fbCrBeard"><option value="0">gak ada</option><option value="1">ada</option></select></div>'
     + '<div style="display:flex;justify-content:center;margin:8px 0"><img id="fbCrPrev" width="110" style="border-radius:12px;border:2px solid #f5c518" alt=""></div>'
     + '<div class="fb-btnrow"><button type="button" class="fb-btn fb-ready" id="fbCrSave">💾 SIMPAN PEMAIN BARU (masuk INDEX & gacha)</button></div>'
-    + '<div id="fbAdmMsg" class="fb-hint" style="min-height:18px"></div>'
+    + '</div>'
+    + '<div id="fbAdmPaneEditP" style="display:none">'
+    + '<div class="fb-row"><span>Cari</span><input class="fb-input" id="fbEpSearch" placeholder="cari nama pemain..."></div>'
+    + '<div id="fbEpList" style="max-height:230px;overflow-y:auto"></div>'
+    + '<div id="fbEpForm"></div>'
+    + '</div>'
+    + '<div id="fbAdmPaneEditT" style="display:none">'
     + '<h3 style="color:#f5c518;margin:14px 0 6px">EDIT TIM USER (sendiri / orang lain)</h3>'
     + '<div class="fb-row"><span>User</span><select id="fbAdmUser" class="fb-input"><option value="">— pilih user —</option></select></div>'
     + '<div class="fb-btnrow"><button type="button" class="fb-btn fb-alt" id="fbAdmLoad">MUAT TIM</button></div>'
       + '<div id="fbAdmEditor"></div>'
+    + '</div>'
     + '</div>');
   const msg = (t)=>{ const m=$('fbAdmMsg'); if(m) m.textContent=t; };
   $('fbAdmBack').onclick = showLobby;
+  /* ganti menu admin */
+  document.querySelectorAll('#fbAdmTabs .fb-idx-tab').forEach((t)=>{ t.onclick=()=>{
+    document.querySelectorAll('#fbAdmTabs .fb-idx-tab').forEach((x)=>x.classList.remove('on'));
+    t.classList.add('on');
+    $('fbAdmPaneBuat').style.display  = t.dataset.admtab==='buat'? '' : 'none';
+    $('fbAdmPaneEditP').style.display = t.dataset.admtab==='editp'? '' : 'none';
+    $('fbAdmPaneEditT').style.display = t.dataset.admtab==='editt'? '' : 'none';
+  }; });
+  /* ═══ MENU EDIT PEMAIN: pilih dari index → ubah nama/posisi/card/OVR/stats/FOTO ═══ */
+  function epDrawList(q){
+    const ql=(q||'').toLowerCase();
+    const pool=PLAYERS.filter((p)=>!ql||p.name.toLowerCase().includes(ql)).sort((a,b)=>b.ovr-a.ovr).slice(0,60);
+    $('fbEpList').innerHTML=pool.map((p)=>'<div class="fb-row" data-epid="'+p.id+'" style="cursor:pointer;padding:4px 6px;border-bottom:1px solid #263140">'
+      +'<span style="font-size:11px;color:'+(p.r==='goat'?'#f5c518':p.r==='icon'?'#c084fc':p.r==='legend'?'#e9d5ff':'#9ca3af')+'">'+RAR[p.r].label+'</span>'
+      +'<b style="flex:1;text-align:left;font-size:12px">&nbsp;'+esc(shortName(p.name))+'</b>'
+      +'<b style="font-size:11px">'+esc(p.pos)+' · '+p.ovr+'</b></div>').join('')||'<div class="fb-hint">gak ketemu</div>';
+    $('fbEpList').querySelectorAll('[data-epid]').forEach((el)=>{ el.onclick=()=>epOpen(+el.dataset.epid); });
+  }
+  function epOpen(pid){
+    const p=byId(pid); if(!p) return;
+    const isGK = POSGROUP[p.pos]==='GK';
+    const st = isGK? gkStatsOf(p) : statsOf(p);
+    const keys = isGK? [['div','DIV'],['han','HAN'],['kic','KIC'],['ref','REF'],['spd','SPD'],['pos','POS']] : [['pac','PAC'],['sho','SHO'],['pass','PAS'],['dri','DRI'],['def','DEF'],['phy','PHY']];
+    $('fbEpForm').innerHTML='<div style="margin-top:10px">'
+      +'<div style="display:flex;justify-content:center;margin-bottom:8px">'+cardHTML(p)+'</div>'
+      +'<div class="fb-row"><span>Nama</span><input class="fb-input" id="fbEpName" value="'+esc(p.name)+'" style="max-width:200px"></div>'
+      +'<div class="fb-row"><span>Posisi</span><select class="fb-input" id="fbEpPos">'+Object.keys(POSXY).map((k)=>'<option value="'+k+'"'+(k===p.pos?' selected':'')+'>'+k+'</option>').join('')+'</select></div>'
+      +'<div class="fb-row"><span>Jenis Card</span><select class="fb-input" id="fbEpRar">'+Object.entries(RAR).map(([k,v])=>'<option value="'+k+'"'+(k===p.r?' selected':'')+'>'+v.label+'</option>').join('')+'</select></div>'
+      +'<div class="fb-row"><span>OVR</span><input class="fb-input" id="fbEpOvr" type="number" min="30" max="99" value="'+p.ovr+'" style="max-width:90px"></div>'
+      +'<div class="fb-hint">Stats '+(isGK?'kiper':'pemain')+':</div>'
+      +'<div id="fbEpStats" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">'
+      + keys.map(([k,l])=>'<label style="font-size:10px;color:#9ca3af">'+l+'<input class="fb-input" type="number" min="30" max="99" id="fbEpS_'+k+'" value="'+Math.round(st[k]||60)+'" style="margin-top:2px"></label>').join('')
+      +'</div>'
+      +'<div class="fb-row" style="margin-top:8px"><span>Ubah foto?</span><select class="fb-input" id="fbEpFace"><option value="0">gak — biarin asli</option><option value="1">iya — bikin muka baru</option></select></div>'
+      +'<div id="fbEpFaceCfg" style="display:none">'
+      +'<div class="fb-row"><span>Warna Kulit</span><select class="fb-input" id="fbEpSkin">'+['gelap','coklat','sawo matang','kuning langsat','terang','coklat tua','sangat gelap'].map((n,i)=>'<option value="'+i+'">'+n+'</option>').join('')+'</select></div>'
+      +'<div class="fb-row"><span>Warna Rambut</span><select class="fb-input" id="fbEpHair">'+['hitam pekat','coklat tua','coklat','coklat muda','hitam kebiruan','abu','pirang','kastanye','pirang emas','pirang platina','hitam murni','coklat kemerahan'].map((n,i)=>'<option value="'+i+'">'+n+'</option>').join('')+'</select></div>'
+      +'<div class="fb-row"><span>Gaya Rambut</span><select class="fb-input" id="fbEpStyle">'+['cepak','belah samping','kribo','plontos','buzzcut','halland bun','spiky','gondrong','curly fade'].map((n,i)=>'<option value="'+i+'">'+n+'</option>').join('')+'</select></div>'
+      +'<div class="fb-row"><span>Brewok</span><select class="fb-input" id="fbEpBeard"><option value="0">gak ada</option><option value="1">ada</option></select></div>'
+      +'<div style="display:flex;justify-content:center;margin:8px 0"><img id="fbEpPrev" width="100" style="border-radius:12px;border:2px solid #f5c518" alt=""></div>'
+      +'</div>'
+      +'<div class="fb-btnrow"><button type="button" class="fb-btn fb-ready" id="fbEpSave">💾 SIMPAN EDIT PEMAIN</button></div>'
+      +'</div>';
+    $('fbEpPos').onchange=()=>{ /* pindah posisi → form stats ganti (kiper = stats kiper) */
+      const g2 = $('fbEpPos').value==='GK';
+      const ks = g2? [['div','DIV'],['han','HAN'],['kic','KIC'],['ref','REF'],['spd','SPD'],['pos','POS']] : [['pac','PAC'],['sho','SHO'],['pass','PAS'],['dri','DRI'],['def','DEF'],['phy','PHY']];
+      $('fbEpStats').innerHTML = ks.map(([k,l])=>'<label style="font-size:10px;color:#9ca3af">'+l+'<input class="fb-input" type="number" min="30" max="99" id="fbEpS_'+k+'" value="70" style="margin-top:2px"></label>').join('');
+    };
+    const updFacePrev=()=>{
+      if($('fbEpFace').value!=='1'){ $('fbEpFaceCfg').style.display='none'; return; }
+      $('fbEpFaceCfg').style.display='';
+      const rar=$('fbEpRar').value;
+      const jersey= rar==='goat'? '#f5c518' : rar==='icon'? '#ffd75e' : rar==='legend'? '#c084fc' : '#f59e0b';
+      $('fbEpPrev').src='data:image/svg+xml;utf8,'+encodeURIComponent(buildFaceSVG({skin:SKINS[+$('fbEpSkin').value],hair:HAIRS[+$('fbEpHair').value],style:+$('fbEpStyle').value,beard:$('fbEpBeard').value==='1',goatShadow:rar==='goat'},jersey));
+    };
+    ['fbEpFace','fbEpSkin','fbEpHair','fbEpStyle','fbEpBeard','fbEpRar'].forEach((id)=>{ $(id).onchange=updFacePrev; });
+    updFacePrev();
+    $('fbEpSave').onclick=async()=>{
+      const pos=$('fbEpPos').value;
+      const patch={ name:$('fbEpName').value.trim()||p.name, pos, r:$('fbEpRar').value, ovr:+$('fbEpOvr').value||p.ovr };
+      if(pos==='GK'){ patch.gk={}; ['div','han','kic','ref','spd','pos'].forEach((k)=>{ patch.gk[k]=Math.max(30,Math.min(99,+($('fbEpS_'+k).value)||60)); }); }
+      else { patch.st={}; ['pac','sho','pass','dri','def','phy'].forEach((k)=>{ patch.st[k]=Math.max(30,Math.min(99,+($('fbEpS_'+k).value)||60)); }); }
+      if($('fbEpFace').value==='1'){ patch.face={ skin:SKINS[+$('fbEpSkin').value], hair:HAIRS[+$('fbEpHair').value], style:+$('fbEpStyle').value, beard:$('fbEpBeard').value==='1' }; }
+      try {
+        await fbPost({action:'adminSavePlayer', pid:p.id, patch});
+        applyPlayerOverride(p.id, patch);
+        msg('✅ '+patch.name+' berhasil diedit! ('+RAR[patch.r].label+' · OVR '+patch.ovr+')');
+        epDrawList($('fbEpSearch').value);
+      } catch(e){ msg('❌ gagal: '+e.message); }
+    };
+  }
+  epDrawList('');
+  $('fbEpSearch').oninput=(e)=>epDrawList(e.target.value);
   /* ── CREATE PLAYER ── */
   const SKIN_N=['gelap','coklat','sawo matang','kuning langsat','terang','coklat tua','sangat gelap'];
   const crCfg = () => ({ skin:SKINS[+$('fbCrSkin').value||0], hair:HAIRS[+$('fbCrHair').value||0], style:+$('fbCrStyle').value||0, beard:$('fbCrBeard').value==='1', goatShadow:$('fbCrRar').value==='goat' });
@@ -4676,7 +4764,9 @@ function startMatch(cfg){
   $('fbMTactic').onclick = openTactics;
   $('fbMTacNow').textContent = TACTICS[M.teams[0].tactic].label; /* FIX: tampilkan taktik yg beneran dipake (bukan selalu Balance) */
   $('fbMSkip').onclick = () => { M.spd = 30; };
-  $('fbMShoot').onclick = () => { if (M && !M.over) M.forceShoot = true; }; /* maksa pemain tim lu yg pegang bola buat nendang */
+  $('fbMShoot').onclick = () => { /* cuma bisa dipencet pas pemain tim lu pegang bola (tombol ijo) */
+    if (M && !M.over && M.phase==='play' && M.ball.owner && M.ball.owner.team===0 && !M.ball.owner.isGK) M.forceShoot = true;
+  };
   $('fbMCam').onclick = () => { /* ganti mode kamera: NORMAL → WIDE → DUEL (zoom bola) */
     M.camMode = (M.camMode||'normal')==='normal'? 'wide' : M.camMode==='wide'? 'duel' : 'normal';
     $('fbMCam').textContent = M.camMode==='normal'? '🎥 NORMAL' : M.camMode==='wide'? '🎥 WIDE' : '🎥 DUEL';
@@ -5011,7 +5101,7 @@ function simTick(dt){
        ANTONY TURN sekarang SITUASIONAL: masuk pool kalo DRI 82+, 1× per POSSESSION TIM (bukan per orang) */
     const antonyHere = (o.st?o.st.dri:0)>=82 && !M.antonyTeamUsed[o.team];
     const maxTrick = (o.goat && o.slotName==='ST')? 9999 : (dri>=90? 3 : dri>=70? 2 : 1);
-    if (!o.trick && !inOwnHalf && (o.trickN||0)<maxTrick && nearDef && (o.ctrl||0)<=0 && o.st && (o.skillCd||0)<=0 && M.R()<dt*(1.5+dri/25)) {
+    if (!o.trick && !inOwnHalf && (o.trickN||0)<maxTrick && nearDef && (o.ctrl||0)<=0 && o.st && (o.skillCd||0)<=0 && M.R()<dt*(0.5+dri/60)) {
       const pool = Object.keys(TRICK_DUR).filter((t)=> t!=='antony' || antonyHere);
       const type = pool[Math.floor(M.R()*pool.length)];
       o.trick = { type, t:TRICK_DUR[type], dur:TRICK_DUR[type], done:false };
@@ -5019,7 +5109,7 @@ function simTick(dt){
       if (type==='antony') M.antonyTeamUsed[o.team] = true; /* jatah antony tim ini abis sampe possession pindah */
       M.lastTrick = { label:TRICK_LABEL[type], team:o.team, t:M.t }; /* dicatet, ditampilin pas replay gol */
       o.stealProt = Math.max(o.stealProt||0, o.trick.t+0.15); /* gak bisa direbut pas lagi gocek */
-      o.skillCd = Math.max(0.6, 3.2 - dri*0.022); /* DRI tinggi = cooldown gocek lebih cepet */
+      o.skillCd = Math.max(1.5, 4.5 - dri*0.026); /* gocek gak spam: cooldown lebih lama, DRI tinggi tetep lebih cepet */
       o.skillLabel = { label:TRICK_LABEL[type], t:1.3 };
     }
     if (o.trick) {
@@ -5162,15 +5252,20 @@ function gkMove(e,dt){
   const bspd0 = Math.hypot(b.vx,b.vy);
   const toward = (gx===2? b.vx<-0.3 : b.vx>0.3);
   e.diving = false;
-  if (!b.owner && bspd0>1.5 && toward) {
-    /* DIVE: baca arah tembakan, potong jalur bola (makin tinggi REF makin cepet) */
+  if (!b.owner && bspd0>1.2 && toward) {
+    /* DIVE: baca arah tembakan — prediksi titik potong di garis gawang (bagus baca = REF tinggi).
+       Ini yang bikin kiper bisa nepis tendangan jarak jauh */
     const vxe=b.vx*10, vye=b.vy*10;
     if (e.goat && Math.abs(b.vx)>0.2) { /* GOAT GK: langsung baca persis bola jatuhnya di mana */
       const gLineX = gx===2? box.x0+1 : box.x1-1;
       const tt = Math.max(0, (gLineX - b.x)/(b.vx*10));
       tx = gLineX; ty = b.y + vye*tt;
     } else {
-      tx = b.x + vxe*0.12; ty = b.y + vye*0.12;
+      const gLineX = gx===2? box.x0+1 : box.x1-1;
+      const tt = Math.max(0, (gLineX - b.x)/((b.vx*10)||0.001));
+      const readF = 0.35 + g.ref/100*0.6; /* kualitas baca arah ikut REF */
+      tx = b.x + (gLineX - b.x)*(0.4 + g.ref/100*0.55);
+      ty = b.y + vye*tt*readF;
     }
     tx = Math.max(box.x0,Math.min(box.x1,tx)); ty = Math.max(box.y0,Math.min(box.y1,ty));
     e.diving = true;
@@ -5189,9 +5284,9 @@ function gkMove(e,dt){
   tx = Math.max(box.x0+0.8, Math.min(box.x1-0.8, tx));
   ty = Math.max(box.y0+0.8, Math.min(box.y1-0.8, ty));
   const dx=tx-e.x, dy=ty-e.y, d=Math.hypot(dx,dy);
-  /* SPD: mobilitas di kotak; dive 1.9x lebih cepet; abis dive (down) lemot dulu buat bangun.
+  /* SPD: mobilitas di kotak; dive 2.2x lebih cepet; abis dive (down) lemot dulu buat bangun.
      GOAT GK: kecepatannya SAMA kayak bolanya — bola OTW gawang, kiper juga segitu (gak lebay) */
-  let sp = (4.2 + g.spd/100*3.0) * (e.down>0? 0.3:1) * (e.diving? 1.9:1);
+  let sp = (4.2 + g.spd/100*3.0) * (e.down>0? 0.3:1) * (e.diving? 2.2:1);
   if (e.goat && e.diving) sp = Math.max(sp, bspd0);
   if (d>0.25){ const step = Math.min(d, sp*dt); e.x += dx/d*step; e.y += dy/d*step; }
   /* HARD CLAMP: kiper gak pernah bisa keluar kotak penalti */
@@ -5203,12 +5298,17 @@ function gkMove(e,dt){
 function trySave(gk){
   const b = M.ball;
   if (b.shotId==null || b.shotId===gk.lastShotId) return; /* cuma 1x roll per tembakan */
+  if (b.shotBy && b.shotBy.team===gk.team) return; /* kiper gak nangkep tembakan temen sendiri (misal kena tiang/melintir balik) */
   const g = gk.gk || {div:60,han:60,kic:60,ref:60,spd:60,pos:60};
   const gx = ownGoal(gk.team);
   const towardGoal = gx===2? b.vx<-0.3 : b.vx>0.3;
   if (!towardGoal) return;
   if (b.sureGoal) return; /* tembakan GOAT penyerang: PASTI gol, kiper gak bisa nangkep */
-  if (gk.goat) { /* GOAT GK: nepis semuanya — dia GAK teleport, larinya nyamain kecepatan bola */
+  /* bola ON TARGET gak? prediksi y pas nyampe garis gawang — melenceng/kena tiang = biarin lewat */
+  const tLine = ((gx===2? 2.5:97.5) - b.x)/((b.vx*10)||0.001);
+  const yAtLine = b.y + b.vy*10*Math.max(0,tLine);
+  if (gk.goat) { /* GOAT GK: nepis semuanya yang ON TARGET — dia GAK teleport, larinya nyamain kecepatan bola */
+    if (!(yAtLine>38 && yAtLine<62)) return;
     gk.lastShotId = b.shotId;
     M.stats.saves[gk.team]++;
     SFX.play('cheer', 0.95);
@@ -5218,14 +5318,14 @@ function trySave(gk){
     touch(gk.team,gk); gk.ctrl=0.4; gk.dribA=null; gk.hold=2.0;
     return;
   }
-  /* DIV: jangkauan diving — makin tinggi makin jauh bola yg bisa disampe */
-  const reach = 2.6 + g.div/100*2.6;
+  /* DIV: jangkauan diving — makin tinggi makin jauh bola yg bisa disampe (dinaikin biar shot jauh ketepis) */
+  const reach = 3.2 + g.div/100*3.0;
   if (dist(gk,b) > reach) return; /* di luar jangkauan */
   gk.lastShotId = b.shotId;
   const shooter = M.shotBy || null;
   const shotPow = Math.hypot(b.vx,b.vy);
   /* REF baca arah & kecepatan reaksi, DIV kualitas diving, POS udah bantu dari positioning */
-  let saveP = 0.30 + g.ref/100*0.40 + g.div/100*0.28 + g.pos/100*0.12 - shotPow*0.02 - ((shooter?shooter.skill:70)/100)*0.10;
+  let saveP = 0.34 + g.ref/100*0.42 + g.div/100*0.30 + g.pos/100*0.12 - shotPow*0.015 - ((shooter?shooter.skill:70)/100)*0.08;
   if (b.knuckle) saveP -= 0.18;              /* knuckle goyang → susah dibaca */
   else if (b.curve && b.bendTarget) saveP -= 0.10; /* placing melengkung → agak susah */
   saveP = Math.max(0.08, Math.min(0.94, saveP));
@@ -5471,10 +5571,12 @@ function onBall(e, dt){
   }
   /* opsi skor */
   let best = null;
-  let shootS = dGoal<33 ? (0.65 + e.skill/230 - dGoal/80) : (dGoal<40? 0.15:0);
-  if (dGoal<16) shootS += 0.35; /* udah di mulut gawang? TEMBAK */
-  if (pressD<2.5 && dGoal<30) shootS += 0.15; /* diteken deket gawang? gas tembak */
-  shootS *= (0.6 + T.direct*0.8); /* taktik direct = lebih berani tembak; possession = sabar */
+  /* BERANI TEMBAK: jarak nembak diperlebar & bobot dinaikin biar pemain gak takut shoot */
+  let shootS = dGoal<36 ? (0.85 + e.skill/200 - dGoal/95) : (dGoal<44? 0.22:0);
+  if (dGoal<20) shootS += 0.4; /* mulut gawang = GAS */
+  if (pressD<3 && dGoal<32) shootS += 0.2; /* diteken deket gawang? tembak sebelum direbut */
+  if (!press || pressD>5) shootS += 0.12; /* gak ada yang press = bebas bidik */
+  shootS *= (0.75 + T.direct*0.6); /* taktik direct = makin berani; possession = agak sabar */
   best = { t:'shoot', s: shootS };
   /* dribble kalo ada ruang */
   const fwd = fwdDir(e.team);
@@ -6102,6 +6204,7 @@ function goal(ti){
 }
 function tickCeleb(dt){
   const c = M.celeb; c.t += dt;
+  if (M.shout){ M.shout.t -= dt; if (M.shout.t<=0) M.shout=null; } /* teriakan suporter pudaran */
   const s = c.scorer;
   /* lari ke spot */
   const dx = c.spot[0]-s.x, dy = c.spot[1]-s.y, d = Math.hypot(dx,dy);
@@ -6177,7 +6280,7 @@ function resetKickoff(kick, keepPause){
   if (kk){ kk.x = ownWorldX(kick, 49); kk.y = 50; b.owner = kk; b.ownerTeam = kick; kk.dribA=null; kk.kick=true; touch(kick,kk); }
   M.snaps=[]; M.attackStart=0; M.pendingOff=null; M.wall=[]; M.shotBy=null; M.assistBy=null; M.shotSnapId=null;
   M.lastConceded=null; M.ftPending=false; M.ftWait=0; M.assistSnapId=null; M.goalTrick=null;
-  M.antonyTeamUsed=[false,false]; M.lastOwnerTeam=null;
+  M.antonyTeamUsed=[false,false]; M.lastOwnerTeam=null; M.shout=null;
   M.phase='play'; M.paused = !!keepPause;
 }
 /* ── HT / FT ── */
@@ -6357,12 +6460,12 @@ function updUI(){
   if (SFX.amb) SFX.amb.volume = sk? 0 : 0.12;
   if (SFX.ultra) SFX.ultra.volume = sk? 0 : 0.19;
 }
-/* MODE KAMERA: normal (agak lebar) / WIDE (keliatan se-lapangan) / DUEL (zoom ke bola) */
+/* MODE KAMERA: normal (se-lapangan) / WIDE (lebih gede lagi) / DUEL (zoom ke bola) */
 function camZoom(base){
   const m = M.camMode||'normal';
-  if (m==='wide') return base*0.72;
-  if (m==='duel') return base*1.45;
-  return base*0.94; /* normal lebih lebar dari dulu biar lapangan gak sempit */
+  if (m==='wide') return base*0.62;  /* super wide */
+  if (m==='duel') return base*1.45;  /* zoom duel */
+  return base*0.80; /* normal = keliatan se-lapangan, lapangan terasa GEDE */
 }
 function updCam(dt, tx, ty, tz){
   const c = M.cam;
@@ -6385,10 +6488,8 @@ function makeCrowd(){
   band(104.5,-4,8.5,108,150,away);  /* kanan */
   return CROWD_CACHE=dots;
 }
-function crowdShout(txt, sad){ /* teriakan suporter pas gol */
-  const host = document.querySelector('.fb-match'); if (!host) return;
-  const d = document.createElement('div'); d.className='fb-crowdshout'+(sad?' sad':''); d.textContent=txt;
-  host.appendChild(d); setTimeout(()=>{ if (d.parentNode) d.remove(); }, 2600);
+function crowdShout(txt, sad){ /* teriakan suporter pas gol — muncul DI TRIBUN, digambar bareng suporter */
+  if (M) M.shout = { text: txt, sad: !!sad, t: 2.8 };
 }
 /* ── DRAW v2 (kamera + VAR + selebrasi + replay) ── */
 function draw(){
@@ -6414,6 +6515,19 @@ function draw(){
   x.fillRect(px(104), py(-4), px(10), py(108));
   const crowd = makeCrowd();
   for (let ci=0; ci<crowd.length; ci++){ const dd=crowd[ci]; x.fillStyle=dd.c; x.fillRect(px(dd.x), py(dd.y), 2.4, 2.4); }
+  /* TERIAKAN SUPORTER pas gol: tulisan GEDE di tribun atas, goyang kayak suporter lagi teriak */
+  if (M.shout && M.shout.t>0) {
+    const nowMs = performance.now();
+    const pr = 1 - M.shout.t/2.8;
+    const sc = pr<0.12? 0.3+(pr/0.12)*0.85 : (1.15 - Math.min(0.15,(pr-0.12)*0.4));
+    x.save();
+    x.translate(px(50), py(-7.5 + Math.sin(nowMs/95)*0.6));
+    x.scale(sc, sc);
+    x.font='900 italic 42px Inter, sans-serif'; x.textAlign='center';
+    x.lineWidth=7; x.strokeStyle='#000'; x.fillStyle= M.shout.sad? '#93c5fd' : '#ffe89a';
+    x.strokeText(M.shout.text, 0, 0); x.fillText(M.shout.text, 0, 0);
+    x.restore();
+  }
   /* lapangan */
   x.fillStyle = '#1e8c46'; x.fillRect(0,0,W,H);
   x.fillStyle = '#1a7f40'; for (let i=0;i<10;i++) if (i%2) x.fillRect(i*W/10,0,W/10,H);
@@ -6525,6 +6639,16 @@ function draw(){
     x.fillStyle='rgba(0,0,0,.4)'; x.fillRect(0,0,W,30);
     x.fillStyle='#ffd75e'; x.font='bold 16px Inter, sans-serif'; x.textAlign='center';
     x.fillText('GOOOL! '+(M.celeb.scorer.name), W/2, 20);
+  }
+  /* tombol SHOOT: MERAH = belum bisa, HIJAU = pemain lu lagi pegang bola */
+  const sb = document.getElementById('fbMShoot');
+  if (sb) {
+    const can = M.phase==='play' && M.ball.owner && M.ball.owner.team===0 && !M.ball.owner.isGK;
+    if (can !== sb._on) {
+      sb._on = can;
+      if (can) { sb.style.background='#14532d'; sb.style.borderColor='#22c55e'; sb.style.color='#86efac'; }
+      else { sb.style.background='#7f1d1d'; sb.style.borderColor='#ef4444'; sb.style.color=''; }
+    }
   }
 }
 /* ── INIT ── */
