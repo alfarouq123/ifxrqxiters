@@ -4236,14 +4236,17 @@ function showPreMatch(cfg){
     if (cfg.mode==='pvp') {
       const wait = $('fbPMWait'); if (wait) wait.innerHTML = 'nunggu lawan siap... <b id="fbPMTimer">'+pm.timer+'</b> dtk';
       fbPost({ action:'matchSquad', mid:cfg.mid, squad:pm.squad }).catch(()=>{});
-      /* flag siap dikirim + DI-RETRY terus (write DB bisa kalah konflik) sampe match mulai */
-      const sendReady = () => fbPost({ action:'matchReadyPre', mid:cfg.mid }).then((d)=>{ if (d && d.both && !pm.started) startNow(); }).catch(()=>{});
+      /* flag siap dikirim + DI-RETRY terus (write DB bisa kalah konflik) sampe match mulai.
+         startAt = WAKTU PASTI KICKOFF DARI SERVER (ms epoch), dipake untuk lock awal tick. */
+      const sendReady = () => fbPost({ action:'matchReadyPre', mid:cfg.mid }).then((d)=>{
+        if (d && d.both && d.startAt && !pm.started) { cfg.kickAt = d.startAt; startNow(); }
+      }).catch(()=>{});
       sendReady();
       clearInterval(pmPoll);
       let rk = 0;
       pmPoll = setInterval(async () => {
         rk++;
-        if (rk%3===0) sendReady();
+        if (rk%2===0) sendReady();
         try {
           const d = await fbPost({ action:'queuePoll' });
           if (d.match) {
@@ -4252,27 +4255,28 @@ function showPreMatch(cfg){
             cfg.seed = m.seed;
             cfg.oppSquad = (imA? m.b.squad : m.a.squad) || cfg.oppSquad;
             cfg.oppName = (imA? m.b.name : m.a.name) || cfg.oppName;
-            /* tentuin tim home/away DARI SERVER (m.home), biar 2 HP sama */
             const imHome = (m.home===0 && imA) || (m.home===1 && !imA);
             cfg.myTeam = imHome?0:1;
             cfg.homeSquad = m.home===0 ? m.a.squad : m.b.squad;
             cfg.awaySquad = m.home===0 ? m.b.squad : m.a.squad;
             cfg.homeName = m.home===0 ? m.a.name : m.b.name;
             cfg.awayName = m.home===0 ? m.b.name : m.a.name;
-            if (m.readyPreA && m.readyPreB) startNow();
+            if (m.readyPreA && m.readyPreB && m.startAt) { cfg.kickAt = m.startAt; startNow(); }
           }
         } catch(e){}
-      }, 1500);
+      }, 1000);
     }
     if (cfg.mode==='friend') {
       const wait = $('fbPMWait'); if (wait) wait.innerHTML = 'nunggu lawan siap... <b id="fbPMTimer">'+pm.timer+'</b> dtk';
-      const sendReady = () => fbPost({ action:'roomReady', roomId:cfg.roomId, squad:pm.squad }).then((d)=>{ if (d && d.both && !pm.started) startNow(); }).catch(()=>{});
+      const sendReady = () => fbPost({ action:'roomReady', roomId:cfg.roomId, squad:pm.squad }).then((d)=>{
+        if (d && d.both && d.startAt && !pm.started) { cfg.kickAt = d.startAt; startNow(); }
+      }).catch(()=>{});
       sendReady();
       clearInterval(pmPoll);
       let rk2 = 0;
       pmPoll = setInterval(async () => {
         rk2++;
-        if (rk2%3===0) sendReady();
+        if (rk2%2===0) sendReady();
         try {
           const d = await fbPost({ action:'roomPoll', roomId:cfg.roomId });
           const r = d.room;
@@ -4280,17 +4284,16 @@ function showPreMatch(cfg){
             const imHost = r.host.uid===myUid || r.host.name===myName;
             cfg.oppSquad = (imHost? (r.guest&&r.guest.squad) : (r.host&&r.host.squad)) || cfg.oppSquad;
             cfg.seed = r.seed;
-            /* tentuin tim home/away DARI SERVER (r.home), biar 2 HP sama */
             const imHome = (r.home===0 && imHost) || (r.home===1 && !imHost);
             cfg.myTeam = imHome?0:1;
             cfg.homeSquad = r.home===0 ? r.host.squad : r.guest.squad;
             cfg.awaySquad = r.home===0 ? r.guest.squad : r.host.squad;
             cfg.homeName = r.home===0 ? r.host.name : r.guest.name;
             cfg.awayName = r.home===0 ? r.guest.name : r.host.name;
-            if (r.readyA && r.readyB) startNow();
+            if (r.readyA && r.readyB && r.startAt) { cfg.kickAt = r.startAt; startNow(); }
           }
         } catch(e){}
-      }, 1500);
+      }, 1000);
     }
   }
   /* countdown 60 dtk (pvp/friend): abis waktu = mulai otomatis */
@@ -4739,9 +4742,9 @@ const TRICK_DUR = { chop:0.42, push:0.5, spin:0.55, double:0.5, rainbow:0.72, el
 let M = null;
 function startMatch(cfg){
   const R = cfg.seed != null ? mulberry(cfg.seed) : mulberry(Date.now() & 0x7fffffff);
-  /* pvpLockstep v24 — TOMBOL SHOOT + TACTICS NYALA LAGI! Pakai input lockstep ala eFootball/ML/FF:
-     input dikirim ke server, dijadwalkan buat tick T+DELAY, dieksekusi di tick SAMA kedua HP.
-     Auto start countdown, home/away server-side. 100% sinkron + BISA CONTROL PEMAIN! */
+  /* pvpServerClock v25 — TOMBOL SHOOT+TACTIC MATI (auto sim), kickoff ditentuin SERVER,
+     sim tick hitung dari WALL-CLOCK TIME (Date.now) yang sinkron ke server.
+     Ini satu-satunya cara: FPS/ldevice tidak pengaruh jumlah tick. 100% SINKRON. */
   const mk = (squad, side, boost) => {
     const f = FORMATIONS[squad.formation] || FORMATIONS['433-attack'];
     const slots = f.slots;
@@ -4827,10 +4830,9 @@ function startMatch(cfg){
   $('fbMTactic').onclick = openTactics;
   $('fbMTacNow').textContent = TACTICS[M.teams[M.myTeam].tactic].label; /* tampilkan taktik TIM LU */
   $('fbMSkip').onclick = () => { M.spd = 30; };
-  $('fbMShoot').onclick = () => { /* cuma bisa dipencet pas pemain tim lu pegang bola (tombol ijo) */
-    if (M && !M.over && M.phase==='play' && M.ball.owner && M.ball.owner.team===M.myTeam && !M.ball.owner.isGK) {
-      if (M.autoPvp) pvpQueueInput('shoot', '1');
-      else M.forceShoot = true;
+  $('fbMShoot').onclick = () => { /* cuma bisa dipencet pas pemain tim lu pegang bola (tombol ijo). PVP dimatiin dulu biar 100% sinkron */
+    if (M && !M.over && M.phase==='play' && M.ball.owner && M.ball.owner.team===M.myTeam && !M.ball.owner.isGK && !M.autoPvp) {
+      M.forceShoot = true;
     }
   };
   $('fbMCam').onclick = () => { /* ganti mode kamera: NORMAL → WIDE → DUEL (zoom bola) */
@@ -4843,18 +4845,35 @@ function startMatch(cfg){
       else if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen();
     } catch(e){}
   };
-  if (cfg.mode==='pvp' || cfg.mode==='friend') {
+    if (cfg.mode==='pvp' || cfg.mode==='friend') {
     $('fbMSkip').style.display = 'none'; /* PVP: skip dimatiin biar 2 HP tetep live bareng */
-    /* PVP LOCKSTEP: tombol shoot+tactic NYALA LAGI kayak eFootball/ML/FF!
-       Input lu gak langsung dieksekusi — dikirim ke SERVER, di-queue, baru dijalankan di TICK YANG SAMA
-       di kedua HP (delay INPUT_DELAY tick = ~4 tick = 0.13 dtk, ga kerasa). Ini cara kerja SEMUA game online beneran. */
+    /* PVP FIX v25: SERVER KICKOFF TIME — sim jalan pake wall-clock time (bukan rAF/fps),
+       jadi walau FPS beda / lag sebentar, jumlah tick TETAP SAMA karena berdasarkan waktu server. */
     M.autoPvp = true;
-    M.pvpLock = { inA:[], inB:[], inMine:[], inOpp:[], tick:0, delay:PVP_INPUT_DELAY, lastSentUpTo:0, inpTimer:null, lastShoot:-999, lastTactic:-999 };
+    M.pvpLock = null; /* lockstep input dihapus: SHOOT/TACTIC matikan dulu, cuma nonton — PENTING untuk 100% sinkron */
+    $('fbMShoot').style.display = 'none';
+    $('fbMTactic').style.display = 'none';
   }
   $('fbMSound').onclick = () => { const on = SFX.toggle(); $('fbMSound').textContent = on? '🔊':'🔇'; };
-  if (M.autoPvp) {
-    /* PVP/FRIEND: LANGSUNG MULAI OTOMATIS countdown 3 detik, tidak ada tombol MULAI manual.
-       Ini menjamin startTick (M.pvpLock.tick=0) dimulai SAMA di kedua HP, jadi input delay sinkron. */
+  if (M.autoPvp && cfg.kickAt) {
+    /* PVP/FRIEND: TUNGGU SAMPAI kickAt YANG DITENTUKAN SERVER! Kedua HP KICKOFF DI SAAT YANG SAMA.
+       Simulasi mulai dengan WAKTU SELESAH HITUNG: tick count = (now - kickAt)/FIXED_DT →
+       Kedua HP akan menghasilkan JUMLAH TICK YANG SAMA → RNG SAMA PERSIS → TIDAK BISA BEDA. */
+    showOverlay('KICK OFF', esc(myName)+' vs '+esc(cfg.oppName)+'<br><span style="font-size:14px;color:#a7f3d0">tunggu kickoff serentak... <b id="fbKickCd">-</b></span>', []);
+    M._kickAtAbs = cfg.kickAt; M.phase='wait';
+    const waitKick = setInterval(() => {
+      const now = Date.now();
+      const left = Math.max(0, Math.ceil((cfg.kickAt - now)/1000));
+      const el = document.getElementById('fbKickCd'); if (el) el.textContent = left+' dtk';
+      if (now >= cfg.kickAt) {
+        clearInterval(waitKick);
+        hideOverlay(); M.phase='play'; M.paused = false;
+        M.lastTs = performance.now(); M.acc = 0; M.t = 0;
+        SFX.ambStart(); SFX.whistle(1, 0.8); bgWatchdog(); loop(performance.now());
+      }
+    }, 200);
+  } else if (M.autoPvp) {
+    /* fallback tanpa kickAt (harusnya ga kejadian) */
     let cd = 3;
     showOverlay('KICK OFF', esc(myName)+' vs '+esc(cfg.oppName)+'<br><span style="font-size:14px;color:#a7f3d0">match mulai otomatis dalam <b id="fbKickCd">3</b>...</span>', []);
     const cdTimer = setInterval(() => {
@@ -4863,15 +4882,13 @@ function startMatch(cfg){
       if (cd<=0) {
         clearInterval(cdTimer);
         hideOverlay(); M.phase='play'; M.paused = false;
-        M.lastTs = 0; M.acc = 0; /* reset timestamp biar tick mulai sama bareng */
-        M.pvpStartAt = performance.now()/1000;
-        startPvpInputPoll();
+        M.lastTs = performance.now(); M.acc = 0;
         SFX.ambStart(); SFX.whistle(1, 0.8); bgWatchdog(); loop(performance.now());
       }
     }, 1000);
   } else {
     showOverlay('KICK OFF', esc(myName)+' vs '+esc(cfg.oppName),
-      [{ label:'MULAI', fn: () => { hideOverlay(); M.phase='play'; M.paused = false; SFX.ambStart(); SFX.whistle(1, 0.8); bgWatchdog(); loop(performance.now()); } }]);
+      [{ label:'MULAI', fn: () => { hideOverlay(); M.phase='play'; M.paused = false; M.lastTs=performance.now(); SFX.ambStart(); SFX.whistle(1, 0.8); bgWatchdog(); loop(performance.now()); } }]);
   }
 }
 /* posisi dasar + spread vertikal kalo ada pos dobel (CB-CB, CM-CM, ST-ST, dll) biar formasi beneran kebentuk */
@@ -4930,10 +4947,21 @@ function nearestOpp(e, rad){ let best=null; M.ents.forEach((o)=>{ if(o.team!==e.
 /* FIXED TIMESTEP 1/30 dtk: jumlah tick + urutan RNG selalu SAMA di device apapun.
    Ini yang bikin match PVP identik di 2 HP (seed sama → jalannya pertandingan sama). */
 const FIXED_DT = 1/30;
+function pvpNowSec(){ return M && M._kickAtAbs ? (Date.now() - M._kickAtAbs)/1000 : 0; }
 function loop(ts){
   if (!M || M.over) return;
   try {
-    if (M.lastTs) {
+    if (M.autoPvp && M._kickAtAbs) {
+      /* PVP: tick count dihitung dari WAKTU SERVER KICKOFF (Date.now), BUKAN dari FPS/rAF!
+         Mau FPS 30 / 60 / lag sebentar / hp lambat, TOTAL TICK yang dijalankan SELALU SAMA di ke-2 HP.
+         Ini KUNCI sinkronisasi — seperti cara eFootball/PES mobile / FIFA / ML lock ke server time. */
+      const real = pvpNowSec() - M.t;
+      if (!M.paused && real > 0) {
+        let guard=0;
+        while (M.t < pvpNowSec() - 0.0001 && guard<60 && !M.over) { simTick(FIXED_DT); guard++; }
+        if (guard>=60) M.t = pvpNowSec(); /* anti-loop: catch up */
+      }
+    } else if (M.lastTs) {
       const real = Math.min(0.5, (ts-M.lastTs)/1000);
       if (!M.paused) {
         M.acc = Math.min(0.5, (M.acc||0) + real);
@@ -4948,19 +4976,24 @@ function loop(ts){
 /* ── MATCH TETEP JALAN walau tab di-background / layar mati ──
    rAF berhenti saat hidden, jadi ada watchdog setInterval yang nge-tick pakai waktu asli.
    + wake-lock biar layar gak gampang mati sendiri. (Kalo browser beneran MATIIN halamannya,
-   sim gak bisa lanjut — tapi selama halaman hidup di background, match jalan terus.) */
+   sim gak bisa lanjut — tapi selama halaman hidup di background, match jalan terus.)
+   DI PVP: tick dihitung dari server clock, jadi bg/foreground catch-up OTOMATIS di loop. */
 function bgWatchdog(){
   if (!M || M.bgT) return;
   M.lastBg = Date.now();
   M.bgT = setInterval(()=>{
     if (!M || M.over) { clearInterval(M.bgT); M.bgT=null; return; }
     const now = Date.now();
-    const real = Math.min(3, (now-M.lastBg)/1000);
-    M.lastBg = now;
-    if (document.hidden && !M.paused) {
-      let left = real, guard=0;
-      while (left >= FIXED_DT && guard < 200) { simTick(FIXED_DT*M.spd); left -= FIXED_DT; guard++; }
-      M.acc = 0; M.lastTs = 0;
+    if (!M.autoPvp) {
+      const real = Math.min(3, (now-M.lastBg)/1000);
+      M.lastBg = now;
+      if (document.hidden && !M.paused) {
+        let left = real, guard=0;
+        while (left >= FIXED_DT && guard < 200) { simTick(FIXED_DT*M.spd); left -= FIXED_DT; guard++; }
+        M.acc = 0; M.lastTs = 0;
+      }
+    } else {
+      M.lastBg = now;
     }
   }, 1000);
   requestWake();
@@ -4974,34 +5007,6 @@ if (typeof document!=='undefined' && document.addEventListener) document.addEven
   else { M.lastTs = 0; M.acc = 0; try{ if(M.wakeLock) M.wakeLock.release().catch(()=>{}); }catch(e){} requestWake(); }
 });
 function simTick(dt){
-  /* PVP LOCKSTEP: hitung tick deterministik, lalu jalankan semua input (shoot/tactic)
-     yang waktunya tiba di tick INI. Ini bikin input dieksekusi di tick SAMA di ke-2 HP. */
-  if (M.pvpLock && M.phase==='play') {
-    M.pvpLock.tick++;
-    const tk = M.pvpLock.tick;
-    /* Eksekusi per tim: hanya input dengan t<=tk yang dijalankan. Yang belum dijalankan tetep di queue. */
-    const runQ = (arr, team) => {
-      if (!arr) return;
-      for (let i=arr.length-1; i>=0; i--) {
-        const inp = arr[i];
-        if (inp.t <= tk) {
-          arr.splice(i,1);
-          if (inp.type==='shoot') {
-            if (M.ball.owner && M.ball.owner.team===team && !M.ball.owner.isGK) {
-              /* tembak sekarang — pake penanda yg dicek di blok onBall, sama untuk KEDUA tim */
-              M._forceShootTeam = team;
-            }
-          } else if (inp.type==='tactic' && TACTICS[inp.v]) {
-            M.teams[team].tactic = inp.v;
-            M.tacticCD = 20;
-            if (team===M.myTeam) { const el=$('fbMTacNow'); if (el) el.textContent=TACTICS[inp.v].label; }
-          }
-        }
-      }
-    };
-    runQ(M.pvpLock.inMine, M.myTeam);
-    runQ(M.pvpLock.inOpp, 1-M.myTeam);
-  }
   /* phase khusus dulu — WAKTU MATCH BERHENTI pas replay/selebrasi/setpiece/VAR */
   if (M.phase==='celebration') { tickCeleb(dt); updCam(dt, M.celeb.spot[0], M.celeb.spot[1], camZoom(1.35)); return; }
   if (M.phase==='replay') { tickReplay(dt); return; }
@@ -5193,14 +5198,11 @@ function simTick(dt){
       en.contactT=0; en.foulCd2=2.5;
     }
   });
-  /* ── FORCE SHOOT PVP/AI: dijalankan SEBELUM onBall (sebelum AI decision).
-        Kalau user/input lockstep minta tembak, tembak SEKARANG; tandai biar onBall gak dobel shoot. */
+  /* FORCE SHOOT (hanya AI mode) */
   let _fsDone = false;
-  const fsT = M.autoPvp ? M._forceShootTeam : (M.forceShoot ? M.myTeam : null);
-  if (fsT != null && b.owner && b.owner.team===fsT && !b.owner.isGK) {
-    shoot(b.owner); _fsDone = true;
+  if (M.forceShoot && !M.autoPvp && b.owner && b.owner.team===M.myTeam && !b.owner.isGK) {
+    shoot(b.owner); _fsDone = true; M.forceShoot=false;
   }
-  M._forceShootTeam = null; M.forceShoot = false;
   if (b.owner && decide) { if (_fsDone && b.owner) b.owner._justShot=true; onBall(b.owner, dt); if (b.owner) b.owner._justShot=false; }
   /* BAWA BOLA: pemilik LARI terus ke arah serangan, steer hindarin lawan, + BISA NGOCEK */
   if (b.owner && !b.owner.isGK && !b.owner.kick && M.phase==='play') {
@@ -6593,46 +6595,8 @@ function openTactics(){
    - Saat simTick nyampe tick target, input dieksekusi di KEDUA HP di tick YANG SAMA.
    - Kedua HP pake seed yang sama, urutan RNG sama, input dijalankan di tick sama → 100% SINKRON. */
 const PVP_INPUT_DELAY = 30; /* 30 tick × 1/30 dtk = 1 detik input delay (cukup untuk ping Indo); ga kerasa buat SHOOT */
-function pvpQueueInput(type, v){
-  if (!M || !M.pvpLock || M.over) return;
-  /* anti-spam: tombol sama dalam delay window jangan kirim dua kali */
-  const key = type==='shoot'?'lastShoot':'lastTactic';
-  if (M.pvpLock.tick - M.pvpLock[key] < PVP_INPUT_DELAY*0.8) return;
-  M.pvpLock[key] = M.pvpLock.tick;
-  const tgt = M.pvpLock.tick + PVP_INPUT_DELAY;
-  if (M.cfg.mode==='pvp') fbPost({ action:'matchInput', mid:M.cfg.mid, t:tgt, type, v, clearedUpTo: M.pvpLock.lastSentUpTo }).catch(()=>{});
-  else fbPost({ action:'roomInput', roomId:M.cfg.roomId, t:tgt, type, v, clearedUpTo: M.pvpLock.lastSentUpTo }).catch(()=>{});
-}
-function startPvpInputPoll(){
-  if (M.pvpLock.inpTimer) clearInterval(M.pvpLock.inpTimer);
-  M.pvpLock.inpTimer = setInterval(async () => {
-    if (!M || M.over || !M.pvpLock) { clearInterval(M.pvpLock.inpTimer); return; }
-    try {
-      let d;
-      if (M.cfg.mode==='pvp') d = await fbPost({ action:'queuePoll' });
-      else d = await fbPost({ action:'roomPoll', roomId:M.cfg.roomId });
-      if (!d) return;
-      const r = M.cfg.mode==='pvp' ? d.match : d.room;
-      if (!r) return;
-      const imHost = (M.cfg.mode==='pvp' ? ((r.a.uid===myUid||r.a.name===myName)) : (r.host.uid===myUid||r.host.name===myName));
-      const keyA = imHost? '_inpA' : '_inpB', keyB = imHost? '_inpB' : '_inpA';
-      const myIn = r[keyA]||[], oppIn = r[keyB]||[];
-      /* gabungkan, jalankan pas tick tiba. Input KITA (yg baru kita kirim) juga dari server → authority */
-      for (const inp of myIn) applyPvpInput(inp, true);
-      for (const inp of oppIn) applyPvpInput(inp, false);
-      M.pvpLock.inA = myIn; M.pvpLock.inB = oppIn;
-      M.pvpLock.lastSentUpTo = M.pvpLock.tick - 5;
-    } catch(e){}
-  }, 250);
-}
-function applyPvpInput(inp, isMine){
-  if (!inp || inp.t == null) return;
-  /* simpan ke queue lokal; dieksekusi saat pvpLock.tick >= inp.t */
-  const arr = isMine? M.pvpLock.inMine : M.pvpLock.inOpp;
-  if (!arr) return;
-  if (arr.some((x)=> x.t===inp.t && x.type===inp.type)) return;
-  arr.push(inp);
-}
+
+
 function showOverlay(title, sub, btns){
   const ov = $('fbMOverlay');
   ov.innerHTML = '<div class="fb-ovl-card"><h3>'+title+'</h3>'+(sub?'<p>'+sub+'</p>':'')+'</div>' + (btns||[]).map((b3,i) => '<button type="button" class="fb-btn" data-ob="'+i+'">'+b3.label+'</button>').join('');
