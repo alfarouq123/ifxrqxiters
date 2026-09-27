@@ -4739,7 +4739,7 @@ const TRICK_DUR = { chop:0.42, push:0.5, spin:0.55, double:0.5, rainbow:0.72, el
 let M = null;
 function startMatch(cfg){
   const R = cfg.seed != null ? mulberry(cfg.seed) : mulberry(Date.now() & 0x7fffffff);
-  /* pvpHomeAwayFixed v21 — home/away DITENTUIN SERVER, gak ada desync */
+  /* pvpSyncFix v22 — home/away server-side + PVP AUTO (no user-input RNG), 100% sinkron */
   const mk = (squad, side, boost) => {
     const f = FORMATIONS[squad.formation] || FORMATIONS['433-attack'];
     const slots = f.slots;
@@ -4838,9 +4838,19 @@ function startMatch(cfg){
       else if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen();
     } catch(e){}
   };
-  if (cfg.mode==='pvp' || cfg.mode==='friend') $('fbMSkip').style.display = 'none'; /* PVP: skip dimatiin biar 2 HP tetep live bareng */
+  if (cfg.mode==='pvp' || cfg.mode==='friend') {
+    $('fbMSkip').style.display = 'none'; /* PVP: skip dimatiin biar 2 HP tetep live bareng */
+    /* PVP: TOMBOL SHOOT + GANTI TAKTIK DINONAKTIFKAN! Karena input user gak tersinkron ke lawan,
+       kalo dipencet cuma di satu HP, RNG bakal kepake cuma di HP itu → 2 HP BEDA.
+       Match PVP 100% ditentukan squad+taktik+seed — kedua HP liat pertandingan SAMA PERSIS. */
+    $('fbMShoot').style.display = 'none';
+    $('fbMTactic').style.display = 'none';
+    M.autoPvp = true;
+  }
   $('fbMSound').onclick = () => { const on = SFX.toggle(); $('fbMSound').textContent = on? '🔊':'🔇'; };
-  showOverlay('KICK OFF', esc(myName)+' vs '+esc(cfg.oppName), [{ label:'MULAI', fn: () => { hideOverlay(); M.phase='play'; M.paused = false; SFX.ambStart(); SFX.whistle(1, 0.8); bgWatchdog(); loop(performance.now()); } }]);
+  showOverlay('KICK OFF', esc(myName)+' vs '+esc(cfg.oppName)
+    +(M.autoPvp? '<br><span style="font-size:12px;color:#fde68a">⚡ PVP SINKRON: kamu & lawan nonton bareng pertandingan yang sama persis!</span>' : ''),
+    [{ label:'MULAI', fn: () => { hideOverlay(); M.phase='play'; M.paused = false; SFX.ambStart(); SFX.whistle(1, 0.8); bgWatchdog(); loop(performance.now()); } }]);
 }
 /* posisi dasar + spread vertikal kalo ada pos dobel (CB-CB, CM-CM, ST-ST, dll) biar formasi beneran kebentuk */
 function slotPos(team, pi){
@@ -6506,6 +6516,7 @@ function fulltime(){
   };
 }
 function openTactics(){
+  if (M && M.autoPvp) return; /* PVP: taktik gak bisa diganti tengah jalan (gak tersinkron ke lawan) */
   if (M.tacticCD>0 || !M || M.paused || M.over) return;
   $('fbMOverlay').innerHTML = '<div class="fb-ovl-card"><h3>TACTICS — GAYA BERMAIN</h3><div class="fb-taclist">'
     + Object.entries(TACTICS).map(([k,t]) => '<div class="fb-tacopt '+(M.teams[M.myTeam].tactic===k?'on':'')+'" data-t="'+k+'"><b>'+t.label+'</b><span>'+t.short+'</span></div>').join('')
@@ -6725,9 +6736,9 @@ function draw(){
     x.fillStyle='#ffd75e'; x.font='bold 16px Inter, sans-serif'; x.textAlign='center';
     x.fillText('GOOOL! '+(M.celeb.scorer.name), W/2, 20);
   }
-  /* tombol SHOOT: MERAH = belum bisa, HIJAU = pemain lu lagi pegang bola */
+  /* tombol SHOOT: MERAH = belum bisa, HIJAU = pemain lu lagi pegang bola (dinoaktifkan di PVP biar sinkron) */
   const sb = document.getElementById('fbMShoot');
-  if (sb) {
+  if (sb && !M.autoPvp) {
     const can = M.phase==='play' && M.ball.owner && M.ball.owner.team===M.myTeam && !M.ball.owner.isGK;
     if (can !== sb._on) {
       sb._on = can;
