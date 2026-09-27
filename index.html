@@ -4753,11 +4753,12 @@ const TRICK_LABEL = { chop:'RONALDO CHOP', push:'PUSH & RUN', spin:'ROULETTE', a
 const TRICK_REQ = { double:60, push:68, nutmeg:74, chop:78, antony:80, spin:84, elastico:88, rainbow:90 };
 const TRICK_DUR = { chop:0.42, push:0.5, spin:0.55, double:0.5, rainbow:0.72, elastico:0.42, nutmeg:0.55, antony:0.9 };
 let M = null;
+function _spStart(){ if(M && M.autoPvp && M.setpiece) phaseUntil(M.setpiece.t); }
 function startMatch(cfg){
   const R = cfg.seed != null ? mulberry(cfg.seed) : mulberry(Date.now() & 0x7fffffff);
-  /* pvpNtpSync v26 — clock NTP sync! Semua waktu (kickoff, countdown, tick count)
-     pakai JAM SERVER (bukan jam hp), walau jam hp salah/bedainet lag/sinyal jelek.
-     Server-authoritative kick time + server clock offset + catch-up sim = PASTI SAMA. */
+  /* pvpNoCatchup v27 — SEMUA JEDA (seleb,replay,ht,setpiece,var) durasi TETAP, OTOMATIS resume
+     di server clock, TIDAK ADA tombol siap di PVP. Sim tick JALAN TERUS 1 tick per frame
+     tanpa catch-up loncat RNG. Satu-satunya cara 2 HP 100% SAMA. */
   const mk = (squad, side, boost) => {
     const f = FORMATIONS[squad.formation] || FORMATIONS['433-attack'];
     const slots = f.slots;
@@ -4960,19 +4961,36 @@ function nearestOpp(e, rad){ let best=null; M.ents.forEach((o)=>{ if(o.team!==e.
 /* FIXED TIMESTEP 1/30 dtk: jumlah tick + urutan RNG selalu SAMA di device apapun.
    Ini yang bikin match PVP identik di 2 HP (seed sama → jalannya pertandingan sama). */
 const FIXED_DT = 1/30;
+/* Helper: jadwalkan phase selesai pada serverNow() + dur — dijalankan otomatis, sinkron */
+function phaseUntil(dur){ M._phaseEnd = serverNow()/1000 + dur; M._phaseDur = dur; }
+function phaseSecLeft(){ return M._phaseEnd!=null? Math.max(0, M._phaseEnd - serverNow()/1000) : 0; }
 function pvpNowSec(){ return M && M._kickAtAbs ? (serverNow() - M._kickAtAbs)/1000 : 0; }
 function loop(ts){
   if (!M || M.over) return;
   try {
     if (M.autoPvp && M._kickAtAbs) {
-      /* PVP: tick count dihitung dari WAKTU SERVER KICKOFF (Date.now), BUKAN dari FPS/rAF!
-         Mau FPS 30 / 60 / lag sebentar / hp lambat, TOTAL TICK yang dijalankan SELALU SAMA di ke-2 HP.
-         Ini KUNCI sinkronisasi — seperti cara eFootball/PES mobile / FIFA / ML lock ke server time. */
-      const real = pvpNowSec() - M.t;
-      if (!M.paused && real > 0) {
+      /* PVP V27 FIX: PHASE CLOCK TETAP (tidak ada catch-up saat jeda).
+         Semua phase (play/celebration/replay/ht/setpiece) jalan dengan kecepatan yang sama,
+         waktu mulai phase dicatat, otomatis lanjut setelah durasi phase berakhir.
+         JAM SERVER dipakai, tapi phase jeda TIDAK advance M.t (match clock) — jam pertandingan hanya
+         jalan saat phase=play. Tidak ada loncatan tick catch-up yang bikin RNG beda. */
+      const sNow = serverNow()/1000;
+      if (!M.paused && M.phase==='play') {
+        const dtReal = Math.min(0.05, 1/FIXED_DT*FIXED_DT/60 + 0.0001);
+        /* jalankan SIM FIXED STEP tapi JANGAN catch-up lebih dari 1 tick per frame biar gak loncat */
+        M.acc = (M.acc||0) + Math.min(0.05, (performance.now()-M.lastTs)/1000);
         let guard=0;
-        while (M.t < pvpNowSec() - 0.0001 && guard<60 && !M.over) { simTick(FIXED_DT); guard++; }
-        if (guard>=60) M.t = pvpNowSec(); /* anti-loop: catch up */
+        while (M.acc >= FIXED_DT && guard<5) { simTick(FIXED_DT); M.acc -= FIXED_DT; guard++; }
+      } else if (!M.paused) {
+        /* phase non-play (celebration/replay/ht/setpiece): kemajukan animasi dengan dt real 1 tick per frame */
+        if (M.lastTs) simTick(FIXED_DT);
+      }
+      /* auto-resume phase non-play (celebration/replay/var/setpiece) — ht ditangani sendiri */
+      if (M._phaseEnd!=null && sNow >= M._phaseEnd && M.phase!=='play' && M.phase!=='ft' && M.phase!=='wait' && M.phase!=='ht') {
+        if (M.phase==='celebration') { startReplay('goal'); phaseUntil(4); } /* replay durasi TETAP 4 detik di PVP */
+        else if (M.phase==='replay') { resetKickoff(M.lastConceded==null?0:1-M.lastConceded); M._phaseEnd=null; }
+        else if (M.phase==='var') applyVar();
+        else if (M.phase==='setpiece') runSetPiece();
       }
     } else if (M.lastTs) {
       const real = Math.min(0.5, (ts-M.lastTs)/1000);
@@ -4983,7 +5001,7 @@ function loop(ts){
       } else M.acc = 0;
     }
     M.lastTs = ts; draw();
-  } catch(e) { /* jangan freeze */ }
+  } catch(e) { /* jangan freeze */ console.error(e); }
   M.raf = requestAnimationFrame(loop);
 }
 /* ── MATCH TETEP JALAN walau tab di-background / layar mati ──
@@ -5370,6 +5388,7 @@ function goalKick(team){ /* GOAL KICK: bola mati dulu, kiper baru nendang distri
   const g2=ownGoal(team); gk.x = g2===2? 4:96; gk.y=50; b.x=gk.x; b.y=gk.y;
   matchMsg('🦵 GOAL KICK — '+tName(team), '');
   M.setpiece={ type:'gk', atkT:team, shooter:gk, t:1.0 };
+  if (M.autoPvp) phaseUntil(1.0);
 }
 function gkMove(e,dt){
   const b = M.ball;
@@ -5993,6 +6012,7 @@ function resolveTackle(e){
 function triggerVar(){
   const po = M.pendingOff; M.pendingOff=null;
   M.phase='var'; M.varInfo = { ...po, t:2.2, result:'offside' };
+  if (M.autoPvp) phaseUntil(2.2);
   M.stats.off[M.varInfo.receiver.team]++;
   M.cam.shake = 2;
 }
@@ -6142,6 +6162,7 @@ function startFreeKick(atkT, x, y){
   if (gkD){ const g2 = ownGoal(defT); gkD.x = g2===2? 4:96; gkD.y = Math.max(40,Math.min(60,y)); }
   spreadSetpiece(M.wall.concat(shooter?[shooter]:[])); /* jangan ada yang numpuk */
   M.setpiece = { type:'fk', atkT, shooter, t:1.2 };
+  if (M.autoPvp) phaseUntil(1.2);
 }
 /* posisi corner sesuai PERAN (seperti instruksi):
    PENYERANG: striker target utama di kotak, CB masuk duel udara, winger/mid cari bola pantul di tepi,
@@ -6200,6 +6221,7 @@ function startCorner(atkT, defT){
   cornerPositions(atkT, shooter);
   spreadSetpiece(shooter?[shooter]:[]); /* corner: pisahkan yang berdempetan biar gak nembus */
   M.setpiece = { type:'ck', atkT, shooter, side, t:1.2 };
+  if (M.autoPvp) phaseUntil(1.2);
 }
 function corner(atkT, defT){ startCorner(atkT, defT); }
 function startPenalty(atkT){
@@ -6216,6 +6238,7 @@ function startPenalty(atkT){
   M.ents.forEach((e)=>{ if (e===shooter||e===gk) return; if (Math.hypot(e.x-x,e.y-50)<15){ const ang=Math.atan2(e.y-50,(e.x-x)||0.01); e.x=Math.max(3,Math.min(97,x+Math.cos(ang)*15)); e.y=Math.max(6,Math.min(94,50+Math.sin(ang)*15)); } });
   spreadSetpiece([shooter,gk].filter(Boolean));
   M.setpiece = { type:'pk', atkT, shooter, t:1.2 };
+  if (M.autoPvp) phaseUntil(1.2);
 }
 function throwIn(team, x, y){
   M.phase='setpiece';
@@ -6240,6 +6263,7 @@ function throwIn(team, x, y){
   spreadSetpiece(thrower?[thrower]:[]); /* throw-in: pisahkan yang berdempetan biar gak nembus */
   matchMsg('🙌 LEMPARAN KE DALAM — '+tName(team), '');
   M.setpiece = { type:'ti', atkT:team, shooter:thrower, t:1.1 };
+  if (M.autoPvp) phaseUntil(1.1);
 }
 function runSetPiece(){
   const sp = M.setpiece; M.setpiece=null; M.phase='play';
@@ -6336,21 +6360,20 @@ function doCross(atkT, from, tx, ty){
 function goal(ti){
   M.score[ti]++; M.stats.sot[ti]++;
   M.lastConceded = ti;
-  /* tangkep nama gocekan tim yg nge-gol (kalo baru aja gocek, <8 dtk) */
   M.goalTrick = (M.lastTrick && M.lastTrick.team===ti && M.t-(M.lastTrick.t||0)<8) ? M.lastTrick.label : null;
   M.phase='celebration'; M.paused=false;
+  if (M.autoPvp) phaseUntil(M.celeb? M.celeb.dur||3 : 3); /* jadwalkan selebrasi otomatis (waktu SAMA di 2 HP) */
   const scorer = M.shotBy || M.lastTouchBy[ti] || M.ents.find((e)=>e.team===ti&&!e.isGK);
   const spot = [ atkGoal(ti)===98? 94:6, (scorer.y<50? 14:86) ];
-  M.celeb = { scorer, spot, t:0, dur:6, type: Math.floor(M.R()*5), mates: [] };
+  M.celeb = { scorer, spot, t:0, dur:M.autoPvp? 3 : 6, type: Math.floor(M.R()*5), mates: [] }; /* PVP: durasi selebrasi PENDEK (3dtk) TETAP */
+  phaseUntil(M.autoPvp? 3 : 6);
   /* 2 temen terdekat ikut */
   M.celeb.mates = M.ents.filter((e)=>e.team===ti && e!==scorer && !e.isGK).sort((a,b)=>dist(a,scorer)-dist(b,scorer)).slice(0,2);
   M.ball.owner=null; M.ball.ownerTeam=null; M.ball.vx=0;M.ball.vy=0;
   M.ball.curve=0; M.ball.ghost=false; M.ball.sureGoal=false; M.ball.lob=false; M.ball.z=0;
-  M.ents.forEach((e)=>{ e.skillLabel=null; e.trick=null; e.tackle=null; }); /* selebrasi bersih: gak ada label nyangkut */
+  M.ents.forEach((e)=>{ e.skillLabel=null; e.trick=null; e.tackle=null; });
   M.cam.shake = 8;
-  /* SOUND: sorakan BESAR penonton pas gol (file morse lama udah dihapus) */
   SFX.play('cheer', 0.95);
-  /* TERIAKAN SUPORTER: banyak variasi, nyebut nama pencetak gol */
   const nm = (scorer && scorer.name)? scorer.name.toUpperCase() : 'TIM LU';
   const winS = ['GOOOLLLLLL!!!','AYOOO '+nm+'!','GILAAAA! GOL '+nm+'!!',nm+' MEMANG BUAS!!','MERINDING! '+nm+'!!','NAH GITU DONG '+nm+'!','LANJUTKAN '+nm+'!!!'];
   const loseS = ['ADUHHHH...','YAAAHH KEBOLAN...','GAK GINI JUGA COBA...','AWAS, BALAS WOY!','SABAR... KEJAR LAGI!','ASTAGAAA GAWANG KITA...'];
@@ -6378,6 +6401,7 @@ function pushSnap(){
 }
 function startReplay(){
   M.phase='replay';
+  if (M.autoPvp) phaseUntil(4); /* replay durasi TETAP 4 detik, SAMA di 2 HP */
   const lastI = Math.max(0, M.snaps.length-1);
   let from = Math.max(0, lastI-480);
   let slowAt = null;
@@ -6442,6 +6466,21 @@ function resetKickoff(kick, keepPause){
 function halftime(){
   M.paused=true; M.phase='ht';
   SFX.whistle(2, 0.7);
+  if (M.autoPvp) {
+    /* PVP: HALFTIME OTOMATIS 4 detik, TANPA tombol siap / nunggu lawan!
+       Kedua HP lanjut babak 2 di SAAT YANG SAMA (server clock). Lineup TIDAK BISA diganti
+       (sudah dikunci) biar gak ada beda state. Ini HAPUSKAN penyebab desync terbesar. */
+    M._htLeft = 4; phaseUntil(4);
+    showOverlay('JEDA BABAK 1', 'babak 2 mulai otomatis dalam <b id="fbHTCdr">4</b> dtk...<br><span style="font-size:12px;color:#fca5a5">lineup dikunci di PVP — tidak ada tombol siap, mulai bareng otomatis</span>', []);
+    const htT = setInterval(()=>{
+      M._htLeft = Math.max(0, M._htLeft - 0.2);
+      const el=document.getElementById('fbHTCdr'); if (el) el.textContent=Math.ceil(M._htLeft);
+      if (serverNow()/1000 >= M._phaseEnd) {
+        clearInterval(htT); goH2();
+      }
+    }, 200);
+    return;
+  }
   const t2 = M.teams[M.myTeam];
   const f = FORMATIONS[(t2.squad&&t2.squad.formation)||'433-attack'];
   const slots = f.slots;
