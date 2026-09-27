@@ -711,7 +711,7 @@
   .fb-ready2{ background:linear-gradient(135deg,#22c55e,#15803d); color:#fff; font-weight:900; font-size:15px; padding:13px 28px; border:none; border-radius:12px; cursor:pointer; margin-top:8px; width:100%; }
   .fb-ready2:disabled{ background:#14532d; opacity:.85; }
   .fb-taclist{ max-height:52vh; overflow-y:auto; margin:6px 0; }
-  #fbMCanvas{ flex:none; width:min(100%,96vw); aspect-ratio:760/470; height:auto; max-height:64vh; display:block; margin:0 auto; border-radius:10px; }
+  #fbMCanvas{ flex:none; width:min(100%,99vw); aspect-ratio:760/470; height:auto; max-height:92vh; display:block; margin:0 auto; border-radius:10px; } /* lapangan GEDE semaksimal layar */
   .fb-hud{ top:6px; }
   .fb-mctrl{ margin-top:8px; }
 
@@ -4956,7 +4956,8 @@ function simTick(dt){
         const gkG = M.ents.find((q)=>q.isGK && q.team===defT2 && q.goat);
         if (gkG) {
           M.stats.saves[defT2]++; SFX.play('cheer', 0.95);
-          matchMsg('🧤 '+gkG.name+' MENEPIS DI GARIS GAWANG!!', 'pk');
+          SFX.play('cheer', 0.8);
+          matchMsg('🧤 TANGKAPAN '+gkG.name+'!', '');
           b.x=gkG.x; b.y=gkG.y; b.vx=0;b.vy=0;b.curve=0;b.knuckle=false;b.shotId=null;b.passTarget=null;
           b.owner=gkG; b.ownerTeam=defT2; touch(defT2,gkG); gkG.ctrl=0.4; gkG.dribA=null; gkG.hold=2.0;
           return;
@@ -5307,12 +5308,12 @@ function trySave(gk){
   /* bola ON TARGET gak? prediksi y pas nyampe garis gawang — melenceng/kena tiang = biarin lewat */
   const tLine = ((gx===2? 2.5:97.5) - b.x)/((b.vx*10)||0.001);
   const yAtLine = b.y + b.vy*10*Math.max(0,tLine);
-  if (gk.goat) { /* GOAT GK: nepis semuanya yang ON TARGET — dia GAK teleport, larinya nyamain kecepatan bola */
+  if (gk.goat) { /* GOAT GK: nepis semua yang ON TARGET — tapi tampilan/save SAMA kayak kiper biasa */
     if (!(yAtLine>38 && yAtLine<62)) return;
     gk.lastShotId = b.shotId;
     M.stats.saves[gk.team]++;
-    SFX.play('cheer', 0.95);
-    matchMsg('🧤 '+gk.name+' MENEPIS!!', 'pk');
+    SFX.play('cheer', 0.8);
+    matchMsg('🧤 TANGKAPAN '+gk.name+'!', '');
     b.vx=0;b.vy=0;b.curve=0;b.knuckle=false;b.shotId=null;b.passTarget=null;
     b.owner=gk; b.ownerTeam=gk.team; b.x=gk.x; b.y=gk.y;
     touch(gk.team,gk); gk.ctrl=0.4; gk.dribA=null; gk.hold=2.0;
@@ -5804,8 +5805,7 @@ function shoot(e){
     b.curve = 3.2; b.bendCap = Math.PI*2; b.bendTarget = { x:gx, y:targetY }; b.bent = 0; /* lengkung sampe 360° */
     b.knuckle = false; b.ghost = true; b.sureGoal = true; b.fly = 0;
     b.sx = b.x; b.lob = true; b.lobH = (e.slotName==='ST'? 16 : 10); /* menukik: ST tinggi, RW/LW sedeng */
-    e.skillLabel = { label: e.slotName==='ST'? 'GOAT PASTI GOL 🐐':'BLITZ CURLER 🐐', t:1.6 };
-    if (e.slotName!=='ST') M.lastTrick = { label:'BLITZ CURLER', team:e.team, t:M.t }; /* GOAT PASTI GOL gak usah muncul di replay */
+    M.lastTrick = { label:'BLITZ CURLER', team:e.team, t:M.t }; /* skill GOAT = tersembunyi: gak ada label, replay cuma bilang BLITZ CURLER */
   }
   SFX.play('kick', 0.35); /* suara tendangan */
   M.shotN=(M.shotN||0)+1; b.shotId=M.shotN; /* id tembakan biar kiper cuma roll 1x */
@@ -6200,7 +6200,12 @@ function goal(ti){
   M.cam.shake = 8;
   /* SOUND: sorakan BESAR penonton pas gol (file morse lama udah dihapus) */
   SFX.play('cheer', 0.95);
-  crowdShout(ti===0? 'GOOOLLLLLL!!!' : 'ADUHHHH...', ti!==0); /* suporter tim lu girang / nyesek */
+  /* TERIAKAN SUPORTER: banyak variasi, nyebut nama pencetak gol */
+  const nm = (scorer && scorer.name)? scorer.name.toUpperCase() : 'TIM LU';
+  const winS = ['GOOOLLLLLL!!!','AYOOO '+nm+'!','GILAAAA! GOL '+nm+'!!',nm+' MEMANG BUAS!!','MERINDING! '+nm+'!!','NAH GITU DONG '+nm+'!','LANJUTKAN '+nm+'!!!'];
+  const loseS = ['ADUHHHH...','YAAAHH KEBOLAN...','GAK GINI JUGA COBA...','AWAS, BALAS WOY!','SABAR... KEJAR LAGI!','ASTAGAAA GAWANG KITA...'];
+  const lst = ti===0? winS : loseS;
+  crowdShout(lst[Math.floor(M.R()*lst.length)], ti!==0);
 }
 function tickCeleb(dt){
   const c = M.celeb; c.t += dt;
@@ -6460,12 +6465,13 @@ function updUI(){
   if (SFX.amb) SFX.amb.volume = sk? 0 : 0.12;
   if (SFX.ultra) SFX.ultra.volume = sk? 0 : 0.19;
 }
-/* MODE KAMERA: normal (se-lapangan) / WIDE (lebih gede lagi) / DUEL (zoom ke bola) */
+/* MODE KAMERA: NORMAL = kamera standar gak diubah / WIDE / DUEL (zoom ke bola)
+   Lapangan GEDE-nya dari ukuran canvas di layar, bukan dari kamera */
 function camZoom(base){
   const m = M.camMode||'normal';
-  if (m==='wide') return base*0.62;  /* super wide */
-  if (m==='duel') return base*1.45;  /* zoom duel */
-  return base*0.80; /* normal = keliatan se-lapangan, lapangan terasa GEDE */
+  if (m==='wide') return base*0.85;
+  if (m==='duel') return base*1.45;
+  return base; /* normal: kamera dipertahankan sesuai aslinya */
 }
 function updCam(dt, tx, ty, tz){
   const c = M.cam;
@@ -6514,14 +6520,28 @@ function draw(){
   x.fillRect(px(-14), py(-4), px(10), py(108));
   x.fillRect(px(104), py(-4), px(10), py(108));
   const crowd = makeCrowd();
-  for (let ci=0; ci<crowd.length; ci++){ const dd=crowd[ci]; x.fillStyle=dd.c; x.fillRect(px(dd.x), py(dd.y), 2.4, 2.4); }
-  /* TERIAKAN SUPORTER pas gol: tulisan GEDE di tribun atas, goyang kayak suporter lagi teriak */
-  if (M.shout && M.shout.t>0) {
-    const nowMs = performance.now();
+  /* TERIAKAN SUPORTER pas gol: tulisan GEDE di tribun atas + SUPORTER LOMPAT-LOMPAT + OMBAK TANGAN */
+  const shoutOn = M.shout && M.shout.t>0;
+  const nowMs0 = performance.now();
+  const waveX = shoutOn? ((nowMs0/9)%150)-20 : -99; /* ombak tangan jalan dari kiri ke kanan */
+  for (let ci=0; ci<crowd.length; ci++){
+    const dd=crowd[ci];
+    let jy=0;
+    if (shoutOn) jy = -Math.abs(Math.sin(nowMs0/130 + ci*0.7))*1.9; /* suporter lompat-lompat pas gol */
+    x.fillStyle=dd.c; x.fillRect(px(dd.x), py(dd.y+jy), 2.4, 2.4);
+    if (shoutOn && Math.abs(dd.x-waveX)<6) { /* tangan ke atas pas ombak lewat */
+      x.strokeStyle=dd.c; x.lineWidth=1.1;
+      x.beginPath();
+      x.moveTo(px(dd.x)-1.4, py(dd.y+jy)); x.lineTo(px(dd.x)-3, py(dd.y+jy-3.6));
+      x.moveTo(px(dd.x)+1.4, py(dd.y+jy)); x.lineTo(px(dd.x)+3, py(dd.y+jy-3.6));
+      x.stroke();
+    }
+  }
+  if (shoutOn) {
     const pr = 1 - M.shout.t/2.8;
     const sc = pr<0.12? 0.3+(pr/0.12)*0.85 : (1.15 - Math.min(0.15,(pr-0.12)*0.4));
     x.save();
-    x.translate(px(50), py(-7.5 + Math.sin(nowMs/95)*0.6));
+    x.translate(px(50), py(-7.5 + Math.sin(nowMs0/95)*0.6));
     x.scale(sc, sc);
     x.font='900 italic 42px Inter, sans-serif'; x.textAlign='center';
     x.lineWidth=7; x.strokeStyle='#000'; x.fillStyle= M.shout.sad? '#93c5fd' : '#ffe89a';
@@ -6603,10 +6623,8 @@ function draw(){
   /* bola + bayangan (b.z = tinggi visual pas rainbow flick/antony) */
   const b = M.ball;
   x.beginPath(); x.ellipse(px(b.x), py(b.y)+6, 5,2,0,0,7); x.fillStyle='rgba(0,0,0,.3)'; x.fill();
-  if (b.ghost) { /* bola GOAT Zaky Mirza: aura emas, nembus pemain */
-    x.beginPath(); x.arc(px(b.x), py(b.y)-(b.z||0), 10, 0, 7); x.fillStyle='rgba(245,197,24,.35)'; x.fill();
-  }
-  x.beginPath(); x.arc(px(b.x), py(b.y)-(b.z||0), 6, 0, 7); x.fillStyle= b.ghost? '#ffe89a':'#fff'; x.fill(); x.strokeStyle= b.ghost? '#f5c518':'#222'; x.lineWidth=1.5; x.stroke();
+  /* bola nembus pemain (ghost) itu mekanik doang — tampilannya TETEP bola biasa (skill GOAT tersembunyi) */
+  x.beginPath(); x.arc(px(b.x), py(b.y)-(b.z||0), 6, 0, 7); x.fillStyle='#fff'; x.fill(); x.strokeStyle='#222'; x.lineWidth=1.5; x.stroke();
   /* sorot assist saat replay */
   if (M.phase==='replay' && M.assistBy) {
     x.beginPath(); x.arc(px(M.assistBy.x), py(M.assistBy.y), 16, 0, 7); x.strokeStyle='#ffd75e'; x.lineWidth=2.5; x.setLineDash([4,3]); x.stroke(); x.setLineDash([]);
