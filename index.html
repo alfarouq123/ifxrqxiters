@@ -3599,6 +3599,7 @@ const GOAT_PLAYERS = [
 ];
 function clampStat(v){ return Math.max(30, Math.min(99, Math.round(v))); }
 function statsOf(p){
+  if (p.customSt) return p.customSt; /* stats custom dari ADMIN PANEL */
   const q = mulberry(p.id*97+13); const o = p.ovr; const g = POSGROUP[p.pos]; const j = () => (q()-0.5)*10;
   let pac=o-3+j(), sho=o, pas=o, dri=o, def=o, phy=o;
   if (g==='GK'){ sho=o-25; dri=o-20; pac=o-12; def=o+5; pas=o-10; phy=o+2; }
@@ -3610,6 +3611,7 @@ function statsOf(p){
 function statsRow(s){ return '<div class="fbc-stats">' + [['PAC',s.pac],['SHO',s.sho],['PAS',s.pass],['DRI',s.dri],['DEF',s.def],['PHY',s.phy]].map(x=>'<span><i>'+x[0]+'</i><b>'+x[1]+'</b></span>').join('') + '</div>'; }
 /* STATS KHUSUS KIPER (standar FIFA): DIV diving/jangkauan, HAN nangkap vs nepis, KIC distribusi, REF reaksi, SPD mobilitas+recovery, POS tutup sudut */
 function gkStatsOf(p){
+  if (p.customGk) return p.customGk; /* stats kiper custom dari ADMIN PANEL */
   if (p._gk) return p._gk;
   const q = mulberry(p.id*53+7); const o = p.ovr; const j = () => (q()-0.5)*12;
   return p._gk = {
@@ -4252,11 +4254,30 @@ function showOppLineup(sq, name){
 
 /* ── ADMIN PANEL: khusus akun IFxrq R — kelola pemain GOAT + ubah tim sendiri/orang ── */
 const ADMIN_UID = '445da442-3518-44cb-8eeb-d8f82a9490a6';
+/* override pemain hasil editan admin (nama/posisi/rarity/stats) — dipake SEMUA akun */
+let overridesLoaded = false;
+function applyPlayerOverride(pid, o){
+  const p = PLAYERS[pid]; if (!p || !o) return;
+  if (o.name) p.name = o.name;
+  if (o.pos && POSGROUP[o.pos]) { p.pos = o.pos; }
+  if (o.r && RAR[o.r]) { p.r = o.r; p._face = null; }
+  if (o.ovr != null) p.ovr = Math.max(30, Math.min(99, +o.ovr || 60));
+  if (o.st && typeof o.st === 'object') p.customSt = { pac:+o.st.pac||60, sho:+o.st.sho||60, pass:+o.st.pass||60, dri:+o.st.dri||60, def:+o.st.def||60, phy:+o.st.phy||60 };
+  if (o.gk && typeof o.gk === 'object') p.customGk = { div:+o.gk.div||60, han:+o.gk.han||60, kic:+o.gk.kic||60, ref:+o.gk.ref||60, spd:+o.gk.spd||60, pos:+o.gk.pos||60 };
+}
+function loadPlayerOverrides(){
+  if (overridesLoaded) return Promise.resolve();
+  overridesLoaded = true;
+  return fbPost({ action:'playerOverrides' }).then((d)=>{
+    const ov = d.overrides || {};
+    for (const k of Object.keys(ov)) applyPlayerOverride(+k, ov[k]);
+  }).catch(()=>{});
+}
 function showAdmin(){
   if (myUid !== ADMIN_UID) return;
   const farouq = PLAYERS.find((p)=>p.name==='AL Farouq');
   const zaky = PLAYERS.find((p)=>p.name==='Zaky Mirza');
-  screen('admin', '<div class="fb-playmenu" style="max-width:600px;margin:0 auto;padding:16px">'
+  screen('admin', '<div class="fb-playmenu" style="max-width:640px;margin:0 auto;padding:16px">'
     + '<div class="fb-draft-top">ADMIN PANEL 🐐</div>'
     + '<h3 style="color:#f5c518;margin:14px 0 6px">GOAT PLAYERS</h3>'
     + '<div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">'
@@ -4267,8 +4288,8 @@ function showAdmin(){
     + '<div id="fbAdmMsg" class="fb-hint" style="min-height:18px"></div>'
     + '<h3 style="color:#f5c518;margin:14px 0 6px">EDIT TIM USER (sendiri / orang lain)</h3>'
     + '<div class="fb-row"><span>User</span><select id="fbAdmUser" class="fb-input"><option value="">— pilih user —</option></select></div>'
-    + '<div class="fb-btnrow"><button type="button" class="fb-btn fb-alt" id="fbAdmLoad">MUAT SQUAD</button></div>'
-    + '<div id="fbAdmSlots"></div>'
+    + '<div class="fb-btnrow"><button type="button" class="fb-btn fb-alt" id="fbAdmLoad">MUAT TIM</button></div>'
+    + '<div id="fbAdmEditor"></div>'
     + '<div class="fb-btnrow"><button type="button" class="fb-btn fb-ghost" id="fbAdmBack">← Lobby</button></div>'
     + '</div>');
   const msg = (t)=>{ const m=$('fbAdmMsg'); if(m) m.textContent=t; };
@@ -4289,32 +4310,138 @@ function showAdmin(){
     const sel=$('fbAdmUser'); if(!sel) return;
     (d.users||[]).forEach((u)=>{ const o=document.createElement('option'); o.value=u.uid; o.textContent=u.name+' (ai div '+(u.divAi||'-')+', pvp div '+(u.divPvp||'-')+')'; sel.appendChild(o); });
   }).catch(()=>msg('gagal load daftar user'));
-  let tgtSquad=null, tgtUid=null;
+
+  /* ═══ EDITOR TIM: lineup visual, klik card → GANTI / EDIT ═══ */
+  let adm = { uid:null, squad:null };
+  function renderEditor(){
+    const box=$('fbAdmEditor'); if(!box) return;
+    if(!adm.squad){ box.innerHTML=''; return; }
+    const sq=adm.squad; const f=FORMATIONS[sq.formation]||FORMATIONS['433-attack'];
+    const slotsHTML=f.slots.map((s,i)=>{
+      const [x,y]=vXY(s,i,f.slots);
+      const p=sq.players[i]!=null?byId(sq.players[i]):null;
+      return '<div class="fb-slot filled" data-admmain="'+i+'" style="left:'+x+'%;top:'+y+'%;cursor:pointer">'+(p?miniCard(p,s,effOVR(p,s)):'<div class="fb-plus">+</div>')+'</div>';
+    }).join('');
+    const benchHTML=(sq.bench||[]).map((pid,b)=>{ const p=pid!=null?byId(pid):null;
+      return '<div class="fb-bslot '+(p?'filled':'')+'" data-admbench="'+b+'" style="cursor:pointer">'+(p?miniCard(p,p.pos,p.ovr):'<div class="fb-plus">+</div>')+'</div>'; }).join('');
+    box.innerHTML='<div class="fb-build fb-vert" style="margin-top:10px">'
+      +'<div class="fb-build-main"><div class="fb-pitch v" style="position:relative;height:340px">'+slotsHTML+'</div>'
+      +'<div class="fb-bench"><div class="fb-bench-title">CADANGAN (klik buat edit)</div><div class="fb-bench-row">'+benchHTML+'</div></div></div>'
+      +'<div class="fb-row"><span>OVR Efektif</span><b>'+squadOVR(sq)+'</b></div>'
+      +'<div class="fb-hint">klik card pemain → GANTI (pilih dari index) atau EDIT (nama/stats/posisi/rarity)</div>'
+      +'<div class="fb-btnrow"><button type="button" class="fb-btn fb-ready" id="fbAdmSaveSq">💾 SIMPAN TIM KE USER INI</button></div>';
+    box.querySelectorAll('[data-admmain]').forEach((el)=>{ el.onclick=()=>openCardModal('main', +el.dataset.admmain); });
+    box.querySelectorAll('[data-admbench]').forEach((el)=>{ el.onclick=()=>openCardModal('bench', +el.dataset.admbench); });
+    const sv=$('fbAdmSaveSq');
+    if(sv) sv.onclick=async()=>{
+      try { await fbPost({action:'adminSetSquad', targetUid:adm.uid, squad:adm.squad}); msg('✅ tim user berhasil disimpan'); } catch(e){ msg('gagal simpan: '+e.message); }
+    };
+  }
+  function closeModal(){ const m=$('fbAdmModal'); if(m) m.remove(); }
+  function openCardModal(kind, idx){
+    closeModal();
+    const sq=adm.squad;
+    const pid = kind==='main'? sq.players[idx] : (sq.bench||[])[idx];
+    const p = pid!=null? byId(pid):null;
+    const d=document.createElement('div');
+    d.className='fb-modal'; d.id='fbAdmModal';
+    d.innerHTML='<div class="fb-modal-card" style="max-width:360px">'
+      +'<h3>'+(p? esc(shortName(p.name)).toUpperCase() : 'SLOT KOSONG')+'</h3>'
+      +'<div id="fbAdmCardPrev" style="display:flex;justify-content:center">'+(p?cardHTML(p):'<div class="fb-hint">belum ada pemain</div>')+'</div>'
+      +'<div class="fb-btnrow" style="margin-top:10px">'
+      +(p?'<button type="button" class="fb-btn fb-alt" id="fbAdmGanti">🔁 GANTI PEMAIN</button><button type="button" class="fb-btn fb-ready" id="fbAdmEdit">✏️ EDIT PEMAIN</button>':'')
+      +'<button type="button" class="fb-btn fb-ghost" id="fbAdmTutup">Tutup</button></div>'
+      +'<div id="fbAdmModalBody"></div>'
+      +'</div>';
+    document.body.appendChild(d);
+    $('fbAdmTutup').onclick=closeModal;
+    if(!p){ renderPicker(null); return; } /* slot kosong → langsung pilih pemain */
+    $('fbAdmGanti').onclick=()=>renderPicker(p);
+    $('fbAdmEdit').onclick=()=>renderEditForm(p);
+  }
+  /* ── GANTI: index semua pemain, bisa dicari ── */
+  function renderPicker(curP){
+    const body=$('fbAdmModalBody'); if(!body) return;
+    body.innerHTML='<div style="margin-top:10px"><input class="fb-input" id="fbAdmSearch" placeholder="🔍 cari nama pemain...">'
+      +'<div id="fbAdmList" style="max-height:280px;overflow-y:auto;margin-top:8px"></div></div>';
+    const list=$('fbAdmList');
+    function drawList(q){
+      const ql=(q||'').toLowerCase();
+      const pool=PLAYERS.filter((p)=>!ql||p.name.toLowerCase().includes(ql)).sort((a,b)=>b.ovr-a.ovr).slice(0,120);
+      list.innerHTML=pool.map((p)=>'<div class="fb-row" data-pick="'+p.id+'" style="cursor:pointer;padding:4px 6px;border-bottom:1px solid #263140">'
+        +'<span style="font-size:11px;color:'+(p.r==='goat'?'#f5c518':p.r==='icon'?'#c084fc':p.r==='legend'?'#e9d5ff':'#9ca3af')+'">'+RAR[p.r].label+'</span>'
+        +'<b style="flex:1;text-align:left;font-size:12px">&nbsp;'+esc(shortName(p.name))+'</b>'
+        +'<b style="font-size:11px">'+esc(p.pos)+' · '+p.ovr+'</b></div>').join('')||'<div class="fb-hint">gak ketemu</div>';
+      list.querySelectorAll('[data-pick]').forEach((el)=>{ el.onclick=()=>{
+        const np=byId(+el.dataset.pick); if(!np) return;
+        const sq=adm.squad;
+        const already=(sq.players.concat(sq.bench||[])).includes(np.id);
+        if(already && (!curP || np.id!==curP.id)){ msg('⚠️ '+np.name+' udah ada di tim ini'); return; }
+        if (adm.kind==='main') sq.players[adm.idx]=np.id; else sq.bench[adm.idx]=np.id;
+        msg((curP? '🔁 '+curP.name+' → ':'➕ ')+np.name+' — jangan lupa SIMPAN TIM');
+        closeModal(); renderEditor();
+      }; });
+    }
+    drawList('');
+    $('fbAdmSearch').oninput=(e)=>drawList(e.target.value);
+  }
+  /* ── EDIT: nama, posisi, rarity, OVR, stats (kiper = stats kiper) ── */
+  function renderEditForm(p){
+    const body=$('fbAdmModalBody'); if(!body) return;
+    const posOpts=Object.keys(POSXY).map((k)=>'<option value="'+k+'"'+(k===p.pos?' selected':'')+'>'+k+'</option>').join('');
+    const rarOpts=Object.entries(RAR).map(([k,v])=>'<option value="'+k+'"'+(k===p.r?' selected':'')+'>'+v.label+'</option>').join('');
+    body.innerHTML='<div style="margin-top:10px;text-align:left">'
+      +'<div class="fb-row"><span>Nama</span><input class="fb-input" id="fbEdName" value="'+esc(p.name)+'" style="max-width:170px"></div>'
+      +'<div class="fb-row"><span>Posisi</span><select class="fb-input" id="fbEdPos">'+posOpts+'</select></div>'
+      +'<div class="fb-row"><span>Card</span><select class="fb-input" id="fbEdRar">'+rarOpts+'</select></div>'
+      +'<div class="fb-row"><span>OVR</span><input class="fb-input" id="fbEdOvr" type="number" min="30" max="99" value="'+p.ovr+'" style="max-width:90px"></div>'
+      +'<div id="fbEdStats"></div>'
+      +'<div class="fb-btnrow"><button type="button" class="fb-btn fb-ready" id="fbEdSave">💾 SIMPAN EDIT PEMAIN</button></div>'
+      +'</div>';
+    function statInputs(pos){
+      if(pos==='GK'){
+        const g=gkStatsOf(p);
+        return '<div class="fb-hint" style="margin:6px 0 2px">STATS KIPER</div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">'
+          +[['div','DIV',g.div],['han','HAN',g.han],['kic','KIC',g.kic],['ref','REF',g.ref],['spd','SPD',g.spd],['pos','POS',g.pos]]
+            .map(([k,l,v])=>'<label style="font-size:10px;color:#9ca3af">'+l+'<input class="fb-input" type="number" min="30" max="99" id="fbEdS_'+k+'" value="'+Math.round(v)+'" style="margin-top:2px"></label>').join('')
+          +'</div>';
+      }
+      const s=statsOf(p);
+      return '<div class="fb-hint" style="margin:6px 0 2px">STATS PEMAIN</div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">'
+        +[['pac','PAC',s.pac],['sho','SHO',s.sho],['pass','PAS',s.pass],['dri','DRI',s.dri],['def','DEF',s.def],['phy','PHY',s.phy]]
+          .map(([k,l,v])=>'<label style="font-size:10px;color:#9ca3af">'+l+'<input class="fb-input" type="number" min="30" max="99" id="fbEdS_'+k+'" value="'+Math.round(v)+'" style="margin-top:2px"></label>').join('')
+        +'</div>';
+    }
+    $('fbEdStats').innerHTML=statInputs(p.pos);
+    $('fbEdPos').onchange=()=>{ $('fbEdStats').innerHTML=statInputs($('fbEdPos').value); }; /* pilih kiper → stats berubah jadi stats kiper */
+    $('fbEdSave').onclick=async()=>{
+      const pos=$('fbEdPos').value, rar=$('fbEdRar').value;
+      const patch={ name:$('fbEdName').value.trim(), pos, r:rar, ovr:+$('fbEdOvr').value||p.ovr };
+      if(pos==='GK'){
+        patch.gk={}; ['div','han','kic','ref','spd','pos'].forEach((k)=>{ patch.gk[k]=Math.max(30,Math.min(99,+($('fbEdS_'+k).value)||60)); });
+      } else {
+        patch.st={}; ['pac','sho','pass','dri','def','phy'].forEach((k)=>{ patch.st[k]=Math.max(30,Math.min(99,+($('fbEdS_'+k).value)||60)); });
+      }
+      try {
+        await fbPost({action:'adminSavePlayer', pid:p.id, patch});
+        applyPlayerOverride(p.id, patch);
+        msg('✅ '+patch.name+' diupdate (berlaku buat SEMUA yang pake pemain ini)');
+        closeModal(); renderEditor();
+      } catch(e){ msg('gagal simpan: '+e.message); }
+    };
+  }
+  /* wrapper modal butuh info slot mana yang lagi dibuka */
+  const _open=openCardModal;
+  openCardModal=function(kind,idx){ adm.kind=kind; adm.idx=idx; _open(kind,idx); };
+
   $('fbAdmLoad').onclick = async () => {
     const u=$('fbAdmUser').value; if(!u){ msg('pilih user dulu'); return; }
     try {
       const d = await fbPost({action:'adminGetSquad', targetUid:u});
-      tgtUid=u; tgtSquad=d.squad;
-      const box=$('fbAdmSlots');
-      if(!tgtSquad){ box.innerHTML='<div class="fb-hint">user ini belum punya squad</div>'; return; }
-      const slots=FORMATIONS[tgtSquad.formation].slots;
-      box.innerHTML = slots.map((s,i)=>{ const pid=tgtSquad.players[i]; const p=pid!=null?byId(pid):null;
-        return '<div class="fb-row"><span>'+s+'</span><b style="font-size:11px;flex:1;text-align:right">'+(p?p.name+' ('+p.ovr+')':'—')+'</b><input class="fb-input" id="fbAdmP'+i+'" placeholder="ganti: nama" style="max-width:140px"></div>'; }).join('')
-        + '<div class="fb-hint">bench sekarang: '+((tgtSquad.bench||[]).map((id)=>{const p=byId(id);return p?p.name:'?';}).join(', ')||'kosong')+'</div>'
-        + '<div class="fb-row"><span>Tambah bench</span><input class="fb-input" id="fbAdmBench" placeholder="ketik nama pemain"></div>'
-        + '<div class="fb-btnrow"><button type="button" class="fb-btn fb-ready" id="fbAdmSave">SIMPAN KE USER INI</button></div>';
-      $('fbAdmSave').onclick = async () => {
-        const sq=JSON.parse(JSON.stringify(tgtSquad)); const err=[];
-        sq.players.forEach((pid,i)=>{ const inp=$('fbAdmP'+i); const q=(inp&&inp.value||'').trim().toLowerCase(); if(!q) return;
-          const f=PLAYERS.find((p)=>p.name.toLowerCase()===q)||PLAYERS.find((p)=>p.name.toLowerCase().includes(q));
-          if(f) sq.players[i]=f.id; else err.push('slot '+(i+1));
-        });
-        const bEl=$('fbAdmBench'); const bq=(bEl&&bEl.value||'').trim().toLowerCase();
-        if(bq){ const f=PLAYERS.find((p)=>p.name.toLowerCase()===bq)||PLAYERS.find((p)=>p.name.toLowerCase().includes(bq));
-          if(f) sq.bench=[...(sq.bench||[]).filter((x)=>x!=null),f.id].slice(0,5); else err.push('bench'); }
-        if(err.length){ msg('nama gak ketemu buat: '+err.join(', ')); return; }
-        try { await fbPost({action:'adminSetSquad', targetUid:tgtUid, squad:sq}); msg('✅ squad user berhasil diubah'); } catch(e){ msg('gagal: '+e.message); }
-      };
+      if(!d.squad){ msg('user ini belum punya squad'); adm.squad=null; renderEditor(); return; }
+      adm.uid=u; adm.squad=JSON.parse(JSON.stringify(d.squad));
+      msg('tim dimuat — klik card pemain buat GANTI/EDIT');
+      renderEditor();
     } catch(e){ msg('gagal load squad'); }
   };
 }
@@ -6210,7 +6337,7 @@ function draw(){
 /* ── INIT ── */
 async function init(){
   if (!document.getElementById('fbRoot')) return;
-  try { await fbRefresh(); renderLobby(); }
+  try { await fbRefresh(); await loadPlayerOverrides(); renderLobby(); }
   catch (e) { $('fbRoot').innerHTML = '<div class="fb-empty">'+esc(e.message)+'</div>'; }
 }
 return { init, showLobby, get M(){ return M; }, PLAYERS, FORMATIONS, state: () => state, _startMatch: startMatch, _draw4: draw4, _squadOVR: squadOVR };
