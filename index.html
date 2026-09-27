@@ -4196,7 +4196,7 @@ function showPreMatch(cfg){
       + '<button type="button" class="fb-btn fb-alt" id="fbPMOpp">👁 LIHAT LINEUP LAWAN</button>'
       + '<button type="button" class="fb-btn fb-ghost" id="fbPMBack">← Batal</button>'
       + '</div></div>'
-      + '<button type="button" class="fb-btn fb-ready" id="fbPMReady">MAIN ▶</button>'
+      + '<button type="button" class="fb-btn fb-ready" id="fbPMReady">'+(cfg.mode==='ai'?'MAIN ▶':'SIAP ▶')+'</button>'
       + '</div>');
     $('fbPMForm').onchange = () => { pm.squad.formation = $('fbPMForm').value; pm.sel=null; render(); };
     $('fbPMTac').onchange = () => { pm.tactic = $('fbPMTac').value; state.defTactic = pm.tactic; try{ localStorage.setItem('fbDefTactic', pm.tactic); }catch(e){} };
@@ -4231,7 +4231,7 @@ function showPreMatch(cfg){
     state.squad = pm.squad; state.defTactic = pm.tactic;
     fbPost({ action:'saveSquad', squad: pm.squad }).catch(()=>{});
     cfg.mySquad = pm.squad; cfg.tactic = pm.tactic;
-    const btn = $('fbPMReady'); if (btn){ btn.disabled=true; btn.textContent='MAIN ✓'; }
+    const btn = $('fbPMReady'); if (btn){ btn.disabled=true; btn.textContent=cfg.mode==='ai'?'MAIN ✓':'SIAP ✓'; }
     if (cfg.mode==='ai') { startNow(); return; }
     if (cfg.mode==='pvp') {
       const wait = $('fbPMWait'); if (wait) wait.innerHTML = 'nunggu lawan siap... <b id="fbPMTimer">'+pm.timer+'</b> dtk';
@@ -4739,7 +4739,7 @@ const TRICK_DUR = { chop:0.42, push:0.5, spin:0.55, double:0.5, rainbow:0.72, el
 let M = null;
 function startMatch(cfg){
   const R = cfg.seed != null ? mulberry(cfg.seed) : mulberry(Date.now() & 0x7fffffff);
-  /* pvpSyncFix v22 — home/away server-side + PVP AUTO (no user-input RNG), 100% sinkron */
+  /* pvpAutoStart v23 — home/away server-side + PVP AUTO (no user-input RNG) + LANGSUNG MULAI OTOMATIS tanpa tombol MULAI, 100% sinkron */
   const mk = (squad, side, boost) => {
     const f = FORMATIONS[squad.formation] || FORMATIONS['433-attack'];
     const slots = f.slots;
@@ -4848,9 +4848,25 @@ function startMatch(cfg){
     M.autoPvp = true;
   }
   $('fbMSound').onclick = () => { const on = SFX.toggle(); $('fbMSound').textContent = on? '🔊':'🔇'; };
-  showOverlay('KICK OFF', esc(myName)+' vs '+esc(cfg.oppName)
-    +(M.autoPvp? '<br><span style="font-size:12px;color:#fde68a">⚡ PVP SINKRON: kamu & lawan nonton bareng pertandingan yang sama persis!</span>' : ''),
-    [{ label:'MULAI', fn: () => { hideOverlay(); M.phase='play'; M.paused = false; SFX.ambStart(); SFX.whistle(1, 0.8); bgWatchdog(); loop(performance.now()); } }]);
+  if (M.autoPvp) {
+    /* PVP/FRIEND: LANGSUNG MULAI OTOMATIS tanpa tombol MULAI! Mulai bareng pakai countdown tetap
+       biar 2 HP mulai di saat yang sama — gak ada klik manual yang beda waktu → 100% sinkron */
+    let cd = 3;
+    showOverlay('KICK OFF', esc(myName)+' vs '+esc(cfg.oppName)+'<br><span style="font-size:14px;color:#a7f3d0">match mulai otomatis dalam <b id="fbKickCd">3</b>...</span>', []);
+    const cdTimer = setInterval(() => {
+      cd--;
+      const el = document.getElementById('fbKickCd'); if (el) el.textContent = cd;
+      if (cd<=0) {
+        clearInterval(cdTimer);
+        hideOverlay(); M.phase='play'; M.paused = false;
+        M.lastTs = 0; M.acc = 0; /* reset timestamp biar tick mulai sama bareng */
+        SFX.ambStart(); SFX.whistle(1, 0.8); bgWatchdog(); loop(performance.now());
+      }
+    }, 1000);
+  } else {
+    showOverlay('KICK OFF', esc(myName)+' vs '+esc(cfg.oppName),
+      [{ label:'MULAI', fn: () => { hideOverlay(); M.phase='play'; M.paused = false; SFX.ambStart(); SFX.whistle(1, 0.8); bgWatchdog(); loop(performance.now()); } }]);
+  }
 }
 /* posisi dasar + spread vertikal kalo ada pos dobel (CB-CB, CM-CM, ST-ST, dll) biar formasi beneran kebentuk */
 function slotPos(team, pi){
