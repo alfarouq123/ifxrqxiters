@@ -4950,21 +4950,7 @@ function simTick(dt){
   }
   if (b.x<2||b.x>98) {
     const exitX = b.x>98? 98:2;
-    if (b.y>38&&b.y<62) {
-      if (!b.sureGoal) { /* GOAT GK gak teleport tapi tetep 100%: bola nyampe garis pun dia masih bisa nepis */
-        const defT2 = exitX===2? 0:1;
-        const gkG = M.ents.find((q)=>q.isGK && q.team===defT2 && q.goat);
-        if (gkG) {
-          M.stats.saves[defT2]++; SFX.play('cheer', 0.95);
-          SFX.play('cheer', 0.8);
-          matchMsg('🧤 TANGKAPAN '+gkG.name+'!', '');
-          b.x=gkG.x; b.y=gkG.y; b.vx=0;b.vy=0;b.curve=0;b.knuckle=false;b.shotId=null;b.passTarget=null;
-          b.owner=gkG; b.ownerTeam=defT2; touch(defT2,gkG); gkG.ctrl=0.4; gkG.dribA=null; gkG.hold=2.0;
-          return;
-        }
-      }
-      goal(atkGoal(0)===exitX? 0:1); return;
-    }
+    if (b.y>38&&b.y<62) { goal(atkGoal(0)===exitX? 0:1); return; }
     /* keluar garis gawang bukan gol → corner / goal kick (yang nyentuh terakhir) */
     cornerOrKick(ownGoal(0)===exitX? 0:1);
     return;
@@ -5308,15 +5294,20 @@ function trySave(gk){
   /* bola ON TARGET gak? prediksi y pas nyampe garis gawang — melenceng/kena tiang = biarin lewat */
   const tLine = ((gx===2? 2.5:97.5) - b.x)/((b.vx*10)||0.001);
   const yAtLine = b.y + b.vy*10*Math.max(0,tLine);
-  if (gk.goat) { /* GOAT GK: nepis semua yang ON TARGET — tapi tampilan/save SAMA kayak kiper biasa */
+  if (gk.goat) { /* GOAT GK: TEPIs, bukan nangkep — dan bolanya HARUS beneran kena kiper */
     if (!(yAtLine>38 && yAtLine<62)) return;
+    if (dist(gk,b) > 2.9) return; /* gak nyentuh bola → biarin (gol) */
     gk.lastShotId = b.shotId;
     M.stats.saves[gk.team]++;
     SFX.play('cheer', 0.8);
-    matchMsg('🧤 TANGKAPAN '+gk.name+'!', '');
-    b.vx=0;b.vy=0;b.curve=0;b.knuckle=false;b.shotId=null;b.passTarget=null;
-    b.owner=gk; b.ownerTeam=gk.team; b.x=gk.x; b.y=gk.y;
-    touch(gk.team,gk); gk.ctrl=0.4; gk.dribA=null; gk.hold=2.0;
+    matchMsg('👋 TEPISAN '+gk.name+'!', '');
+    b.shotId=null; b.knuckle=false; b.curve=0; b.bendTarget=null; b.bendCap=null;
+    touch(gk.team,gk); gk.ctrl=0.4; gk.dribA=null;
+    /* MUNTAHAN langsung ke ST sendiri: LAMBUNG ke atas + lengkung, nyampe pas di kaki striker, bebas offside */
+    const fw = M.ents.filter((m2)=>m2.team===gk.team && !m2.isGK && (m2.slotName==='ST'||m2.slotName==='CF'));
+    const tgt = fw.sort((a,b2)=>dist(gk,b2)-dist(gk,a))[0] || M.ents.filter((m2)=>m2.team===gk.team && !m2.isGK && m2!==gk).sort((a,b2)=>dist(gk,b2)-dist(gk,a))[0];
+    if (tgt) { doPass(gk, tgt, 0, true, true, true); }
+    else { b.owner=gk; b.ownerTeam=gk.team; b.x=gk.x; b.y=gk.y; b.vx=0;b.vy=0; gk.hold=2.0; }
     return;
   }
   /* DIV: jangkauan diving — makin tinggi makin jauh bola yg bisa disampe (dinaikin biar shot jauh ketepis) */
@@ -5502,6 +5493,16 @@ function onBall(e, dt){
   /* kiper pegang bola → distribusi; KIC nentuin seberapa jauh/cepet distribusinya */
   if (e.isGK) {
     if ((e.hold||0)>0) return; /* masih jeda pegang bola — tunggu tim re-posisi dulu */
+    if (e.goat) { /* GOAT GK: semua distribusi = TRIVELA LAMBUNG+lengkung ke striker, striker bebas offside */
+      const fwdG = fwdDir(e.team);
+      const fwds = M.ents.filter((o)=>o.team===e.team && !o.isGK);
+      let tgt=null, bd=-1e9;
+      for (const m2 of fwds){
+        const s = (m2.x-e.x)*fwdG + (m2.slotName==='ST'||m2.slotName==='CF'? 25:0);
+        if (s>bd){ bd=s; tgt=m2; }
+      }
+      if (tgt && dist(e,tgt)>10){ doPass(e, tgt, 0, true, true, true); return; }
+    }
     const g = e.gk || {div:60,han:60,kic:60,ref:60,spd:60,pos:60};
     const kicF = g.kic/100;
     if (kicF>0.5 && M.R()<kicF) {
@@ -5544,7 +5545,7 @@ function onBall(e, dt){
     return;
   }
   /* GOAT pengumpan (LB/RB/LWB/RWB/CM/RM/LM/CAM): bawa bola maju dulu, terus
-     TRIVELA AKURAT 100% ke striker */
+     TRIVELA AKURAT 100%: LAMBUNG ke atas, lengkung 180°-360°, nyampe pas di kaki striker */
   if (e.goat && ['LB','RB','LWB','RWB','CM','RM','LM','CAM'].includes(e.slotName)) {
     const fwdG = fwdDir(e.team);
     const inOppG = fwdG>0? e.x>=50 : e.x<=50;
@@ -5552,7 +5553,7 @@ function onBall(e, dt){
     const stMates = M.ents.filter((m2)=>m2.team===e.team && !m2.isGK && m2!==e && (m2.slotName==='ST'||m2.slotName==='CF'));
     if (stMates.length) {
       const tgt = stMates.sort((a,b2)=> (fwdG>0? b2.x-a.x : a.x-b2.x))[0]; /* striker paling depan */
-      if (dist(e,tgt)>8) { doPass(e, tgt, 0, true); return; }
+      if (dist(e,tgt)>8) { doPass(e, tgt, 0, true, true, false); return; } /* trivela lambung akurat */
     }
   }
   const gx = atkGoal(e.team);
@@ -5667,7 +5668,7 @@ function clearBall(e){
   touch(e.team,e);
   e.dribA=null;
 }
-function doPass(from, to, accB, forceOk){ /* forceOk=true → umpan PASTI nyampe (TRIVELA GOAT) */
+function doPass(from, to, accB, forceOk, goatLob, noOff){ /* forceOk=umpan PASTI nyampe; goatLob=TRIVELA LAMBUNG+lengkung 180-360° akurat ke kaki; noOff=bebas offside (GOAT GK) */
   const b = M.ball; b.owner=null; b.ownerTeam=null;
   const kicB = (from.isGK && from.gk)? from.gk.kic/100*0.18 : 0; /* KIC: akurasi distribusi kiper */
   const pasStat = from.st? from.st.pass : 50;
@@ -5678,18 +5679,18 @@ function doPass(from, to, accB, forceOk){ /* forceOk=true → umpan PASTI nyampe
   const err = ok? 0 : (0.5-M.R())*(eliteP?6:10);
   const dx = to.x-from.x + (ok?0:err), dy = to.y-from.y + (ok?0:err*0.6);
   const d = Math.hypot(dx,dy)||1;
-  const lob = d > 26; /* umpan JAUH = TENDANGAN LAMBUNG (bola melayang) */
+  const lob = goatLob===true || d > 26; /* umpan JAUH / TRIVELA GOAT = TENDANGAN LAMBUNG */
   const pow = lob? 2.2 + d*0.045 : 2.4 + d*0.055;
   b.vx = dx/d*pow; b.vy = dy/d*pow; b.passTarget = ok? to : null; b.from = from;
-  b.fly = lob? Math.max(0.6, Math.min(1.5, d*0.028)) : 0.16; /* bola terbang dulu, gak langsung nyangkut di org depan */
-  if (lob) { b.flyMax = b.fly; b.lobH2 = Math.min(13, d*0.26); } else { b.flyMax = 0; }
+  b.fly = lob? Math.max(0.7, Math.min(1.6, d*0.03)) : 0.16; /* bola terbang dulu, gak langsung nyangkut di org depan */
+  if (lob) { b.flyMax = b.fly; b.lobH2 = Math.min(14, d*0.24); } else { b.flyMax = 0; }
   from.skillLabel = { label:'PASS', t:1.0 }; /* umpan biasa = label PASS (bukan TRIVELA lagi) */
   /* CURVE PASS. TRIVELA (PAS 85+): kaki luar, belokan 180°→360° ikut PAS.
      cuma belok kalo umpan SUKSES — umpan gagal gak bengkok biar gak keluar-keluar.
      nama TRIVELA cuma dicatet buat REPLAY, gak muncul live */
   if (ok && trivela) {
-    b.curve = 1.5;
-    b.bendCap = forceOk===true? Math.PI*1.5 : Math.PI + (pasStat-85)/15*Math.PI; /* TRIVELA GOAT fix 270°; biasa PAS 85→180°, PAS 100→360° */
+    b.curve = goatLob? 2.4 : 1.5;
+    b.bendCap = forceOk===true? Math.PI + M.R()*Math.PI : Math.PI + (pasStat-85)/15*Math.PI; /* GOAT: lengkung acak 180°→360°; biasa PAS 85→180°, PAS 100→360° */
     b.bendTarget = { x:to.x, y:to.y }; b.bent = 0;
     M.lastTrick = { label:'TRIVELA', team:from.team, t:M.t }; /* biar muncul di replay */
   }
@@ -5698,6 +5699,7 @@ function doPass(from, to, accB, forceOk){ /* forceOk=true → umpan PASTI nyampe
   /* offside check — arah ikut fwdDir (bener setelah tukar sisi half 2);
      syarat: penerima di PARUH LAWAN + lebih dekat ke gawang lawan dr bek kedua-terakhir + lebih depan dr bola.
      Di paruh sendiri TIDAK PERNAH offside. */
+  if (!noOff) { /* GOAT GK: semua umpan bebas offside — pemain depan dianggap ONSIDE */
   const fwd = fwdDir(from.team);
   const oppsAll = M.ents.filter((o)=>o.team!==from.team);
   if (oppsAll.length) {
@@ -5710,6 +5712,7 @@ function doPass(from, to, accB, forceOk){ /* forceOk=true → umpan PASTI nyampe
     const beyondBall = fwd>0? to.x>b.x : to.x<b.x;
     const off = inOppHalf && beyondDef && beyondBall;
     M.pendingOff = { receiver: to, lineX, onside: !off, margin: Math.abs(to.x-lineX), passSnapId: M.snapId||0 };
+  }
   }
   M.lastTouchBy[from.team] = from; M.touchT[from.team] = M.t; from.dribA=null;
   if (M.assistBy==null || M.assistBy.team!==from.team) { M.assistBy = from; M.assistSnapId = M.snapId||0; } /* frame assist, buat replay gol */
