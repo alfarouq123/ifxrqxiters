@@ -3591,7 +3591,7 @@ const HISTORIC_PLAYERS = [
 ['Lionel Messi','CAM','Argentina',97,'icon'],['Cristiano Ronaldo','ST','Portugal',96,'icon'],['Neymar Jr','LW','Brasil',93,'icon'],['Kylian Mbappé','LW','Prancis',95,'icon'],['Erling Haaland','ST','Norwegia',94,'icon'],['Kevin De Bruyne','CAM','Belgia',94,'icon'],['Luka Modrić','CM','Kroasia',92,'legend'],['Robert Lewandowski','ST','Polandia',93,'icon'],['Mohamed Salah','RW','Mesir',93,'icon'],['Sadio Mané','LW','Senegal',89,'gold'],['Virgil van Dijk','CB','Belanda',92,'legend'],['Alisson Becker','GK','Brasil',91,'legend'],['Ederson Moraes','GK','Brasil',90,'legend'],['Thibaut Courtois','GK','Belgia',91,'legend'],['Manuel Neuer','GK','Jerman',92,'legend'],['Toni Kroos','CM','Jerman',91,'legend'],['Casemiro','CDM','Brasil',89,'gold'],['Karim Benzema','ST','Prancis',91,'legend'],['Antoine Griezmann','CAM','Prancis',90,'legend'],['Paul Pogba','CM','Prancis',88,'gold'],['N\'Golo Kanté','CDM','Prancis',89,'gold'],['Eden Hazard','LW','Belgia',89,'gold'],['Romelu Lukaku','ST','Belgia',87,'gold'],['Sergio Agüero','ST','Argentina',90,'legend'],['Ángel Di María','RW','Argentina',88,'gold'],['Javier Mascherano','CDM','Argentina',87,'gold'],['Sergio Romero','GK','Argentina',84,'gold'],['Luis Suárez','ST','Uruguay',90,'legend'],['Diego Godín','CB','Uruguay',87,'gold'],['Federico Valverde','CM','Uruguay',90,'legend'],['Darwin Núñez','ST','Uruguay',85,'gold'],['Alexis Sánchez','RW','Chile',86,'gold'],['Arturo Vidal','CM','Chile',86,'gold'],['Claudio Bravo','GK','Chile',85,'gold'],['Son Heung-min','LW','Korea Selatan',91,'legend'],['Park Ji-sung','CM','Korea Selatan',84,'gold'],['Takefusa Kubo','RW','Jepang',84,'gold'],['Kaoru Mitoma','LW','Jepang',84,'gold'],['Daichi Kamada','CAM','Jepang',83,'gold'],['Shinji Kagawa','CAM','Jepang',84,'gold'],['Keisuke Honda','CAM','Jepang',83,'gold'],['Yuto Nagatomo','LB','Jepang',81,'gold'],['Maya Yoshida','CB','Jepang',80,'gold'],['Eiji Kawashima','GK','Jepang',80,'gold']
 ];
 /* ═══ GOAT: rarity tertinggi — kekuatan ikut POSISI pemain (lari TETAP sesuai stats PAC, gak ada yang ngebut):
-   GK        : kecepatan dive = kecepatan bola + langsung baca arah tembakan
+   GK        : NEPIS 100% semua tendangan — GAK teleport, larinya nyamain kecepatan bola terus nepis pas bola deket
    CB        : sadar duluan, cepet nutup ruang antara bola & gawang
    LB/RB     : bawa bola maju, terus TRIVELA akurasi 100% ke striker
    CM/RM/LM  : TRIVELA akurasi 100% ke striker
@@ -4285,7 +4285,7 @@ function showAdmin(){
     + '<div style="position:relative"><button type="button" class="fb-btn fb-ghost" id="fbAdmBack" style="position:absolute;left:0;top:-4px;z-index:5">← EXIT</button><div class="fb-draft-top">ADMIN PANEL 🐐</div></div>'
     + '<h3 style="color:#f5c518;margin:14px 0 6px">GOAT PLAYERS</h3>'
     + '<div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">'
-    + (farouq? '<div>'+cardHTML(farouq)+'<div class="fb-hint" style="max-width:180px">GOAT GK: kecepatan dive = kecepatan bola, langsung baca arah tembakan</div></div>' :'')
+    + (farouq? '<div>'+cardHTML(farouq)+'<div class="fb-hint" style="max-width:180px">GOAT GK: nepis 100% semua tendangan — lari nyamain kecepatan bola (gak teleport)</div></div>' :'')
     + (zaky? '<div>'+cardHTML(zaky)+'<div class="fb-hint" style="max-width:180px">GOAT ST: tiap tendangan PASTI gol (lewatin pemain depan), gocek unlimited</div></div>' :'')
     + '</div>'
     + '<div class="fb-hint" style="margin:6px 0">Kekuatan GOAT ikut POSISI: CB nutup ruang cepet · LB/RB/CM/RM/LM trivela akurat 100% ke striker · RW/LW blitz curler 100% gol · lari semua GOAT tetep sesuai stats PAC</div>'
@@ -4727,10 +4727,10 @@ function simTick(dt){
   const b = M.ball;
   /* bola fisik — bola GHOST (tendangan GOAT penyerang) gak kena gesekan, jalan terus sampe gawang */
   b.x += b.vx*dt*10; b.y += b.vy*dt*10; if (!b.ghost){ b.vx*=0.985; b.vy*=0.985; }
-  if (b.lob && b.sureGoal && b.bendTarget) { /* ST GOAT: bola NAIK melewati pemain depan, lalu menukik */
+  if (b.lob && b.sureGoal && b.bendTarget) { /* GOAT: bola MENUKIK — ST naik lewatin pemain, RW/LW lengkung menukik */
     const tot=Math.abs(b.bendTarget.x-(b.sx!=null?b.sx:b.x))||1;
     const pr=Math.max(0,Math.min(1,Math.abs(b.x-(b.sx!=null?b.sx:b.x))/tot));
-    b.z=Math.sin(pr*Math.PI)*15;
+    b.z=Math.sin(pr*Math.PI)*(b.lobH||12);
   }
   /* KNUCKLEBALL: goyang/dip tak terduga di udara */
   if (b.knuckle && !b.owner && (Math.abs(b.vx)+Math.abs(b.vy))>1) {
@@ -4781,7 +4781,21 @@ function simTick(dt){
   }
   if (b.x<2||b.x>98) {
     const exitX = b.x>98? 98:2;
-    if (b.y>38&&b.y<62) { goal(atkGoal(0)===exitX? 0:1); return; }
+    if (b.y>38&&b.y<62) {
+      if (!b.sureGoal) { /* GOAT GK gak teleport tapi tetep 100%: bola nyampe garis pun dia masih bisa nepis */
+        const defT2 = exitX===2? 0:1;
+        const gkG = M.ents.find((q)=>q.isGK && q.team===defT2 && q.goat);
+        if (gkG) {
+          M.stats.saves[defT2]++; SFX.play('cheer', 0.95);
+          matchMsg('🐐 TEPISAN 100% '+gkG.name+' DI GARIS GAWANG!!', 'pk');
+          gkG.skillLabel = { label:'GOAT SAVE 🐐', t:1.6 };
+          b.x=gkG.x; b.y=gkG.y; b.vx=0;b.vy=0;b.curve=0;b.knuckle=false;b.shotId=null;b.passTarget=null;
+          b.owner=gkG; b.ownerTeam=defT2; touch(defT2,gkG); gkG.ctrl=0.4; gkG.dribA=null; gkG.hold=2.0;
+          return;
+        }
+      }
+      goal(atkGoal(0)===exitX? 0:1); return;
+    }
     /* keluar garis gawang bukan gol → corner / goal kick (yang nyentuh terakhir) */
     cornerOrKick(ownGoal(0)===exitX? 0:1);
     return;
@@ -5109,6 +5123,18 @@ function trySave(gk){
   const towardGoal = gx===2? b.vx<-0.3 : b.vx>0.3;
   if (!towardGoal) return;
   if (b.sureGoal) return; /* tembakan GOAT penyerang: PASTI gol, kiper gak bisa nangkep */
+  if (gk.goat) { /* GOAT GK: NEPIS 100%! dia GAK teleport — larinya nyamain kecepatan bola,
+     terus pas bola udah deket dia, tepisannya gak pernah gagal */
+    gk.lastShotId = b.shotId;
+    M.stats.saves[gk.team]++;
+    SFX.play('cheer', 0.95);
+    gk.skillLabel = { label:'GOAT SAVE 🐐', t:1.6 };
+    matchMsg('🐐 TEPISAN 100% '+gk.name+'!!', 'pk');
+    b.vx=0;b.vy=0;b.curve=0;b.knuckle=false;b.shotId=null;b.passTarget=null;
+    b.owner=gk; b.ownerTeam=gk.team; b.x=gk.x; b.y=gk.y;
+    touch(gk.team,gk); gk.ctrl=0.4; gk.dribA=null; gk.hold=2.0;
+    return;
+  }
   /* DIV: jangkauan diving — makin tinggi makin jauh bola yg bisa disampe */
   const reach = 2.6 + g.div/100*2.6;
   if (dist(gk,b) > reach) return; /* di luar jangkauan */
@@ -5578,17 +5604,17 @@ function shoot(e){
   }
   else { b.curve = 0; b.bendTarget = null; b.bendCap=null; }
   if (e.goat && ['ST','RW','LW'].includes(e.slotName)) { /* GOAT penyerang: SETIAP TENDANGAN PASTI GOL
-     RW/LW = BLITZ CURLER (kaki dalam lengkung menukik). ST = bola ditendang NAIK melewati pemain di depan.
+     RW/LW = BLITZ CURLER: kaki dalam LENGKUNG sampe 360° + MENUKIK. ST = bola NAIK lewatin pemain depan.
      Bola nembus semua pemain (ghost) & kiper gak bisa nangkep */
     const farCorner = b.y < 50 ? 61 : 39;
     const targetY = Math.max(42, Math.min(58, farCorner + (M.R()-0.5)*6));
-    const pow2 = 3.4; /* gak terlalu kenceng, melengkung */
+    const pow2 = 3.4; /* gak terlalu kenceng biar lengkungannya keliatan penuh */
     const detour = (targetY<50? 15:-15);
     const fdx=gx-b.x, fdy=(targetY+detour)-b.y, fd=Math.hypot(fdx,fdy)||1;
     b.vx = fdx/fd*pow2; b.vy = fdy/fd*pow2;
-    b.curve = 2.6; b.bendCap = Math.PI*2; b.bendTarget = { x:gx, y:targetY }; b.bent = 0;
+    b.curve = 3.2; b.bendCap = Math.PI*2; b.bendTarget = { x:gx, y:targetY }; b.bent = 0; /* lengkung sampe 360° */
     b.knuckle = false; b.ghost = true; b.sureGoal = true; b.fly = 0;
-    b.sx = b.x; b.lob = (e.slotName==='ST'); /* ST: melambung LEWAT ATAS pemain yang ngalangin */
+    b.sx = b.x; b.lob = true; b.lobH = (e.slotName==='ST'? 16 : 10); /* menukik: ST tinggi, RW/LW sedeng */
     e.skillLabel = { label: e.slotName==='ST'? 'GOAT PASTI GOL 🐐':'BLITZ CURLER 🐐', t:1.6 };
     M.lastTrick = { label: e.slotName==='ST'? 'GOAT PASTI GOL':'BLITZ CURLER', team:e.team, t:M.t };
   }
