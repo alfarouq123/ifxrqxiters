@@ -13,6 +13,7 @@ const VARIANTS = {
   black: '#000000',
   pink: '#F5A9D0',
   blue: '#A9C9F5',
+  purple: '#b58cff',
 };
 
 function getTokenWidth(ctx, token, fontSize) {
