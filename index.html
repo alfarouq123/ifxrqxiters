@@ -5122,30 +5122,18 @@ function startMatch(cfg){
     + '</div>'
     + '<div class="fb-mctrl-wrap">'
     + '<div class="fb-mctrl">'
-    + '<button type="button" class="fb-btn fb-ghost" id="fbMPause">⏸</button>'
-    + '<button type="button" class="fb-btn fb-alt onsp" id="fbMSp1">1x</button>'
-    + '<button type="button" class="fb-btn fb-ghost" id="fbMSp2">2x</button>'
-    + '<button type="button" class="fb-btn fb-ghost" id="fbMSp4">4x</button>'
     + '<button type="button" class="fb-btn fb-alt" id="fbMTactic">TAKTIK</button>'
     + '<span id="fbMTacNow">Balance</span><span class="fb-mcd" id="fbMCD"></span>'
     + '<button type="button" class="fb-btn fb-ghost" id="fbMSound">🔊</button>'
-    + '<button type="button" class="fb-btn fb-alt" id="fbMSkip" style="background:#7f1d1d;border-color:#ef4444">⏭</button>'
     + '</div>'
     + '</div>'
     + '</div>');
   $('fbMTactic').onclick = openTactics;
   $('fbMTacNow').textContent = TACTICS[M.teams[M.myTeam].tactic].label;
-  // speed controls
-  const setSp = (v) => { M.spd=v; ['fbMSp1','fbMSp2','fbMSp4'].forEach(id=>{ const el=$(id); if(el) el.classList.toggle('onsp', id==='fbMSp'+v); }); };
-  $('fbMSp1').onclick = ()=>setSp(1);
-  $('fbMSp2').onclick = ()=>setSp(2);
-  $('fbMSp4').onclick = ()=>setSp(4);
-  setSp(1);
-  $('fbMPause').onclick = () => { M.paused = !M.paused; $('fbMPause').textContent = M.paused?'▶':'⏸'; };
-  $('fbMSkip').onclick = () => { M.spd = 8; }; /* Skip ke hasil dibatasi speed 8x (bukan 30x yg bikin freeze) */
+  /* SPEED CONTROL, PAUSE, SKIP SEMUA DIHAPUS — match JALAN TERUS di kecepatan normal 1x */
+  M.spd = 1; M.paused = false;
   $('fbMSound').onclick = () => { const on = SFX.toggle(); $('fbMSound').textContent = on? '🔊':'🔇'; };
   if (cfg.mode==='pvp' || cfg.mode==='friend') {
-    $('fbMSkip').style.display = 'none'; /* PVP skip dimatiin */
     M.autoPvp = true;
     M.pvpLock = null;
     $('fbMTactic').style.display = 'none';
@@ -5339,10 +5327,10 @@ function simTick(dt){
   /* DEKLARASI b DI AWAL — biar bisa dipake dimana aja di fungsi ini tanpa ReferenceError! */
   const b = M.ball;
   /* phase khusus dulu — WAKTU MATCH BERHENTI pas replay/selebrasi/setpiece/VAR */
-  if (M.phase==='celebration') { tickCeleb(dt); updCam(dt, M.celeb.spot[0], M.celeb.spot[1], camZoom(1.35)); return; }
+  if (M.phase==='celebration') { tickCeleb(dt); updCam(dt, M.celeb.spot[0], M.celeb.spot[1], camZoom(1.8)); return; }
   if (M.phase==='replay') { tickReplay(dt); return; }
-  if (M.phase==='var') { M.varInfo.t -= dt; if (M.varInfo.t<=0) applyVar(); updCam(dt, b.x, b.y, camZoom(1.3)); return; }
-  if (M.phase==='setpiece') { M.setpiece.t -= dt; if (M.setpiece.t<=0) runSetPiece(); updCam(dt, b.x, b.y, camZoom(1.2)); return; }
+  if (M.phase==='var') { M.varInfo.t -= dt; if (M.varInfo.t<=0) applyVar(); updCam(dt, b.x, b.y, camZoom(1.65)); return; }
+  if (M.phase==='setpiece') { M.setpiece.t -= dt; if (M.setpiece.t<=0) runSetPiece(); updCam(dt, b.x, b.y, camZoom(1.55)); return; }
   if (M.phase!=='play') return;
   M.t += dt; M.min = Math.min(90+M.added, M.t*0.5); /* 90 menit = 180 detik real */
   if (M.tacticCD>0) M.tacticCD = Math.max(0, M.tacticCD-dt);
@@ -5525,7 +5513,7 @@ function simTick(dt){
       else { e.touchCd=0.3; b.vx=b.vx*0.55+(M.R()-0.5)*1.4; b.vy=b.vy*0.55+(M.R()-0.5)*1.4; }
     }
   });
-  M.ents.forEach((en)=>{ if(en.ctrl>0)en.ctrl-=dt; if(en.touchCd>0)en.touchCd-=dt; if(en.dribLock>0)en.dribLock-=dt; if(en.stealProt>0)en.stealProt-=dt; if(en.foulCd>0)en.foulCd-=dt; if(en.hold>0)en.hold-=dt; if(en.skillCd>0)en.skillCd-=dt; if(en.skillLabel&&en.skillLabel.t>0)en.skillLabel.t-=dt; if(en.trick && b.owner!==en) en.trick=null; }); /* bola ilang → stop gocekan */
+  M.ents.forEach((en)=>{ if(en.ctrl>0)en.ctrl-=dt; if(en.touchCd>0)en.touchCd-=dt; if(en.dribLock>0)en.dribLock-=dt; if(en.stealProt>0)en.stealProt-=dt; if(en.foulCd>0)en.foulCd-=dt; if(en.hold>0)en.hold-=dt; if(en.skillCd>0)en.skillCd-=dt; if(en.skillLabel&&en.skillLabel.t>0)en.skillLabel.t-=dt; if(en.trick && b.owner!==en) en.trick=null; if(en.kickAnim>0)en.kickAnim-=dt; }); /* bola ilang → stop gocekan + kick anim timer */
   if (b.ownerTeam!=null && b.ownerTeam!==M.lastOwnerTeam) {
     if (M.lastOwnerTeam!=null && M.lastOwnerTeam!==b.ownerTeam) M.antonyTeamUsed[M.lastOwnerTeam]=false; /* possession pindah tim → jatah antony tim lama balik */
     M.lastOwnerTeam = b.ownerTeam;
@@ -5655,7 +5643,7 @@ function simTick(dt){
   separate();
   if (b.ownerTeam!=null) M.stats.poss[b.ownerTeam]+=dt;
   updUI();
-  updCam(dt, b.x, b.y, camZoom(1.12));
+  updCam(dt, b.x, b.y, camZoom(1.48));
 }
 function separate(){
   for (let i=0;i<M.ents.length;i++) for (let j=i+1;j<M.ents.length;j++){
@@ -6238,6 +6226,9 @@ function bestPassTarget(o){
 }
 function shoot(e){
   const b = M.ball; b.owner=null; b.ownerTeam=null;
+  /* ANIMASI KICK: kaki belakang terayun ke depan selama 0.3 detik (tendangan kencang!) */
+  e.kickAnim = 0.3;
+  e.kickDir = Math.atan2(b.vy||0.01, (atkGoal(e.team)-e.x)||0.001);
   const gx = atkGoal(e.team);
   const shoStat = e.st? e.st.sho : e.skill;
   const acc = shoStat/100;
@@ -6748,7 +6739,7 @@ function tickReplay(dt){
       else if (v){ en.trick=null; en.skillLabel = { label:v, t:1 }; }
       else { en.trick=null; en.skillLabel=null; }
     });
-    updCam(dt, M.ball.x, M.ball.y, camZoom(1.5));
+    updCam(dt, M.ball.x, M.ball.y, camZoom(1.9));
   }
   if (r.i >= M.snaps.length-1) {
     const mode = r.mode||'goal';
@@ -7056,124 +7047,166 @@ function v3UiTick(){
   }
 }
 
-/* ── PIXEL CHIBI SPRITE (procedural, no external assets) — 3 frame lari ── */
+/* ── PIXEL CHIBI SPRITE (procedural) — LEBIH BESAR, LEBIH DETAIL, gaya pixel soccer retro.
+    Ukuran 14x18 grid, P=2px (28px tinggi pemain), ada 4 state: idle/lari1/lari2/kick/slide/celeb */
 function drawChibi(x, X, Y, e, M){
-  /* warna tim */
-  const isGK = e.isGK;
-  const skinTones = ['#6b4423','#8d5a2c','#a07043','#c89472','#e5b896','#8b5a3c','#4a2f1c'];
-  const hairTones = ['#1a0f0a','#3d2817','#6b4423','#2c1810','#d4b896','#0f0a08','#8b4513'];
-  /* stably pick skin/hair based on player id (id*23+7, id*31+5 hash-like) — JANGAN pakai Math.random (PVP desync) */
+  const isGK = !!e.isGK;
+  const skinTones = ['#5c3a1d','#7a4a22','#9a6438','#b37a4d','#d29a6d','#e8b88a','#3f2512'];
+  const hairTones = ['#120a07','#2a1a0d','#4a2d14','#1d1108','#c4a06b','#090605','#6b3410','#8b2500'];
   const sIdx = Math.abs(Math.floor(((e.id||1)*23+7)%skinTones.length));
   const hIdx = Math.abs(Math.floor(((e.id||1)*31+5)%hairTones.length));
   const skin = skinTones[sIdx], hair = hairTones[hIdx];
-  const shirt = isGK? (e.team===0?'#eab308':'#06b6d4') : (e.team===0?'#6d5bd0':'#ef4444'); /* ungu home / merah away */
-  const shirtDark = isGK? (e.team===0?'#a16207':'#0e7490') : (e.team===0?'#4a3f9e':'#991b1b');
-  const shorts = isGK? '#1f2937' : (e.team===0?'#2a1e5e':'#111827');
-  const socks = isGK? '#1f2937' : (e.team===0?'#ffffff':'#ffffff');
-  const boots = '#1a1a1a';
-  /* frame animasi: 3 frame (idle / lari 1 / lari 2) berdasarkan kecepatan + waktu */
+  const shirt = isGK? (e.team===0?'#facc15':'#22d3ee') : (e.team===0?'#7c3aed':'#ef4444');
+  const shirtDark = isGK? (e.team===0?'#a16207':'#0891b2') : (e.team===0?'#5b21b6':'#991b1b');
+  const shirtLight = isGK? (e.team===0?'#fde047':'#67e8f9') : (e.team===0?'#a78bfa':'#fca5a5');
+  const shorts = isGK? '#111827' : (e.team===0?'#1e1b4b':'#1f2937');
+  const socks = isGK? '#111827' : '#f8fafc';
+  const boots = '#0a0a0a';
   const speed = Math.hypot(e.vx||0, e.vy||0);
-  const t = performance.now()/110;
+  const t = performance.now()/100;
   let frame = 0;
-  if (e.celeb) frame = Math.floor(t*1.2)%3; /* selebrasi lompat */
+  const isKicking = (e.kickAnim||0) > 0;
+  const slide = (e.down||0) > 0 || !!e.tackle;
+  const armsUp = e.celeb>0;
+  if (slide) frame = 0;
+  else if (isKicking) frame = 99;
+  else if (e.celeb) frame = Math.floor(t*1.3)%3;
   else if (speed>0.8) frame = Math.floor(t)%3;
   else if (speed>0.3) frame = Math.floor(t*0.6)%2 + 1;
-  const offy = (e.celeb? -Math.abs(Math.sin(t*1.6))*8 : (frame===2? -2 : 0));
-  const isFlip = (e.vx!=null && e.vx < -0.1 && M.half===1) || (e.vx!=null && e.vx>0.1 && M.half===2);
-  /* selebrasi khusus */
-  const armsUp = e.celeb>0 && (e.celeb===2||e.celeb===0);
-  /* tackle slide */
-  const slide = e.down>0 || e.tackle;
+  const offy = (e.celeb? -Math.abs(Math.sin(t*1.5))*9 : (frame===2? -3 : 0)) - (isKicking? -3:0);
+  const isFlip = (e.vx!=null && e.vx < -0.08 && M.half===1) || (e.vx!=null && e.vx>0.08 && M.half===2);
   x.save();
   x.translate(X, Y + offy);
   x.imageSmoothingEnabled = false;
   if (isFlip) x.scale(-1,1);
-  /* scale pixel sprite: 2px per pixel → 12*2=24px tinggi */
-  const P = 1.6; /* pixel size */
-  const baseY = -2; /* ground anchor */
-  function px_(cx,cy,w,h,color){ x.fillStyle=color; x.fillRect(cx*P - 6*P, cy*P + baseY, w*P, h*P); }
-  /* === 12x15 pixel grid (chibi kepala besar, badan pendek) === */
-  /* RENCANA GRID (col 0..11, row 0..14):
-     row 0-3   : rambut + kepala
-     row 4-5   : muka (mata/mulut)
-     row 6-8   : badan (jersey)
-     row 9     : celana
-     row 10-11 : kaki/sepatu
+  const P = 2.2; /* pixel size — lebih besar biar detail */
+  const W_ = 14, H_ = 18; // grid 14 kolom × 18 baris
+  const ox = -W_/2 * P;
+  const baseY = -H_*P + 4;
+  function px_(cx,cy,w,h,color){ x.fillStyle=color; x.fillRect(ox+cx*P, baseY+cy*P, w*P, h*P); }
+  function line_(cx,cy,len,vertical,color){ x.fillStyle=color; x.fillRect(ox+cx*P, baseY+cy*P, vertical?P:len*P, vertical?len*P:P); }
+  /* === GRID 14 × 18:
+     0-4 rambut+topi kepala
+     4-7 wajah (mata, mulut, pipi)
+     7-8 leher + kerah
+     8-12 badan/jersey (dengan motif/stripe)
+     12-13 celana pendek
+     13-16 kaki+sepatu
   */
-  /* rambut */
-  px_(3,0,6,3,hair); px_(2,1,1,2,hair); px_(9,1,1,2,hair);
-  /* kepala (kulit) */
-  px_(3,3,6,3,skin); px_(2,4,1,1,skin); px_(9,4,1,1,skin);
-  /* mata */
-  px_(4,4,1,1,'#111'); px_(7,4,1,1,'#111');
+  /* RAMBUT — bentuk lebih natural */
+  px_(3,0,8,4,hair);
+  px_(2,1,1,3,hair); px_(11,1,1,3,hair);
+  px_(2,3,1,1,hair); px_(11,3,1,1,hair);
+  /* KEPALA (kulit) */
+  px_(3,4,8,4,skin);
+  px_(2,5,1,2,skin); px_(11,5,1,2,skin);
+  /* telinga */
+  px_(2,6,1,1,skin); px_(11,6,1,1,skin);
+  /* alis */
+  px_(4,5,2,1,hair); px_(8,5,2,1,hair);
+  /* MATA — lebih hidup */
+  px_(5,6,1,1,'#fff'); px_(8,6,1,1,'#fff');
+  px_(5,6,1,1,'#111'); px_(8,6,1,1,'#111'); /* pupil */
+  px_(5,6,1,0,'#fff'); px_(8,6,1,0,'#fff'); /* sorot */
+  /* pipi */
+  px_(4,7,1,1,'#e08a74'); px_(9,7,1,1,'#e08a74');
   /* mulut */
-  px_(5,5,2,1,'#7a3b2c');
-  /* leher */
-  px_(5,6,2,1,skin);
-  /* badan / jersey */
-  px_(3,7,6,3,shirt); px_(2,7,1,2,shirt); px_(9,7,1,2,shirt);
-  /* nomor punggung (depan dada) — pixel kecil putih */
-  px_(5,8,2,1,'#ffffff'); px_(5,7,1,1,shirtDark); /* detail garis leher */
-  /* LENGAN: frame 0 lurus, frame 1/2 berayun */
+  px_(6,7,2,1,'#8b3a3a');
+  /* LEHER */
+  px_(6,8,2,1,skin);
+  /* KERAH jersey */
+  px_(5,9,4,1,shirtDark);
+  /* BADAN (jersey) */
+  px_(3,9,8,4,shirt);
+  px_(2,10,1,3,shirt); px_(11,10,1,3,shirt);
+  /* garis stripe jersey */
+  px_(6,9,2,4,shirtLight);
+  px_(4,10,1,2,shirtDark); px_(9,10,1,2,shirtDark);
+  /* nomor di dada (pixel kecil) */
+  px_(6,10,2,2,'#ffffff');
+  px_(6,10,1,1,'#000'); px_(7,11,1,1,'#000');
+  /* LENGAN — bergantung ke frame animasi */
   if (armsUp) {
-    px_(1,4,1,4,shirt); px_(10,4,1,4,shirt); /* tangan ke atas */
-    px_(1,3,1,1,skin); px_(10,3,1,1,skin);
+    /* selebrasi: tangan ke atas */
+    px_(1,5,1,5,shirt); px_(12,5,1,5,shirt);
+    px_(1,4,1,1,skin); px_(12,4,1,1,skin);
+  } else if (isKicking) {
+    /* POSE KICK: satu kaki terayun ke depan, satu lengan ke belakang untuk keseimbangan */
+    px_(1,9,1,3,shirt); px_(12,10,1,3,shirt);
+    px_(1,12,1,1,skin); px_(12,13,1,1,skin);
   } else if (frame===0) {
-    px_(2,7,1,2,shirt); px_(9,7,1,2,shirt); /* diam */
-    px_(2,9,1,1,skin); px_(9,9,1,1,skin);
+    px_(2,10,1,3,shirt); px_(11,10,1,3,shirt); /* diam */
+    px_(2,13,1,1,skin); px_(11,13,1,1,skin);
   } else if (frame===1) {
-    px_(1,7,1,2,shirt); px_(10,8,1,2,shirt); /* ayun kanan maju */
-    px_(1,9,1,1,skin); px_(10,10,1,1,skin);
+    px_(1,10,1,2,shirt); px_(12,11,1,2,shirt); /* ayun kanan maju */
+    px_(1,12,1,1,skin); px_(12,13,1,1,skin);
   } else {
-    px_(1,8,1,2,shirt); px_(10,7,1,2,shirt); /* ayun kiri maju */
-    px_(1,10,1,1,skin); px_(10,9,1,1,skin);
+    px_(1,11,1,2,shirt); px_(12,10,1,2,shirt); /* ayun kiri maju */
+    px_(1,13,1,1,skin); px_(12,12,1,1,skin);
   }
-  /* celana */
-  px_(4,10,4,1,shorts);
-  /* KAKI 3-frame:
-     frame 0: sejajar (idle)
-     frame 1: kaki kanan depan, kiri belakang
-     frame 2: sebaliknya
-  */
+  /* CELANA */
+  px_(4,13,6,2,shorts);
+  px_(3,13,1,1,shorts); px_(10,13,1,1,shorts);
+  /* garis pinggang celana */
+  px_(4,13,6,1,'#ffffff55');
+  /* KAKI / SEPATU */
   if (slide){
-    /* nyerosot mendatar */
-    px_(4,11,1,1,socks); px_(7,11,1,1,socks);
-    px_(3,11,2,1,boots); px_(7,11,2,1,boots);
+    /* sliding tackle: tubuh mendatar, kaki lurus */
+    px_(2,14,4,1,socks); px_(8,14,4,1,socks);
+    px_(1,15,3,1,boots); px_(10,15,3,1,boots);
+    px_(4,12,2,1,'#ffffff55');
+  } else if (isKicking) {
+    /* KICK POSE: kaki penendang LURUS ke depan, kaki tumpu menekuk */
+    px_(5,15,1,2,socks); px_(5,16,1,1,boots); /* kaki tumpu */
+    /* kaki menendang memanjang ke depan */
+    px_(8,14,4,1,socks); px_(11,14,2,1,boots);
+    px_(7,14,1,1,skin);
   } else if (frame===0){
-    px_(4,11,1,2,socks); px_(7,11,1,2,socks);
-    px_(4,12,1,1,boots); px_(7,12,1,1,boots);
+    px_(5,15,1,2,socks); px_(8,15,1,2,socks);
+    px_(5,17,1,1,boots); px_(8,17,1,1,boots);
   } else if (frame===1){
-    px_(5,11,1,1,socks); px_(3,11,1,2,socks);
-    px_(5,11,1,1,boots); px_(3,12,1,1,boots);
-    px_(7,11,1,2,socks); px_(7,12,1,1,boots);
+    px_(4,15,1,1,socks); px_(6,15,1,2,socks);
+    px_(3,16,2,1,boots); px_(6,17,1,1,boots);
+    px_(8,15,1,2,socks); px_(8,17,1,1,boots);
+    px_(9,15,1,1,socks); px_(9,16,1,1,boots);
   } else {
-    px_(6,11,1,1,socks); px_(8,11,1,2,socks);
-    px_(6,11,1,1,boots); px_(8,12,1,1,boots);
-    px_(4,11,1,2,socks); px_(4,12,1,1,boots);
+    px_(6,15,1,1,socks); px_(4,15,1,2,socks);
+    px_(5,16,2,1,boots); px_(4,17,1,1,boots);
+    px_(8,15,1,2,socks); px_(8,17,1,1,boots);
+    px_(9,15,1,1,socks); px_(10,16,1,1,boots);
   }
-  /* ring saat pemain pegang bola */
-  if (M.ball.owner===e && !slide) {
-    x.strokeStyle='#ffd75e'; x.lineWidth=1.5;
-    x.beginPath(); x.arc(0, -2+offy*(isFlip?-1:1)*0, 14, 0, 7); x.stroke();
+  /* efek DEBU saat menendang kencang */
+  if (isKicking) {
+    for(let i=0;i<3;i++){
+      x.fillStyle='rgba(255,255,255,'+(0.4-i*0.12)+')';
+      x.fillRect(ox+(10+i*2)*P, baseY+(14)*P+2, 2*P, 2*P);
+    }
+  }
+  /* ring pemilik bola */
+  if (M.ball.owner===e && !slide && !isKicking) {
+    x.strokeStyle='#ffd75e'; x.lineWidth=1.8;
+    x.beginPath(); x.arc(0, -4, 19, 0, 7); x.stroke();
   }
   x.restore();
-  /* label nama + OVR (TETAP TEGAK, gak ke-flip) */
+  /* LABEL NAMA + OVR (tidak ke-flip) */
   x.save();
   x.translate(X, Y + offy);
-  x.font='700 8px Inter, sans-serif'; x.textAlign='center';
-  x.fillStyle='#fff'; x.strokeStyle='#000'; x.lineWidth=2.5;
-  const shortName = e.name.split(' ').slice(-1)[0].slice(0,8);
-  x.strokeText(shortName, 0, -18); x.fillText(shortName, 0, -18);
-  x.fillStyle='#ffe89a'; x.font='900 8px Inter';
-  x.strokeText(e.ovr, 0, -27); x.fillText(e.ovr, 0, -27);
-  /* skill label */
+  x.font='800 10px Inter, sans-serif'; x.textAlign='center';
+  x.fillStyle='#fff'; x.strokeStyle='#000'; x.lineWidth=3;
+  const shortName = String(e.name||'').split(' ').slice(-1)[0].slice(0,9);
+  x.strokeText(shortName, 0, -28); x.fillText(shortName, 0, -28);
+  x.fillStyle='#ffe89a'; x.font='900 10px Inter';
+  x.strokeText(e.ovr, 0, -40); x.fillText(e.ovr, 0, -40);
   if (M.phase!=='celebration') {
     if (e.trick && TRICK_LABEL[e.trick.type]) {
-      x.font='bold 8px Inter'; x.fillStyle='#fb923c'; x.strokeStyle='#000';
-      x.strokeText(TRICK_LABEL[e.trick.type], 0, -36); x.fillText(TRICK_LABEL[e.trick.type], 0, -36);
+      x.font='900 10px Inter'; x.fillStyle='#fb923c'; x.strokeStyle='#000'; x.lineWidth=3;
+      x.strokeText(TRICK_LABEL[e.trick.type], 0, -52); x.fillText(TRICK_LABEL[e.trick.type], 0, -52);
     } else if (e.skillLabel && e.skillLabel.t>0) {
-      x.font='bold 8px Inter'; x.fillStyle='#fb923c'; x.strokeStyle='#000';
-      x.strokeText(e.skillLabel.label, 0, -36); x.fillText(e.skillLabel.label, 0, -36);
+      x.font='900 10px Inter'; x.fillStyle='#fb923c'; x.strokeStyle='#000'; x.lineWidth=3;
+      x.strokeText(e.skillLabel.label, 0, -52); x.fillText(e.skillLabel.label, 0, -52);
+    } else if (isKicking) {
+      x.font='900 italic 10px Inter'; x.fillStyle='#facc15'; x.strokeStyle='#000'; x.lineWidth=3;
+      x.strokeText('POWER!', 0, -52); x.fillText('POWER!', 0, -52);
     }
   }
   x.restore();
@@ -7190,7 +7223,17 @@ function makeCrowd(){
   for(let y=-4;y<=104;y+=2.5){ for(let j=0;j<2;j++){ arr.push({x:-14+j*2.4,y,c:colors[Math.floor(Math.random()*colors.length)]}); arr.push({x:104+j*2.4,y,c:colors[Math.floor(Math.random()*colors.length)]}); } }
   return arr;
 }
-/* upgrade draw: pixel chibi player, trail bola, smooth camera */
+/* ── KAMERA SMOOTH HELPERS (biar updCam/camZoom ga ReferenceError) ── */
+function camZoom(z){ return z; }
+function updCam(dt, tx, ty, tz){
+  if (!M || !M.cam) return;
+  const c = M.cam;
+  if (!c._tx){ c._tx=tx; c._ty=ty; c._tz=tz||1.45; }
+  c._tx += (tx-c._tx)*Math.min(1, dt*6);
+  c._ty += (ty-c._ty)*Math.min(1, dt*6);
+  c._tz += (tz-c._tz)*Math.min(1, dt*4);
+}
+/* upgrade draw: pixel chibi player, trail bola, smooth camera, KICK ANIMATION */
 function draw(){
   const cv = $('fbMCanvas'); if (!cv || !M) return;
   const x = cv.getContext('2d'); const W = cv.width, H = cv.height;
@@ -7198,13 +7241,13 @@ function draw(){
   const shx = (Math.random()-0.5)*c.shake, shy = (Math.random()-0.5)*c.shake; /* Math.random: visual doang, JANGAN M.R() — biar PVP deterministik */
   x.setTransform(1,0,0,1,0,0);
   x.fillStyle = '#080e16'; x.fillRect(0,0,W,H);
-  /* kamera smooth follow bola */
-  if(!c._tx){ c._tx = M.ball.x; c._ty = M.ball.y; c._tz = c.z||1.08; }
-  const nearBox = M.ball.x<25||M.ball.x>75;
-  const zTarget = nearBox?1.18 : (M.phase==='celebration'?1.35 : (M.phase==='replay'?1.25 : 1.08));
-  c._tx += (M.ball.x-c._tx)*0.08;
-  c._ty += ((M.ball.y-50)*0.2+50 - c._ty)*0.08;
-  c._tz += (zTarget-c._tz)*0.05;
+  /* kamera smooth follow bola — ZOOM LEBIH DEKAT biar pemain keliatan DETAIL bukan kayak dari jauh */
+  if(!c._tx){ c._tx = M.ball.x; c._ty = M.ball.y; c._tz = c.z||1.45; }
+  const nearBox = M.ball.x<22||M.ball.x>78;
+  const zTarget = nearBox?1.6 : (M.phase==='celebration'?1.8 : (M.phase==='replay'?1.7 : (M.phase==='setpiece'?1.55 : (M.phase==='var'?1.6 : 1.45))));
+  c._tx += (M.ball.x-c._tx)*0.09;
+  c._ty += ((M.ball.y-50)*0.35+50 - c._ty)*0.09;
+  c._tz += (zTarget-c._tz)*0.06;
   c.shake *= 0.88;
   if (M.phase==='celebration' && c.shake<2) c.shake = 6;
   /* kamera transform */
@@ -7279,34 +7322,59 @@ function draw(){
   /* bayangan elips pemain + sprite */
   M.ents.forEach((e)=>{
     const X = px(e.x), Y = py(e.y);
-    x.beginPath(); x.ellipse(X, Y+12, 11, 3.8, 0, 0, 7); x.fillStyle='rgba(0,0,0,.38)'; x.fill();
+    const sliding = e.tackle||(e.down||0)>0;
+    x.beginPath(); x.ellipse(X, Y+16, sliding?20:16, sliding?4:5, 0, 0, 7); x.fillStyle='rgba(0,0,0,.42)'; x.fill();
     if (e.tackle) { /* jejak dash tackle */
       const bd=Math.hypot(b.x-e.x, b.y-e.y)||1;
       const ux=(b.x-e.x)/bd, uy=(b.y-e.y)/bd;
-      for (let k2=1;k2<=3;k2++){ x.beginPath(); x.ellipse(px(e.x-ux*k2*2), py(e.y-uy*k2*2), 9-k2*2,3, 0, 0, 7); x.fillStyle='rgba(255,255,255,'+(0.22-k2*0.06)+')'; x.fill(); }
+      for (let k2=1;k2<=4;k2++){ x.beginPath(); x.ellipse(px(e.x-ux*k2*2.2), py(e.y-uy*k2*2.2), 12-k2*2,3.5, 0, 0, 7); x.fillStyle='rgba(220,220,220,'+(0.28-k2*0.05)+')'; x.fill(); }
+    }
+    /* kick debu */
+    if ((e.kickAnim||0) > 0.15) {
+      for(let k2=1;k2<=3;k2++){ x.fillStyle='rgba(255,255,255,'+(0.35-k2*0.09)+')'; x.fillRect(px(e.x+8+k2*3)-3, py(e.y+10)-3, 5, 5); }
     }
     drawChibi(x, px(e.x), py(e.y), e, M);
   });
-  /* trail bola saat tembakan kencang */
+  /* trail bola saat tembakan kencang — MAKIN KENCANG makin panjang dan ada warna fire di shot keras */
   const sp = Math.hypot(b.vx,b.vy);
-  if (sp>4 && !b.fly) {
-    for (let i=1;i<=4;i++) { const a=0.25-i*0.05; if (a<=0) break;
-      x.beginPath(); x.arc(px(b.x)-b.vx*i*0.9, py(b.y)-b.vy*i*0.9-(b.z||0), 6-i*0.8, 0,7); x.fillStyle='rgba(255,255,255,'+a+')'; x.fill();
+  if (sp>3.5) {
+    const trailLen = Math.min(7, Math.round(sp*1.1));
+    for (let i=1;i<=trailLen;i++) {
+      const a = Math.max(0, 0.5 - i*0.06);
+      const sz = Math.max(2, 9-i*0.9);
+      const tx = px(b.x)-b.vx*i*0.85, ty = py(b.y)-b.vy*i*0.85-(b.z||0)*(1-i*0.08);
+      /* trail putih + coret api kalo shot SUPER kencang */
+      x.beginPath(); x.arc(tx, ty, sz, 0, 7);
+      x.fillStyle = sp>7 ? 'rgba(255,180,50,'+(a*0.8)+')' : 'rgba(255,255,255,'+a+')'; x.fill();
+    }
+    /* blur cepat */
+    if (sp>6) {
+      x.strokeStyle='rgba(255,240,180,0.5)'; x.lineWidth=2;
+      x.beginPath(); x.moveTo(px(b.x)-b.vx*trailLen*0.9, py(b.y)-b.vy*trailLen*0.9);
+      x.lineTo(px(b.x), py(b.y)-(b.z||0)); x.stroke();
     }
   }
-  /* bayangan bola + bola pixel */
-  x.beginPath(); x.ellipse(px(b.x), py(b.y)+6, 5,2,0,0,7); x.fillStyle='rgba(0,0,0,.3)'; x.fill();
-  /* BOLA PIXEL PATTERN: putih + pentagon hitam */
-  const bx = px(b.x), by = py(b.y)-(b.z||0);
+  /* bayangan bola — lebih besar kalo bola terbang */
+  const bz = b.z||0;
+  x.beginPath(); x.ellipse(px(b.x), py(b.y)+4 + bz*0.3, Math.max(4,8-bz*0.4), Math.max(1.5,2.5-bz*0.1), 0, 0, 7); x.fillStyle='rgba(0,0,0,'+Math.max(0.1,0.45-bz*0.02)+')'; x.fill();
+  /* BOLA PIXEL PATTERN: putih + pentagon hitam + sorot cahaya (lebih besar) */
+  const bx = px(b.x), by = py(b.y)-bz;
   x.save(); x.translate(bx,by); x.imageSmoothingEnabled=false;
-  x.fillStyle='#fff'; x.beginPath(); x.arc(0,0,6,0,7); x.fill();
-  x.strokeStyle='#111'; x.lineWidth=1.2; x.stroke();
+  const ballR = 9;
+  x.fillStyle='#f8fafc'; x.beginPath(); x.arc(0,0,ballR,0,7); x.fill();
+  x.strokeStyle='#0a0a0a'; x.lineWidth=1.6; x.stroke();
+  /* sorot cahaya atas */
+  x.fillStyle='rgba(255,255,255,0.5)';
+  x.beginPath(); x.arc(-3,-3,3,0,7); x.fill();
   /* pentagon tengah */
-  x.fillStyle='#111';
-  x.fillRect(-2,-2,4,4);
-  /* 6 bintik pattern */
-  [[-4,-1],[-3,3],[2,-4],[4,2],[0,-5],[0,5]].forEach(([dx,dy])=>{
-    x.fillRect(dx-1,dy-1,2,2);
+  x.fillStyle='#0a0a0a';
+  x.fillRect(-3,-3,6,6);
+  /* garis nyambung ke pentagon lain */
+  x.strokeStyle='#0a0a0a'; x.lineWidth=1.3;
+  /* 6 bintik/pentagon sekitar */
+  [[-5,-1],[-4,4],[3,-6],[5,3],[0,-7],[0,7]].forEach(([dx,dy])=>{
+    x.beginPath(); x.arc(dx,dy,2.2,0,7); x.fill();
+    x.beginPath(); x.moveTo(dx*0.4,dy*0.4); x.lineTo(dx,dy); x.stroke();
   });
   x.restore();
   /* sorot assist saat replay */
