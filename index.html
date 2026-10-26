@@ -5125,6 +5125,7 @@ function startMatch(cfg){
     + '<div class="fb-mctrl">'
     + '<button type="button" class="fb-btn fb-alt" id="fbMTactic">TAKTIK</button>'
     + '<span id="fbMTacNow">Balance</span><span class="fb-mcd" id="fbMCD"></span>'
+    + '<button type="button" class="fb-btn fb-ghost" id="fbMCam">📷 MID</button>'
     + '<button type="button" class="fb-btn fb-ghost" id="fbMSound">🔊</button>'
     + '</div>'
     + '</div>'
@@ -5133,6 +5134,24 @@ function startMatch(cfg){
   $('fbMTacNow').textContent = TACTICS[M.teams[M.myTeam].tactic].label;
   /* SPEED CONTROL, PAUSE, SKIP SEMUA DIHAPUS — match JALAN TERUS di kecepatan normal 1x */
   M.spd = 1; M.paused = false;
+  /* CAMERA MODE: wide=0.9 (tv wide), mid=1.05 (default), low=1.25 (player cam), duel=1.5 (close up), broadcast=dynamic */
+  const CAM_MODES = [
+    {k:'wide', label:'WIDE', z:0.9},
+    {k:'mid',  label:'MID',  z:1.05},
+    {k:'low',  label:'LOW',  z:1.25},
+    {k:'duel', label:'DUEL', z:1.55},
+    {k:'tv',   label:'TV',   z:'dynamic'},
+  ];
+  let camModeI = 1; /* mulai dari MID */
+  function applyCamMode(){
+    const m = CAM_MODES[camModeI];
+    $('fbMCam').textContent = '📷 '+m.label;
+    M.camMode = m.k;
+    if (typeof m.z === 'number') M._userZ = m.z;
+    else M._userZ = null; /* dynamic/tv pakai zTarget otomatis */
+  }
+  applyCamMode();
+  $('fbMCam').onclick = () => { camModeI = (camModeI+1)%CAM_MODES.length; applyCamMode(); };
   $('fbMSound').onclick = () => { const on = SFX.toggle(); $('fbMSound').textContent = on? '🔊':'🔇'; };
   if (cfg.mode==='pvp' || cfg.mode==='friend') {
     M.autoPvp = true;
@@ -5286,7 +5305,7 @@ function matchMsg(txt, cls){
 function nearestOpp(e, rad){ let best=null; M.ents.forEach((o)=>{ if(o.team!==e.team && (!rad||dist(o,e)<rad)) { if(!best||dist(o,e)<dist(best,e)) best=o; } }); return best; }
 /* FIXED TIMESTEP 1/30 dtk: jumlah tick + urutan RNG selalu SAMA di device apapun.
    Ini yang bikin match PVP identik di 2 HP (seed sama → jalannya pertandingan sama). */
-const FIXED_DT = 1/30; /* 30 FPS simulasi + animasi */
+const FIXED_DT = 1/16; /* 16fps - lebih ringan di HP, tidak lag */
 /* Helper: jadwalkan phase selesai pada serverNow() + dur — dijalankan otomatis, sinkron */
 function phaseUntil(dur){ M._phaseEnd = serverNow()/1000 + dur; M._phaseDur = dur; }
 function phaseSecLeft(){ return M._phaseEnd!=null? Math.max(0, M._phaseEnd - serverNow()/1000) : 0; }
@@ -6701,11 +6720,18 @@ function goal(ti){
   M.phase='celebration'; M.paused=false;
   if (M.autoPvp) phaseUntil(M.celeb? M.celeb.dur||3 : 3); /* jadwalkan selebrasi otomatis (waktu SAMA di 2 HP) */
   const scorer = M.shotBy || M.lastTouchBy[ti] || M.ents.find((e)=>e.team===ti&&!e.isGK);
-  const spot = [ atkGoal(ti)===98? 94:6, (scorer.y<50? 14:86) ];
-  M.celeb = { scorer, spot, t:0, dur:1, type: Math.floor(M.R()*5), mates: [] }; /* selebrasi 1 dtk doang */
-  phaseUntil(1);
-  /* 2 temen terdekat ikut */
+  /* Selebrasi: LARI KE TIANG CORNER bendera, bukan ke spot pinggir.
+     Corner: (2,4) kiri atas, (98,4) kanan atas, (2,96) kiri bawah, (98,96) kanan bawah.
+     Pilih corner terdekat dengan scorer */
+  const corners = [[2,4],[98,4],[2,96],[98,96]];
+  let bestCorner = corners[0], bestD = 1e9;
+  for(const cc of corners){ const dd=Math.hypot(cc[0]-scorer.x,cc[1]-scorer.y); if(dd<bestD){bestD=dd;bestCorner=cc;} }
+  const spot = [bestCorner[0]+2.5, bestCorner[1]];
+  M.celeb = { scorer, spot, t:0, dur:2.5, type: Math.floor(M.R()*5), mates: [], slideKnee: false }; /* selebrasi 2.5 detik, pemain lari ke corner */
+  phaseUntil(2.5);
+  /* 2 temen terdekat ikut lari ke corner */
   M.celeb.mates = M.ents.filter((e)=>e.team===ti && e!==scorer && !e.isGK).sort((a,b)=>dist(a,scorer)-dist(b,scorer)).slice(0,2);
+  M.celeb.matesTarget = M.celeb.mates.map((m,i)=>[bestCorner[0]+(i===0?0.5:4.5), bestCorner[1]+(i===0?6:-6)]);
   M.ball.owner=null; M.ball.ownerTeam=null; M.ball.vx=0;M.ball.vy=0;
   M.ball.curve=0; M.ball.ghost=false; M.ball.sureGoal=false; M.ball.lob=false; M.ball.z=0;
   M.ents.forEach((e)=>{ e.skillLabel=null; e.trick=null; e.tackle=null; });
@@ -6719,16 +6745,26 @@ function goal(ti){
 }
 function tickCeleb(dt){
   const c = M.celeb; c.t += dt;
-  if (M.shout){ M.shout.t -= dt; if (M.shout.t<=0) M.shout=null; } /* teriakan suporter pudaran */
+  if (M.shout){ M.shout.t -= dt; if (M.shout.t<=0) M.shout=null; }
   const s = c.scorer;
-  /* lari ke spot */
+  /* LARI KE CORNER FLAG dengan kecepatan 8 (sprint selebrasi) */
   const dx = c.spot[0]-s.x, dy = c.spot[1]-s.y, d = Math.hypot(dx,dy);
-  if (d>1.5) { s.x += dx/d*7*dt; s.y += dy/d*7*dt; }
-  else s.celeb = c.type;
-  c.mates.forEach((m2,i)=>{ const tx = c.spot[0] + (i===0?-4:4), ty = c.spot[1]+ (i===0?3:-3); const ddx=tx-m2.x, ddy=ty-m2.y, dd=Math.hypot(ddx,ddy); if (dd>1.5){ m2.x+=ddx/dd*6*dt; m2.y+=ddy/dd*6*dt; } });
+  if (d>1.8) { s.x += dx/d*8*dt; s.y += dy/d*8*dt; s.celeb=0; }
+  else {
+    /* NYAMPAI di corner — SLIDE KNEE selebrasi! Kemudian lompat tangan ke atas */
+    if (!c.arrivedT) { c.arrivedT = 0; c.slideKnee = true; }
+    c.arrivedT += dt;
+    if (c.arrivedT < 0.7) s.celeb = 1; /* slide knee pose */
+    else s.celeb = 2; /* angkat tangan */
+  }
+  /* TEMEN IKUT LARI ke corner (pakai target dari matesTarget) */
+  c.mates.forEach((m2,i)=>{
+    const tgt = c.matesTarget[i] || [c.spot[0]+(i===0?0.5:4.5), c.spot[1]+(i===0?6:-6)];
+    const ddx=tgt[0]-m2.x, ddy=tgt[1]-m2.y, dd=Math.hypot(ddx,ddy);
+    if (dd>1.8){ m2.x+=ddx/dd*7*dt; m2.y+=ddy/dd*7*dt; m2.celeb=0; }
+    else { m2.celeb = (c.arrivedT||0)>0.4 ? 0 : 0; }
+  });
   if (c.t>=c.dur) {
-    /* selebrasi selesai. phaseEnd di simTicker yang manggil startReplay() otomatis.
-       Kita set phase dulu disini biar takutnya double-call gpp (startReplay idempotent soal replay object) */
     if (M.phase==='celebration') startReplay();
   }
   updUI();
@@ -7376,17 +7412,35 @@ function draw(){
   const shx = 0, shy = 0;
   x.setTransform(1,0,0,1,0,0);
   x.fillStyle = '#080e16'; x.fillRect(0,0,W,H);
-  /* KAMERA: ZOOM 1.05x (hampir 1x) — lapangan keliatan FULL seperti sepak bola nyata.
-     World 0..100 × 760/470 aspect ratio: pada z=1.0, pitch (2..98 x 4..96) pas masuk frame
-     dengan padding tribun. z=1.05 sedikit nge-zoom supaya pemain tidak terlalu kecil dan
-     tidak banyak area hitam di pinggir. */
+  /* KAMERA: zoom tergantung MODE yang dipilih user.
+     Jika user milih fixed z (wide/mid/low/duel) → z di-paksa sesuai, tapi selebrasi/replay tetap zoom.
+     Jika mode TV (dynamic) → otomatis ikut aksi seperti TV broadcast. */
   if(!c._tx){ c._tx = 50; c._ty = 50; c._tz = c.z||1.05; }
   const nearBox = M.ball.x<15||M.ball.x>85;
-  const zTarget = nearBox?1.13 : (M.phase==='celebration'?1.3 : (M.phase==='replay'?1.25 : (M.phase==='setpiece'?1.1 : (M.phase==='var'?1.15 : 1.05))));
-  /* kamera ngikut bola tapi jangan berlebihan (0.06 = smooth, sedikit lambat supaya ga oleng) */
-  c._tx += (M.ball.x-c._tx)*0.05;
-  c._ty += (M.ball.y-c._ty)*0.05;
-  c._tz += (zTarget-c._tz)*0.04;
+  let baseZ = 1.05;
+  if (typeof M._userZ === 'number') baseZ = M._userZ;
+  /* pada mode TV (dynamic), otomatis zoom ikut aksi */
+  if (M._userZ == null) {
+    if (M.phase==='celebration') baseZ = 1.3;
+    else if (M.phase==='replay') baseZ = 1.3;
+    else if (M.phase==='setpiece') baseZ = 1.12;
+    else if (M.phase==='var') baseZ = 1.18;
+    else if (nearBox) baseZ = 1.15;
+    else baseZ = 1.05;
+  }
+  /* pada selebrasi/replay selalui nge-zoom dikit ke atas baseZ */
+  let zTarget = baseZ;
+  if (M.phase==='celebration') zTarget = baseZ + 0.2;
+  else if (M.phase==='replay') zTarget = baseZ + 0.2;
+  else if (M.phase==='setpiece') zTarget = baseZ + 0.06;
+  else if (M.phase==='var') zTarget = baseZ + 0.08;
+  else if (nearBox) zTarget = baseZ + 0.08;
+  /* kamera follow bola */
+  const txLerp = baseZ>1.4 ? 0.12 : 0.05; /* duel/low: ikut bola lebih cepet */
+  const tyLerp = baseZ>1.4 ? 0.12 : 0.05;
+  c._tx += (M.ball.x-c._tx)*txLerp;
+  c._ty += (M.ball.y-c._ty)*tyLerp;
+  c._tz += (zTarget-c._tz)*0.05;
   c.shake = 0; /* matikan shake biar ga getar */
   /* kamera transform — BULATIN ke integer biar ga sub-pixel blur! */
   const z = c._tz;
