@@ -5229,20 +5229,14 @@ function startMatch(cfg){
             simTick(simDt);
           }
           if (M._phaseEnd!=null && sNow >= M._phaseEnd && M.phase!=='play' && M.phase!=='ft' && M.phase!=='wait' && M.phase!=='ht') {
-            if (M.phase==='celebration') { startReplay(); M._phaseEnd=null; }
-            else if (M.phase==='replay') { resetKickoff(M.lastConceded==null?0:1-M.lastConceded); M._phaseEnd=null; }
-            else if (M.phase==='var') applyVar();
-            else if (M.phase==='setpiece') runSetPiece();
+            nextPhase();
           }
         } else {
           /* VS AI: phaseEnd pakai serverNow() agar selebrasi/replay otomatis lanjut */
           const spd = Math.min(M.spd||1, 8);
           simTick(simDt*spd);
           if (M._phaseEnd!=null && serverNow()/1000 >= M._phaseEnd && M.phase!=='play' && M.phase!=='ft' && M.phase!=='wait' && M.phase!=='ht') {
-            if (M.phase==='celebration') { startReplay(); M._phaseEnd=null; }
-            else if (M.phase==='replay') { resetKickoff(M.lastConceded==null?0:1-M.lastConceded); M._phaseEnd=null; }
-            else if (M.phase==='var') applyVar();
-            else if (M.phase==='setpiece') runSetPiece();
+            nextPhase();
           }
         }
       } catch(e){ console.error('simTick error', e); }
@@ -5366,6 +5360,7 @@ function simTick(dt){
   /* phase khusus dulu — WAKTU MATCH BERHENTI pas replay/selebrasi/setpiece/VAR */
   if (M.phase==='celebration') { tickCeleb(dt); updCam(dt, M.celeb.spot[0], M.celeb.spot[1], camZoom(1.3)); return; }
   if (M.phase==='replay') { tickReplay(dt); return; }
+  if (M.phase==='goalFreeze') { tickGoalFreeze(dt); return; }
   if (M.phase==='var') { M.varInfo.t -= dt; if (M.varInfo.t<=0) applyVar(); updCam(dt, b.x, b.y, camZoom(1.2)); return; }
   if (M.phase==='setpiece') { M.setpiece.t -= dt; if (M.setpiece.t<=0) runSetPiece(); updCam(dt, b.x, b.y, camZoom(1.15)); return; }
   if (M.phase!=='play') return;
@@ -6712,13 +6707,47 @@ function doCross(atkT, from, tx, ty){
   b.passTarget = target||null; b.from = from; b.fly=0.22; b.curve=0; b.bendTarget=null; /* proteksi: cuma target yg boleh nyentuh pertama */
   touch(atkT, from); M.assistBy = from;
 }
+/* ── STATE MACHINE phase selebrasi → replay → goal freeze → kickoff ── */
+function nextPhase(){
+  M._phaseEnd = null;
+  const ph = M.phase;
+  if (ph==='celebration') { startReplay(); return; }
+  if (ph==='replay') {
+    /* Replay selesai (bola udah masuk gawang di frame terakhir). Masuk ke GOAL FREEZE:
+       tampilkan bola di gawang 3 detik (pemain angkat tangan, sorakan penonton) baru kickoff. */
+    startGoalFreeze();
+    return;
+  }
+  if (ph==='goalFreeze') { resetKickoff(M.lastConceded==null?0:1-M.lastConceded); return; }
+  if (ph==='var') { applyVar(); return; }
+  if (ph==='setpiece') { runSetPiece(); return; }
+}
+function startGoalFreeze(){
+  M.phase='goalFreeze';
+  /* semua pemain berhenti, scorer+mates angkat tangan, bola diam di gawang */
+  M.ball.vx=0; M.ball.vy=0; M.ball.owner=null; M.ball.ownerTeam=null;
+  M.ents.forEach((e)=>{ e.vx=0; e.vy=0; e.celeb = (e.team===M.lastConceded && !e.isGK)? 2 : 0; });
+  phaseUntil(3.0); /* 3 DETIK FREEZE di momen bola masuk gawang, baru kickoff */
+  SFX.whistle(1, 0.6);
+}
+function tickGoalFreeze(dt){
+  /* nothing moves — crowd keep shouting, players hold pose */
+  if (M.shout){ M.shout.t -= dt; if (M.shout.t<=0) M.shout=null; }
+  updCam(dt, M.ball.x, M.ball.y, camZoom(1.4)); /* zoom ke bola di gawang */
+}
 /* ── gol → selebrasi → replay ── */
 function goal(ti){
   M.score[ti]++; M.stats.sot[ti]++;
   M.lastConceded = ti;
   M.goalTrick = (M.lastTrick && M.lastTrick.team===ti && M.t-(M.lastTrick.t||0)<8) ? M.lastTrick.label : null;
+  /* DORONG BOLA MASUK ke dalam gawang (5 unit) biar di replay keliatan bener2 masuk */
+  const netPush = ti===0 ? -5 : 5; /* tim 0 gawang di x=2 (kiri), tim 1 di x=98 (kanan) */
+  M.ball.x += netPush; M.ball.z = 0;
+  M.ball.vx = 0; M.ball.vy = 0;
+  /* push 1 snapshot terakhir saat bola sudah DI DALAM gawang */
+  pushSnap();
   M.phase='celebration'; M.paused=false;
-  if (M.autoPvp) phaseUntil(M.celeb? M.celeb.dur||3 : 3); /* jadwalkan selebrasi otomatis (waktu SAMA di 2 HP) */
+  const CELEB_DUR = 4.5; /* selebrasi 4.5 detik: lari ke corner + slide knee + angkat tangan */
   const scorer = M.shotBy || M.lastTouchBy[ti] || M.ents.find((e)=>e.team===ti&&!e.isGK);
   /* Selebrasi: LARI KE TIANG CORNER bendera, bukan ke spot pinggir.
      Corner: (2,4) kiri atas, (98,4) kanan atas, (2,96) kiri bawah, (98,96) kanan bawah.
@@ -6727,13 +6756,14 @@ function goal(ti){
   let bestCorner = corners[0], bestD = 1e9;
   for(const cc of corners){ const dd=Math.hypot(cc[0]-scorer.x,cc[1]-scorer.y); if(dd<bestD){bestD=dd;bestCorner=cc;} }
   const spot = [bestCorner[0]+2.5, bestCorner[1]];
-  M.celeb = { scorer, spot, t:0, dur:2.5, type: Math.floor(M.R()*5), mates: [], slideKnee: false }; /* selebrasi 2.5 detik, pemain lari ke corner */
-  phaseUntil(2.5);
+  M.celeb = { scorer, spot, t:0, dur:CELEB_DUR, type: Math.floor(M.R()*5), mates: [], slideKnee: false };
+  if (M.autoPvp) phaseUntil(CELEB_DUR); /* jadwalkan selebrasi otomatis (waktu SAMA di 2 HP) */
+  else phaseUntil(CELEB_DUR); /* VS AI juga pakai phaseUntil biar konsisten */
   /* 2 temen terdekat ikut lari ke corner */
   M.celeb.mates = M.ents.filter((e)=>e.team===ti && e!==scorer && !e.isGK).sort((a,b)=>dist(a,scorer)-dist(b,scorer)).slice(0,2);
   M.celeb.matesTarget = M.celeb.mates.map((m,i)=>[bestCorner[0]+(i===0?0.5:4.5), bestCorner[1]+(i===0?6:-6)]);
-  M.ball.owner=null; M.ball.ownerTeam=null; M.ball.vx=0;M.ball.vy=0;
-  M.ball.curve=0; M.ball.ghost=false; M.ball.sureGoal=false; M.ball.lob=false; M.ball.z=0;
+  M.ball.owner=null; M.ball.ownerTeam=null;
+  M.ball.curve=0; M.ball.ghost=false; M.ball.sureGoal=false; M.ball.lob=false;
   M.ents.forEach((e)=>{ e.skillLabel=null; e.trick=null; e.tackle=null; });
   M.cam.shake = 0;
   SFX.play('cheer', 0.95);
@@ -6762,11 +6792,13 @@ function tickCeleb(dt){
     const tgt = c.matesTarget[i] || [c.spot[0]+(i===0?0.5:4.5), c.spot[1]+(i===0?6:-6)];
     const ddx=tgt[0]-m2.x, ddy=tgt[1]-m2.y, dd=Math.hypot(ddx,ddy);
     if (dd>1.8){ m2.x+=ddx/dd*7*dt; m2.y+=ddy/dd*7*dt; m2.celeb=0; }
-    else { m2.celeb = (c.arrivedT||0)>0.4 ? 0 : 0; }
+    else {
+      /* temen nyampe → angkat tangan ikut selebrasi */
+      m2.celeb = 2;
+    }
   });
-  if (c.t>=c.dur) {
-    if (M.phase==='celebration') startReplay();
-  }
+  /* transisi selebrasi → replay di-handle oleh M._phaseEnd timer di nextPhase()
+     (biar gak dobel call kalo tick sama _phaseEnd barengan) */
   updUI();
 }
 function pushSnap(){
@@ -6837,9 +6869,12 @@ function tickReplay(dt){
     const resume = r.resume;
     M.replay=null;
     M.ents.forEach((en)=>{ en.trick=null; en.skillLabel=null; en.kickAnim=0; });
-    if (mode==='var') applyVar();
-    else if (mode==='save') { M.phase = resume==='setpiece'? 'setpiece' : 'play'; }
-    else resetKickoff(M.lastConceded==null? 0 : 1-M.lastConceded);
+    if (mode==='var') { M._phaseEnd=null; applyVar(); }
+    else if (mode==='save') { M._phaseEnd=null; M.phase = resume==='setpiece'? 'setpiece' : 'play'; }
+    else {
+      /* Replay nyampe frame TERAKHIR (bola masuk gawang). Trigger nextPhase → goalFreeze 3 detik. */
+      nextPhase();
+    }
   }
 }
 function resetKickoff(kick, keepPause){
@@ -6852,7 +6887,7 @@ function resetKickoff(kick, keepPause){
   M.snaps=[]; M.attackStart=0; M.pendingOff=null; M.wall=[]; M.shotBy=null; M.assistBy=null; M.shotSnapId=null;
   M.lastConceded=null; M.ftPending=false; M.ftWait=0; M.assistSnapId=null; M.goalTrick=null;
   M.antonyTeamUsed=[false,false]; M.lastOwnerTeam=null; M.shout=null;
-  M._kickSlow = 0;
+  M._kickSlow = 0; M.celeb = null;
   M.phase='play'; M.paused = !!keepPause;
 }
 /* ── HT / FT ── */
@@ -7079,6 +7114,10 @@ function updUI(){
   // event overlay: goal, penalty, cards, HT/FT
   v3UiTick();
 }
+/* ── helper: crowd shout / teriakan penonton ── */
+function crowdShout(text, sad){
+  M.shout = { text, sad:!!sad, t:2.8 };
+}
 /* ── helper event overlay ── */
 let _v3LastScore=[0,0], _v3LastPhase='play', _v3EvTimer=null;
 function v3ShowBigEv(text, cls, dur){
@@ -7198,12 +7237,8 @@ function drawChibi(x, X, Y, e, M){
   x.translate(Math.round(X), Math.round(Y + offy));
   x.imageSmoothingEnabled = false;
   if (isFlip) x.scale(-1,1);
-  /* MIRING BADAN ikut arah lari (diagonal/kiri/kanan/atas/bawah) */
-  const vx = e.vx||0, vy = e.vy||0;
-  const vTot = Math.hypot(vx,vy)||0.01;
-  const dirY = vy/vTot; /* -1 lari ke atas (y kecil), +1 ke bawah */
-  const tiltDeg = dirY*3*Math.min(1, vTot/3); /* miring maks 3 derajat pas sprint */
-  if (Math.abs(tiltDeg)>0.3) x.rotate(tiltDeg*Math.PI/180);
+  /* TILT ROTASI DIMATIKAN — rotation() bikin pixel nyemplung ke sub-pixel yang keliatan
+     kayak getar/blur meskipun semua posisi udah integer. Visual tilt kita ganti dengan bob Y saja. */
   const P = 2; /* pixel size integer */
   const W_ = 14, H_ = 20; // grid 14 × 20 (lebih tinggi, kaki panjang)
   const ox = -W_/2 * P;
@@ -7347,9 +7382,9 @@ function drawChibi(x, X, Y, e, M){
   /* Ring kuning DIHAPUS — permintaan user */
   /* (dulu ada elips pemilik bola, sekarang dihapus total biar bersih) */
   x.restore();
-  /* LABEL NAMA + OVR (tidak ke-flip) */
+  /* LABEL NAMA + OVR (tidak ke-flip) — bulatin integer biar ga goyang blur */
   x.save();
-  x.translate(X, Y + offy);
+  x.translate(Math.round(X), Math.round(Y + offy));
   x.font='800 10px Inter, sans-serif'; x.textAlign='center';
   x.fillStyle='#fff'; x.strokeStyle='#000'; x.lineWidth=3;
   const shortName = String(e.name||'').split(' ').slice(-1)[0].slice(0,9);
@@ -7416,38 +7451,53 @@ function draw(){
      Jika user milih fixed z (wide/mid/low/duel) → z di-paksa sesuai, tapi selebrasi/replay tetap zoom.
      Jika mode TV (dynamic) → otomatis ikut aksi seperti TV broadcast. */
   if(!c._tx){ c._tx = 50; c._ty = 50; c._tz = c.z||1.05; }
+  /* goalFreeze: KAMERA KE BOLA (di gawang) — ga ngikut corner */
+  let camFollow = M.ball;
+  let cfx = M.ball.x, cfy = M.ball.y;
+  if (M.phase==='celebration' && M.celeb){ cfx = M.celeb.spot[0]; cfy = M.celeb.spot[1]; }
   const nearBox = M.ball.x<15||M.ball.x>85;
   let baseZ = 1.05;
   if (typeof M._userZ === 'number') baseZ = M._userZ;
   /* pada mode TV (dynamic), otomatis zoom ikut aksi */
   if (M._userZ == null) {
-    if (M.phase==='celebration') baseZ = 1.3;
+    if (M.phase==='goalFreeze') baseZ = 1.4;
+    else if (M.phase==='celebration') baseZ = 1.3;
     else if (M.phase==='replay') baseZ = 1.3;
     else if (M.phase==='setpiece') baseZ = 1.12;
     else if (M.phase==='var') baseZ = 1.18;
     else if (nearBox) baseZ = 1.15;
     else baseZ = 1.05;
   }
-  /* pada selebrasi/replay selalui nge-zoom dikit ke atas baseZ */
+  /* pada selebrasi/replay selalu nge-zoom dikit ke atas baseZ */
   let zTarget = baseZ;
-  if (M.phase==='celebration') zTarget = baseZ + 0.2;
+  if (M.phase==='goalFreeze') zTarget = 1.45;
+  else if (M.phase==='celebration') zTarget = baseZ + 0.2;
   else if (M.phase==='replay') zTarget = baseZ + 0.2;
   else if (M.phase==='setpiece') zTarget = baseZ + 0.06;
   else if (M.phase==='var') zTarget = baseZ + 0.08;
   else if (nearBox) zTarget = baseZ + 0.08;
-  /* kamera follow bola */
+  /* kamera follow target */
   const txLerp = baseZ>1.4 ? 0.12 : 0.05; /* duel/low: ikut bola lebih cepet */
   const tyLerp = baseZ>1.4 ? 0.12 : 0.05;
-  c._tx += (M.ball.x-c._tx)*txLerp;
-  c._ty += (M.ball.y-c._ty)*tyLerp;
+  c._tx += (cfx-c._tx)*txLerp;
+  c._ty += (cfy-c._ty)*tyLerp;
   c._tz += (zTarget-c._tz)*0.05;
   c.shake = 0; /* matikan shake biar ga getar */
-  /* kamera transform — BULATIN ke integer biar ga sub-pixel blur! */
+  /* KAMERA TRANSFORM: setTransform LANGSUNG.
+     World (0..100, 0..100) → world-pixel (px(0)..px(100)) lalu scale z, lalu translate
+     ke device offset yang DIBULATKAN ke integer. Ini SATU-SATUNYA cara biar TIDAK ada
+     sub-pixel jitter walau z non-integer. */
   const z = c._tz;
+  /* world-pixel posisi target kamera (BELUM dibulatkan — dibulatkan SETELAH dikali z) */
+  const wtx = c._tx/100*W, wty = c._ty/100*H;
+  const devTx = Math.round(W/2 - z*wtx);
+  const devTy = Math.round(H/2 - z*wty);
   x.save();
-  x.translate(Math.round(W/2 + shx), Math.round(H/2 + shy));
-  x.scale(z,z);
-  x.translate(-Math.round(c._tx/100*W), -Math.round(c._ty/100*H));
+  x.setTransform(z,0,0,z,devTx,devTy);
+  /* px/py: world-unit → world-pixel, lalu di-SNAP ke grid 1 world-pixel (pembulatan).
+     Ini KUNCI anti-getar: tiap benda (pemain, bola, garis) akan selalu mendarat di kelipatan
+     world-pixel utuh, jadi saat z scale+translate, pergeseran kamera 0.1 world-unit TIDAK
+     bikin pemain loncat 1 pixel sendirian — SEMUA benda bergeser serentak per world-pixel. */
   const px = (v) => Math.round(v/100*W), py = (v) => Math.round(v/100*H);
   /* STADION: pelataran gelap + tribun + suporter warna tim (ungu = tim lu, merah = lawan) */
   x.fillStyle = '#0d1117'; x.fillRect(px(-20), py(-20), px(140), py(140));
@@ -7470,8 +7520,8 @@ function draw(){
     if (shoutOn && Math.abs(dd.x-waveX)<8) {
       x.strokeStyle=dd.c; x.lineWidth=2;
       x.beginPath();
-      x.moveTo(rx-2, ry); x.lineTo(rx-3, ry-8);
-      x.moveTo(rx+2, ry); x.lineTo(rx+3, ry-8);
+      x.moveTo(Math.round(rx-2), Math.round(ry)); x.lineTo(Math.round(rx-3), Math.round(ry-8));
+      x.moveTo(Math.round(rx+2), Math.round(ry)); x.lineTo(Math.round(rx+3), Math.round(ry-8));
       x.stroke();
     }
   }
@@ -7488,9 +7538,17 @@ function draw(){
     x.strokeText(M.shout.text, 0, 0); x.fillText(M.shout.text, 0, 0);
     x.restore();
   }
-  /* lapangan */
-  x.fillStyle = '#2ea153'; x.fillRect(px(2),py(4),px(96),py(92));
-  x.fillStyle = '#27904a'; for (let i=0;i<20;i++) if (i%2===0) x.fillRect(px(2+i*4.8), py(4), px(4.8)+1, py(92));
+  /* lapangan — stripe rumput PAKAI SATUAN PIXEL INTEGER biar ga blur/sub-pixel */
+  const fX0=px(2), fY0=py(4), fW=px(96), fH=py(92);
+  x.fillStyle = '#2ea153'; x.fillRect(fX0,fY0,fW,fH);
+  x.fillStyle = '#27904a';
+  /* 16 stripe gelap-terang, lebar GENAP di pixel (fW/16 dibulatkan ke GENAP biar tajam) */
+  const sN = 16;
+  let sW = Math.floor(fW/sN/2)*2;
+  for (let i=0;i<sN;i+=2){
+    const sx = fX0 + i*sW;
+    x.fillRect(sx, fY0, sW, fH);
+  }
   x.strokeStyle = '#ffffffcc'; x.lineWidth = 2;
   x.strokeRect(px(2),py(4),px(96),py(92));
   x.beginPath(); x.moveTo(px(50),py(4)); x.lineTo(px(50),py(96)); x.stroke();
@@ -7593,6 +7651,12 @@ function draw(){
     x.fillStyle='rgba(0,0,0,.4)'; x.fillRect(0,0,W,30);
     x.fillStyle='#ffd75e'; x.font='bold 16px Inter, sans-serif'; x.textAlign='center';
     x.fillText('GOOOL! '+(M.celeb.scorer.name), W/2, 20);
+  }
+  if (M.phase==='goalFreeze') {
+    x.fillStyle='rgba(0,0,0,.55)'; x.fillRect(0,0,W,40);
+    x.fillStyle='#ffd75e'; x.font='900 italic 20px Inter, sans-serif'; x.textAlign='center';
+    const scorerName = (M.celeb && M.celeb.scorer && M.celeb.scorer.name) ? M.celeb.scorer.name.toUpperCase() : (M.lastConceded===0?'TIM LU':'LAWAN');
+    x.fillText('⚽ GOL! '+scorerName+' ⚽', W/2, 26);
   }
   /* tombol SHOOT: MERAH = belum bisa, HIJAU = pemain lu lagi pegang bola */
   const sb = document.getElementById('fbMShoot');
