@@ -5285,7 +5285,7 @@ function matchMsg(txt, cls){
 function nearestOpp(e, rad){ let best=null; M.ents.forEach((o)=>{ if(o.team!==e.team && (!rad||dist(o,e)<rad)) { if(!best||dist(o,e)<dist(best,e)) best=o; } }); return best; }
 /* FIXED TIMESTEP 1/30 dtk: jumlah tick + urutan RNG selalu SAMA di device apapun.
    Ini yang bikin match PVP identik di 2 HP (seed sama → jalannya pertandingan sama). */
-const FIXED_DT = 1/30;
+const FIXED_DT = 1/16; /* 16 fps — animasi lebih smooth buat pixel game, ga kerasa kecepetan */
 /* Helper: jadwalkan phase selesai pada serverNow() + dur — dijalankan otomatis, sinkron */
 function phaseUntil(dur){ M._phaseEnd = serverNow()/1000 + dur; M._phaseDur = dur; }
 function phaseSecLeft(){ return M._phaseEnd!=null? Math.max(0, M._phaseEnd - serverNow()/1000) : 0; }
@@ -5501,7 +5501,7 @@ function simTick(dt){
       if (M.pendingOff && M.pendingOff.receiver===e) { const po = M.pendingOff; M.pendingOff=null; if (!po.onside) {
         /* OFFSIDE → replay SLOW-MO dari momen umpan sampe bola disentuh, baru free kick.
            cari frame umpan lewat snapId (tahan bgt walau buffer snapshot ke-shift) */
-        M.stats.off[e.team]++; M.cam.shake=2;
+        M.stats.off[e.team]++; M.cam.shake=0;
         M.varInfo = { ...po };
         const lastI = Math.max(0, M.snaps.length-1);
         let startI = M.snaps.findIndex((s)=>s.id===po.passSnapId);
@@ -6309,8 +6309,8 @@ function shoot(e){
   const distToGoal = Math.abs(gx - b.x);
   if (pow>=5 && distToGoal<45) {
     M._kickSlow = 0.35;
-    if (M.cam) M.cam.shake = 4;
-  } else if (M.cam) M.cam.shake = Math.max(M.cam.shake||0, 2);
+    if (M.cam) M.cam.shake = 0;
+  } else if (M.cam) M.cam.shake = 0;
 }
 /* HASIL TACKLE: roll kena BOLA (rebut bersih) vs kena PEMAIN (agresi = pelanggaran) */
 function resolveTackle(e){
@@ -6342,7 +6342,7 @@ function triggerVar(){
   M.phase='var'; M.varInfo = { ...po, t:2.2, result:'offside' };
   if (M.autoPvp) phaseUntil(2.2);
   M.stats.off[M.varInfo.receiver.team]++;
-  M.cam.shake = 2;
+  M.cam.shake = 0;
 }
 function applyVar(){
   const v = M.varInfo; M.varInfo=null; M.phase='play';
@@ -6353,7 +6353,7 @@ function applyVar(){
 function foul(e, o){
   if (M.phase!=='play') return;
   M.stats.fouls[e.team]++;
-  M.cam.shake = 6;
+  M.cam.shake = 0;
   SFX.whistle(1, 0.45); /* peluit pelanggaran */
   const b = M.ball; b.vx*=0.2; b.vy*=0.2;
   /* KEKERASAN: makin agresif/bruiser makin gede peluang kena kartu (merah rare, kuning kadang2) */
@@ -6385,7 +6385,7 @@ function foul(e, o){
 function contactFoul(e, o, sev){
   if (M.phase!=='play') return;
   M.stats.fouls[e.team]++;
-  M.cam.shake = 5;
+  M.cam.shake = 0;
   const b = M.ball; b.vx*=0.2; b.vy*=0.2;
   /* kata-kata pelanggaran (bukan "nempel X dtk" lagi).
      pilih kata TANPA M.R() biar timeline RNG match gak geser (penting buat PVP sinkron) */
@@ -6700,7 +6700,7 @@ function goal(ti){
   M.ball.owner=null; M.ball.ownerTeam=null; M.ball.vx=0;M.ball.vy=0;
   M.ball.curve=0; M.ball.ghost=false; M.ball.sureGoal=false; M.ball.lob=false; M.ball.z=0;
   M.ents.forEach((e)=>{ e.skillLabel=null; e.trick=null; e.tackle=null; });
-  M.cam.shake = 8;
+  M.cam.shake = 0;
   SFX.play('cheer', 0.95);
   const nm = (scorer && scorer.name)? scorer.name.toUpperCase() : 'TIM LU';
   const winS = ['GOOOLLLLLL!!!','AYOOO '+nm+'!','GILAAAA! GOL '+nm+'!!',nm+' MEMANG BUAS!!','MERINDING! '+nm+'!!','NAH GITU DONG '+nm+'!','LANJUTKAN '+nm+'!!!'];
@@ -7054,7 +7054,7 @@ function v3ShowGoal(scorer, assist, mySide){
   cards.innerHTML = mk('⚽',scorer) + mk('🎯',assist);
   ov.classList.add('show');
   // shake canvas
-  if(M.cam) M.cam.shake=8;
+  if(M.cam) M.cam.shake=0;
   // confetti sederhana pakai CSS animation (via tambah class sementara) — biar ringan, kita inject div confetti 1x
   const confs=[];
   for(let i=0;i<60;i++){
@@ -7110,7 +7110,7 @@ function drawChibi(x, X, Y, e, M){
   const socks = isGK? '#111827' : '#f8fafc';
   const boots = '#0a0a0a';
   const speed = Math.hypot(e.vx||0, e.vy||0);
-  const t = performance.now()/100;
+  const t = performance.now()/160; /* 16 FPS animasi — ga kecepetan, smooth pixel style */
   let frame = 0;
   const isKicking = (e.kickAnim||0) > 0;
   const slide = (e.down||0) > 0 || !!e.tackle;
@@ -7123,13 +7123,13 @@ function drawChibi(x, X, Y, e, M){
   const offy = (e.celeb? -Math.abs(Math.sin(t*1.5))*9 : (frame===2? -3 : 0)) - (isKicking? -3:0);
   const isFlip = (e.vx!=null && e.vx < -0.08 && M.half===1) || (e.vx!=null && e.vx>0.08 && M.half===2);
   x.save();
-  x.translate(X, Y + offy);
+  x.translate(Math.round(X), Math.round(Y + offy));
   x.imageSmoothingEnabled = false;
   if (isFlip) x.scale(-1,1);
-  const P = 2.2; /* pixel size — lebih besar biar detail */
+  const P = 2; /* pixel size integer BULAT biar ga blur (2px per pixel chibi) */
   const W_ = 14, H_ = 18; // grid 14 kolom × 18 baris
   const ox = -W_/2 * P;
-  const baseY = -H_*P + 4;
+  const baseY = -(H_-1)*P; /* anchor tepat di dasar sprite (cy=H-1 = kaki di Y=0 translate) */
   function px_(cx,cy,w,h,color){ x.fillStyle=color; x.fillRect(ox+cx*P, baseY+cy*P, w*P, h*P); }
   function line_(cx,cy,len,vertical,color){ x.fillStyle=color; x.fillRect(ox+cx*P, baseY+cy*P, vertical?P:len*P, vertical?len*P:P); }
   /* === GRID 14 × 18:
@@ -7284,8 +7284,14 @@ function updCam(dt, tx, ty, tz){
 function draw(){
   const cv = $('fbMCanvas'); if (!cv || !M) return;
   const x = cv.getContext('2d'); const W = cv.width, H = cv.height;
+  /* PIXEL PERFECT: matikan smoothing biar ga blur! Semua posisi dibulatkan ke integer. */
+  x.imageSmoothingEnabled = false;
+  x.webkitImageSmoothingEnabled = false;
+  x.mozImageSmoothingEnabled = false;
+  x.msImageSmoothingEnabled = false;
   const c = M.cam;
-  const shx = (Math.random()-0.5)*c.shake, shy = (Math.random()-0.5)*c.shake; /* Math.random: visual doang, JANGAN M.R() — biar PVP deterministik */
+  /* CAMERA SHAKE DIMATIKIN — ini biang keladi getar/blur! Ga usah goyang2. */
+  const shx = 0, shy = 0;
   x.setTransform(1,0,0,1,0,0);
   x.fillStyle = '#080e16'; x.fillRect(0,0,W,H);
   /* kamera smooth follow bola — ZOOM LEBIH DEKAT biar pemain keliatan DETAIL bukan kayak dari jauh */
@@ -7295,15 +7301,14 @@ function draw(){
   c._tx += (M.ball.x-c._tx)*0.09;
   c._ty += ((M.ball.y-50)*0.35+50 - c._ty)*0.09;
   c._tz += (zTarget-c._tz)*0.06;
-  c.shake *= 0.88;
-  if (M.phase==='celebration' && c.shake<2) c.shake = 6;
-  /* kamera transform */
+  c.shake = 0; /* matikan shake biar ga getar */
+  /* kamera transform — BULATIN ke integer biar ga sub-pixel blur! */
   const z = c._tz;
   x.save();
-  x.translate(W/2 + shx, H/2 + shy);
+  x.translate(Math.round(W/2 + shx), Math.round(H/2 + shy));
   x.scale(z,z);
-  x.translate(-c._tx/100*W, -c._ty/100*H);
-  const px = (v) => v/100*W, py = (v) => v/100*H;
+  x.translate(-Math.round(c._tx/100*W), -Math.round(c._ty/100*H));
+  const px = (v) => Math.round(v/100*W), py = (v) => Math.round(v/100*H);
   /* STADION: pelataran gelap + tribun + suporter warna tim (ungu = tim lu, merah = lawan) */
   x.fillStyle = '#0d1117'; x.fillRect(px(-20), py(-20), px(140), py(140));
   x.fillStyle = '#1a2230';
@@ -7366,46 +7371,35 @@ function draw(){
   M.wall.forEach((e)=>{ x.beginPath(); x.arc(px(e.x),py(e.y),10,0,7); x.fillStyle='#f8717133'; x.fill(); x.strokeStyle='#f87171'; x.lineWidth=1.5; x.stroke(); });
   /* bola (diambil duluan buat trail) */
   const b = M.ball;
-  /* bayangan elips pemain + sprite */
+  /* bayangan elips pemain + sprite — TEPAT di bawah kaki (Y+2) bukan ngambang 16px kebawah */
   M.ents.forEach((e)=>{
     const X = px(e.x), Y = py(e.y);
     const sliding = e.tackle||(e.down||0)>0;
-    x.beginPath(); x.ellipse(X, Y+16, sliding?20:16, sliding?4:5, 0, 0, 7); x.fillStyle='rgba(0,0,0,.42)'; x.fill();
+    x.beginPath(); x.ellipse(X, Y+3, sliding?22:16, sliding?4:4, 0, 0, 7); x.fillStyle='rgba(0,0,0,.35)'; x.fill();
     if (e.tackle) { /* jejak dash tackle */
       const bd=Math.hypot(b.x-e.x, b.y-e.y)||1;
       const ux=(b.x-e.x)/bd, uy=(b.y-e.y)/bd;
-      for (let k2=1;k2<=4;k2++){ x.beginPath(); x.ellipse(px(e.x-ux*k2*2.2), py(e.y-uy*k2*2.2), 12-k2*2,3.5, 0, 0, 7); x.fillStyle='rgba(220,220,220,'+(0.28-k2*0.05)+')'; x.fill(); }
+      for (let k2=1;k2<=4;k2++){ x.beginPath(); x.ellipse(px(e.x-ux*k2*2.2), py(e.y-uy*k2*2.2), 12-k2*2,3, 0, 0, 7); x.fillStyle='rgba(220,220,220,'+(0.25-k2*0.05)+')'; x.fill(); }
     }
-    /* kick debu */
-    if ((e.kickAnim||0) > 0.15) {
-      for(let k2=1;k2<=3;k2++){ x.fillStyle='rgba(255,255,255,'+(0.35-k2*0.09)+')'; x.fillRect(px(e.x+8+k2*3)-3, py(e.y+10)-3, 5, 5); }
-    }
-    drawChibi(x, px(e.x), py(e.y), e, M);
+    drawChibi(x, Math.round(X), Math.round(Y), e, M);
   });
-  /* trail bola saat tembakan kencang — MAKIN KENCANG makin panjang dan ada warna fire di shot keras */
+  /* trail bola saat tembakan kencang */
   const sp = Math.hypot(b.vx,b.vy);
   if (sp>3.5) {
-    const trailLen = Math.min(7, Math.round(sp*1.1));
+    const trailLen = Math.min(6, Math.round(sp*0.9));
     for (let i=1;i<=trailLen;i++) {
-      const a = Math.max(0, 0.5 - i*0.06);
-      const sz = Math.max(2, 9-i*0.9);
-      const tx = px(b.x)-b.vx*i*0.85, ty = py(b.y)-b.vy*i*0.85-(b.z||0)*(1-i*0.08);
-      /* trail putih + coret api kalo shot SUPER kencang */
+      const a = Math.max(0, 0.4 - i*0.05);
+      const sz = Math.max(2, Math.round(8-i*0.8));
+      const tx = Math.round(px(b.x)-b.vx*i*0.85), ty = Math.round(py(b.y)-b.vy*i*0.85-(b.z||0)*(1-i*0.08));
       x.beginPath(); x.arc(tx, ty, sz, 0, 7);
       x.fillStyle = sp>7 ? 'rgba(255,180,50,'+(a*0.8)+')' : 'rgba(255,255,255,'+a+')'; x.fill();
     }
-    /* blur cepat */
-    if (sp>6) {
-      x.strokeStyle='rgba(255,240,180,0.5)'; x.lineWidth=2;
-      x.beginPath(); x.moveTo(px(b.x)-b.vx*trailLen*0.9, py(b.y)-b.vy*trailLen*0.9);
-      x.lineTo(px(b.x), py(b.y)-(b.z||0)); x.stroke();
-    }
   }
-  /* bayangan bola — lebih besar kalo bola terbang */
+  /* bayangan bola — TEPAT di bawah bola (Y+3) bukan ngambang jauh */
   const bz = b.z||0;
-  x.beginPath(); x.ellipse(px(b.x), py(b.y)+4 + bz*0.3, Math.max(4,8-bz*0.4), Math.max(1.5,2.5-bz*0.1), 0, 0, 7); x.fillStyle='rgba(0,0,0,'+Math.max(0.1,0.45-bz*0.02)+')'; x.fill();
-  /* BOLA PIXEL PATTERN: putih + pentagon hitam + sorot cahaya (lebih besar) */
-  const bx = px(b.x), by = py(b.y)-bz;
+  x.beginPath(); x.ellipse(px(b.x), py(b.y)+3 + bz*0.25, Math.max(4,Math.round(8-bz*0.4)), Math.max(1.5,2-bz*0.08), 0, 0, 7); x.fillStyle='rgba(0,0,0,'+Math.max(0.1,0.4-bz*0.02)+')'; x.fill();
+  /* BOLA PIXEL PATTERN — bulatin posisi biar ga blur */
+  const bx = Math.round(px(b.x)), by = Math.round(py(b.y)-bz);
   x.save(); x.translate(bx,by); x.imageSmoothingEnabled=false;
   const ballR = 9;
   x.fillStyle='#f8fafc'; x.beginPath(); x.arc(0,0,ballR,0,7); x.fill();
