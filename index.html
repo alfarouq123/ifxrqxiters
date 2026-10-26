@@ -5754,9 +5754,8 @@ function gkMove(e,dt){
   tx = Math.max(box.x0+0.8, Math.min(box.x1-0.8, tx));
   ty = Math.max(box.y0+0.8, Math.min(box.y1-0.8, ty));
   const dx=tx-e.x, dy=ty-e.y, d=Math.hypot(dx,dy);
-  /* SPD: mobilitas di kotak; dive 2.2x lebih cepet; abis dive (down) lemot dulu buat bangun.
-     GOAT GK: kecepatannya SAMA kayak bolanya — bola OTW gawang, kiper juga segitu (gak lebay) */
-  let sp = (4.2 + g.spd/100*3.0) * (e.down>0? 0.3:1) * (e.diving? 2.2:1);
+  /* SPD: mobilitas di kotak; DIBUFF — dive speed 2.8x, base 4.8 (dulu 4.2) */
+  let sp = (4.8 + g.spd/100*3.5) * (e.down>0? 0.4:1) * (e.diving? 2.8:1);
   if (e.goat && e.diving) sp = Math.max(sp, bspd0);
   if (d>0.25){ const step = Math.min(d, sp*dt); e.x += dx/d*step; e.y += dy/d*step; }
   /* HARD CLAMP: kiper gak pernah bisa keluar kotak penalti */
@@ -5793,24 +5792,25 @@ function trySave(gk){
     else { b.owner=gk; b.ownerTeam=gk.team; b.x=gk.x; b.y=gk.y; b.vx=0;b.vy=0; gk.hold=2.0; }
     return;
   }
-  /* DIV: jangkauan diving — makin tinggi makin jauh bola yg bisa disampe (dinaikin biar shot jauh ketepis) */
-  const reach = 3.2 + g.div/100*3.0;
+  /* DIV: jangkauan diving — makin tinggi makin jauh bola yg bisa disampe (DIBUFF: reach diperlebar biar ga bobol mulu) */
+  const reach = 4.2 + g.div/100*3.5;
   if (dist(gk,b) > reach) return; /* di luar jangkauan */
   gk.lastShotId = b.shotId;
   const shooter = M.shotBy || null;
   const shotPow = Math.hypot(b.vx,b.vy);
-  /* REF baca arah & kecepatan reaksi, DIV kualitas diving, POS udah bantu dari positioning */
-  let saveP = 0.34 + g.ref/100*0.42 + g.div/100*0.30 + g.pos/100*0.12 - shotPow*0.015 - ((shooter?shooter.skill:70)/100)*0.08;
-  if (b.knuckle) saveP -= 0.18;              /* knuckle goyang → susah dibaca */
-  else if (b.curve && b.bendTarget) saveP -= 0.10; /* placing melengkung → agak susah */
-  saveP = Math.max(0.08, Math.min(0.94, saveP));
+  /* REF baca arah & kecepatan reaksi, DIV kualitas diving, POS udah bantu dari positioning
+     BUFF BASE SAVE PROB + 0.12 (dulu 0.34 base) + weight stats diperbesar */
+  let saveP = 0.46 + g.ref/100*0.35 + g.div/100*0.25 + g.pos/100*0.15 - shotPow*0.01 - ((shooter?shooter.skill:70)/100)*0.05;
+  if (b.knuckle) saveP -= 0.12;              /* knuckle goyang → susah dibaca, tapi gak se-neh dulu */
+  else if (b.curve && b.bendTarget) saveP -= 0.06; /* placing melengkung */
+  saveP = Math.max(0.18, Math.min(0.96, saveP));
   if (M.R() >= saveP) return; /* gak kesampe — bola lanjut */
   b.ghost=false; /* kena tangan kiper → efek nembus ilang */
   M.stats.saves[gk.team]++;
   SFX.play('cheer', 0.8); /* SORAKAN BESAR penonton buat save kiper */
-  gk.down = Math.max(0.35, 1.25 - g.spd/100*0.85); /* SPD: seberapa cepet bangun abis dive */
+  gk.down = Math.max(0.25, 0.9 - g.spd/100*0.7); /* SPD: seberapa cepet bangun abis dive (LEBIH CEPET dari dulu) */
   /* HAN: nangkap lengket atau cuma nepis */
-  const catchP = 0.22 + g.han/100*0.55 - shotPow*0.035;
+  const catchP = 0.32 + g.han/100*0.55 - shotPow*0.025;
   if (M.R() < catchP) {
     /* NANGKAP lengket → bola MATI: jeda dulu (GK hold), tim maju & lawan balik posisi, baru distribusi */
     b.vx=0;b.vy=0; b.curve=0; b.owner=gk; b.ownerTeam=gk.team; b.x=gk.x;b.y=gk.y; b.passTarget=null;
@@ -6241,7 +6241,7 @@ function bestPassTarget(o){
   }
   return best;
 }
-function shoot(e){
+function shoot(e, forceLob){
   const b = M.ball; b.owner=null; b.ownerTeam=null;
   /* ANIMASI KICK: kaki belakang terayun ke depan selama 0.3 detik (tendangan kencang!) */
   e.kickAnim = 0.3;
@@ -6249,8 +6249,11 @@ function shoot(e){
   const gx = atkGoal(e.team);
   const shoStat = e.st? e.st.sho : e.skill;
   const acc = shoStat/100;
-  const elite = shoStat>=85;   /* CURVE SHOOT mulai SHO 85 (derajat naik sampe 180° di SHO 100) */
-  const knuck = shoStat>=92 && M.R()<0.55;   /* SHO 92+: bisa KNUCKLE */
+  const elite = shoStat>=85;   /* CURVE SHOOT mulai SHO 85 */
+  const knuck = shoStat>=92 && M.R()<0.55;
+  /* LOB SHOT / CHIP: kalau dipaksa (forceLob), atau JARAKNYA JAUH (>30) dan SHO tinggi — chip kiper! */
+  const distToGoal = Math.abs(gx - b.x);
+  const lob = !!forceLob || (distToGoal>32 && shoStat>=78 && M.R()<0.22 && !b.owner);
   let ty;
   if (knuck) {
     ty = (M.R()<0.5? 42:58) + (M.R()-0.5)*8;
@@ -6260,11 +6263,18 @@ function shoot(e){
     ty = 50 + (M.R()-0.5)*56*(1.3-acc);
   }
   const dx = gx-b.x, dy = ty-b.y; const d = Math.hypot(dx,dy)||1;
-  const pow = 4.5 + acc*3 + (knuck?0.8:0);
+  let pow = 4.5 + acc*3 + (knuck?0.8:0);
+  if (lob) pow = 3.2 + acc*1.5; /* chip: tenaga lebih pelan, bola melambung tinggi */
   b.vx = dx/d*pow; b.vy = dy/d*pow; M.shotBy = e; e.dribA=null;
   b.knuckle = false;
-  e.skillLabel = { label:'SHOOT', t:1.0 }; /* live: semua tembakan = SHOOT */
-  if (knuck) {
+  e.skillLabel = { label: lob?'CHIP!':'SHOOT', t:1.0 };
+  if (lob) {
+    /* LOB/CHIP: bola terbang TINGGI di atas kiper, turun ke gawang */
+    b.lob = true; b.lobH = 22; b.flyMax = 99; b.fly = 0.35;
+    b.bendTarget = { x:gx, y:ty }; b.curve = 0.3; b.bendCap = 0.5; b.bent = 0;
+    b.sx = b.x;
+    M.lastTrick = { label:'CHIP', team:e.team, t:M.t };
+  } else if (knuck) {
     /* knuckle: lurus ke sasaran tapi GOYANG di udara. namanya cuma muncul di REPLAY */
     b.knuckle = true; b.curve = 0; b.bendTarget = null; b.bendCap=null;
     M.lastTrick = { label:'KNUCKLE', team:e.team, t:M.t };
@@ -6305,12 +6315,10 @@ function shoot(e){
   const t = (gx-b.x)/(b.vx||0.001); const yAt = b.y + b.vy*t;
   if (yAt>38&&yAt<62) M.stats.sot[e.team]++;
   M.attackStart = Math.max(M.attackStart, M.snaps.length - 60);
-  /* SLOWMO BENTAR + CAMERA SHAKE saat tembakan KERAS di area SHOOT (dekat kotak penalti), ala TV broadcast! */
-  const distToGoal = Math.abs(gx - b.x);
-  if (pow>=5 && distToGoal<45) {
-    M._kickSlow = 0.35;
-    if (M.cam) M.cam.shake = 0;
-  } else if (M.cam) M.cam.shake = 0;
+  /* SLOWMO BENTAR saat tembakan KERAS (chip/slowmo tidak, cuma tendangan keras datar) */
+  if (!lob && pow>=5 && distToGoal<45) {
+    M._kickSlow = 0.25;
+  }
 }
 /* HASIL TACKLE: roll kena BOLA (rebut bersih) vs kena PEMAIN (agresi = pelanggaran) */
 function resolveTackle(e){
@@ -7110,53 +7118,44 @@ function drawChibi(x, X, Y, e, M){
   const socks = isGK? '#111827' : '#f8fafc';
   const boots = '#0a0a0a';
   const speed = Math.hypot(e.vx||0, e.vy||0);
-  /* 30 FPS animasi: cycle tiap 0.33 detik, interpolasi LINEAR antar frame biar lari smooth,
-     bukan loncat-loncat 3 frame kasar. Frame bergerak di angka float, lengan+kaki diinterpolasi. */
-  const runSpeed = speed>0.8 ? Math.min(6, speed*1.1) : (speed>0.3 ? 2.5 : 0);
+  /* 30 FPS animasi: 6 FRAME BERLARI (0-5), interpolasi LINEAR antar frame. Lebih smooth dari 3 frame. */
+  const runSpeed = speed>0.8 ? Math.min(7, speed*1.2) : (speed>0.3 ? 3 : 0);
   const tCycle = runSpeed>0 ? (M.t*runSpeed) : 0;
-  const celebT = e.celeb ? performance.now()/300 : 0;
+  const celebT = e.celeb ? performance.now()/260 : 0;
   let isKicking = (e.kickAnim||0) > 0;
   const slide = (e.down||0) > 0 || !!e.tackle;
   const armsUp = e.celeb>0;
-  /* frameFloat: 0..3 berputar (0=frame0, 1=frame1, 2=frame2, 3=kembali ke 0). Lalu interp antar 2 frame. */
-  let f0, f1, blend; /* f0=frame kiri, f1=frame kanan, blend 0..1 = campuran */
+  const NFRAME = 6; /* 6 frame animasi lari */
+  let f0, f1, blend;
   if (slide) { f0=0; f1=0; blend=0; }
   else if (isKicking) { f0=99; f1=99; blend=0; }
-  else if (armsUp) { f0=3; f1=3; blend=0; } /* selebrasi tangan ke atas */
-  else if (runSpeed===0) { f0=0; f1=0; blend=0; }
+  else if (armsUp) { f0='up'; f1='up'; blend=0; }
+  else if (runSpeed===0) { f0='idle'; f1='idle'; blend=0; }
   else {
-    const cyc = tCycle % 3;
+    const cyc = tCycle % NFRAME;
     f0 = Math.floor(cyc);
-    f1 = (f0+1)%3;
+    f1 = (f0+1)%NFRAME;
     blend = cyc - f0;
-    /* idle goyang dikit */
-    if (speed<=0.3) {
-      f0=0; f1=0; blend=0;
-    } else if (speed<=0.8) {
-      /* lari pelan: bolak balik frame 1↔2 lebih lambat */
-      const slowC = (performance.now()/700) % 2;
-      f0 = slowC<1 ? 1 : 2;
-      f1 = slowC<1 ? 2 : 1;
+    if (speed<=0.8) {
+      /* berjalan pelan: cuma 2 frame bolak-balik (1↔4) lambat */
+      const slowC = (performance.now()/800) % 2;
+      f0 = slowC<1 ? 1 : 4;
+      f1 = slowC<1 ? 4 : 1;
       blend = Math.abs((slowC%1)*2-1);
     }
   }
-  /* bob up/down halus: tinggi badan bergelombang mengikuti langkah (bukan cuma loncat di frame 2) */
+  /* bob up/down halus: 2x bob per cycle lari (2 langkah = 2 naik-turun) */
   let offy = 0;
   if (!slide && !isKicking) {
     if (armsUp) offy = -Math.abs(Math.sin(celebT*2.2))*9;
     else if (runSpeed>0) {
-      /* sinus 1 cycle per 3 frame: turun di tengah langkah (menapak), naik di puncak */
-      const prog = (f0 + blend)/3;
-      offy = -Math.abs(Math.sin(prog*Math.PI))*2.5;
+      const prog = (f0 + blend)/NFRAME;
+      offy = -Math.abs(Math.sin(prog*Math.PI*2))*2.2;
     }
   }
-  /* helper: ambil posisi bagian tubuh berdasarkan frame, dengan blend */
-  function limb(f, p0, p1, p2) {
-    /* p0=posisi di frame 0, p1=frame 1, p2=frame 2, f99=kick, f3=armsUp */
-    if (f===99) return p0.kick;
-    if (f===3) return p0.up;
-    return f===0 ? p0.idle : (f===1 ? p0.run1 : p0.run2);
-  }
+  /* Key untuk pose (string 'idle','run0'..'run5','kick','up') */
+  const key0 = f0==='up'?'up':(f0===99?'kick':(f0==='idle'?'idle':'run'+f0));
+  const key1 = f1==='up'?'up':(f1===99?'kick':(f1==='idle'?'idle':'run'+f1));
   const isFlip = (e.vx!=null && e.vx < -0.08 && M.half===1) || (e.vx!=null && e.vx>0.08 && M.half===2);
   x.save();
   x.translate(Math.round(X), Math.round(Y + offy));
@@ -7208,98 +7207,92 @@ function drawChibi(x, X, Y, e, M){
   /* nomor di dada (pixel kecil) */
   px_(6,10,2,2,'#ffffff');
   px_(6,10,1,1,'#000'); px_(7,11,1,1,'#000');
-  /* === LENGAN: interpolasi smooth antar frame 30fps, TIDAK loncat kasar === */
-  /* Format: [cx,cy,w,h] per posisi. Lengan kanan (kiri layar) dan kiri (kanan layar). */
-  const ARM_R = { /* kanan (sisi kiri sprite) */
-    idle: [2,10,1,3], run1: [1,10,1,2], run2: [1,11,1,2], kick: [1,9,1,3], up: [1,5,1,5],
+  /* === LENGAN + KAKI: 6 frame lari diinterpolasi smooth === */
+  /* ARM_R = lengan kanan (di kiri layar), ARM_L = lengan kiri (kanan layar)
+     Frames run0-run5 = 1 langkah penuh (contact, down, mid, toe-off, mid, up) */
+  const ARM_R = {
+    idle: [2,10,1,3], up:[1,5,1,5], kick:[1,9,1,3],
+    run0:[2,10,1,3], run1:[1,10,1,3], run2:[1,11,1,2], run3:[2,11,1,2], run4:[2,10,1,2], run5:[2,10,1,3],
   };
-  const ARM_L = { /* kiri (sisi kanan sprite) */
-    idle: [11,10,1,3], run1: [12,11,1,2], run2: [12,10,1,2], kick: [12,10,1,3], up: [12,5,1,5],
+  const ARM_L = {
+    idle:[11,10,1,3], up:[12,5,1,5], kick:[12,10,1,3],
+    run0:[11,10,1,3], run1:[12,11,1,2], run2:[12,11,1,2], run3:[11,10,1,2], run4:[11,10,1,3], run5:[11,10,1,3],
   };
   const HAND_R = {
-    idle: [2,13,1,1], run1: [1,12,1,1], run2: [1,13,1,1], kick: [1,12,1,1], up: [1,4,1,1],
+    idle:[2,13,1,1], up:[1,4,1,1], kick:[1,12,1,1],
+    run0:[2,13,1,1], run1:[1,13,1,1], run2:[1,13,1,1], run3:[2,13,1,1], run4:[2,13,1,1], run5:[2,13,1,1],
   };
   const HAND_L = {
-    idle: [11,13,1,1], run1: [12,13,1,1], run2: [12,12,1,1], kick: [12,13,1,1], up: [12,4,1,1],
+    idle:[11,13,1,1], up:[12,4,1,1], kick:[12,13,1,1],
+    run0:[11,13,1,1], run1:[12,13,1,1], run2:[12,13,1,1], run3:[11,13,1,1], run4:[11,13,1,1], run5:[11,13,1,1],
   };
-  if (isKicking || armsUp) {
-    /* kick / seleb: pose tetap */
-    const ar = isKicking?ARM_R.kick:ARM_R.up, al = isKicking?ARM_L.kick:ARM_L.up;
-    const hr = isKicking?HAND_R.kick:HAND_R.up, hl = isKicking?HAND_L.kick:HAND_L.up;
-    px_(ar[0],ar[1],ar[2],ar[3],shirt); px_(al[0],al[1],al[2],al[3],shirt);
-    px_(hr[0],hr[1],hr[2],hr[3],skin); px_(hl[0],hl[1],hl[2],hl[3],skin);
+  if (isKicking || armsUp || runSpeed===0) {
+    /* pose fixed */
+    const armK = isKicking?'kick':(armsUp?'up':'idle');
+    const handK = armK;
+    px_(ARM_R[armK][0],ARM_R[armK][1],ARM_R[armK][2],ARM_R[armK][3],shirt);
+    px_(ARM_L[armK][0],ARM_L[armK][1],ARM_L[armK][2],ARM_L[armK][3],shirt);
+    px_(HAND_R[handK][0],HAND_R[handK][1],HAND_R[handK][2],HAND_R[handK][3],skin);
+    px_(HAND_L[handK][0],HAND_L[handK][1],HAND_L[handK][2],HAND_L[handK][3],skin);
   } else {
-    /* LARI/DIAM: blend antara frame f0 dan f1 untuk smooth motion */
-    const key0 = f0===99?'kick':f0===3?'up':f0===0?'idle':f0===1?'run1':'run2';
-    const key1 = f1===99?'kick':f1===3?'up':f1===0?'idle':f1===1?'run1':'run2';
     function ip(p){
       const a = p[key0], b = p[key1];
       return [Math.round(a[0]+(b[0]-a[0])*blend), Math.round(a[1]+(b[1]-a[1])*blend), Math.round(a[2]+(b[2]-a[2])*blend), Math.round(a[3]+(b[3]-a[3])*blend)];
     }
     function drawArm(setArm, setHand){
-      const pa = ip(setArm);
-      const ph = ip(setHand);
-      px_(pa[0],pa[1],pa[2],pa[3],shirt);
-      px_(ph[0],ph[1],ph[2],ph[3],skin);
+      const pa = ip(setArm), ph = ip(setHand);
+      px_(pa[0],pa[1],pa[2],pa[3],shirt); px_(ph[0],ph[1],ph[2],ph[3],skin);
     }
-    drawArm(ARM_R, HAND_R);
-    drawArm(ARM_L, HAND_L);
+    drawArm(ARM_R, HAND_R); drawArm(ARM_L, HAND_L);
   }
   /* CELANA */
   px_(4,13,6,2,shorts);
   px_(3,13,1,1,shorts); px_(10,13,1,1,shorts);
-  /* garis pinggang celana */
   px_(4,13,6,1,'#ffffff55');
-  /* KAKI / SEPATU */
-  /* SOCK_R, BOOT_R = kaki kanan, SOCK_L, BOOT_L = kaki kiri. Posisi [cx,cy,w,h] per frame. */
+  /* KAKI / SEPATU: 6 frame langkah (cycle lari kanan-kiri) */
   const SOCK_R = {
-    idle: [5,15,1,2], run1:[4,15,1,1], run2:[6,15,1,1], kick:[5,15,1,2], up:[5,15,1,2],
+    idle:[5,15,1,2], up:[5,15,1,2], kick:[5,15,1,2],
+    run0:[5,15,1,2], run1:[4,15,1,2], run2:[4,15,1,1], run3:[5,15,1,1], run4:[6,15,1,2], run5:[6,15,1,2],
   };
   const SOCK_L = {
-    idle: [8,15,1,2], run1:[6,15,1,2], run2:[4,15,1,2], kick:[8,15,1,1], up:[8,15,1,2],
+    idle:[8,15,1,2], up:[8,15,1,2], kick:[8,14,1,1],
+    run0:[8,15,1,2], run1:[8,15,1,2], run2:[7,15,1,1], run3:[6,15,1,1], run4:[5,15,1,2], run5:[7,15,1,2],
   };
   const BOOT_R = {
-    idle: [5,17,1,1], run1:[3,16,2,1], run2:[5,16,2,1], kick:[5,16,1,1], up:[5,17,1,1],
+    idle:[5,17,1,1], up:[5,17,1,1], kick:[5,16,1,1],
+    run0:[5,17,1,1], run1:[3,17,2,1], run2:[3,16,2,1], run3:[4,16,2,1], run4:[5,17,1,1], run5:[5,17,2,1],
   };
   const BOOT_L = {
-    idle: [8,17,1,1], run1:[6,17,1,1], run2:[4,17,1,1], kick:[11,14,2,1], up:[8,17,1,1],
+    idle:[8,17,1,1], up:[8,17,1,1], kick:[11,14,2,1],
+    run0:[8,17,1,1], run1:[8,17,1,1], run2:[7,16,1,1], run3:[5,16,2,1], run4:[4,17,2,1], run5:[7,17,2,1],
   };
   if (slide){
-    /* sliding tackle: tubuh mendatar, kaki lurus */
     px_(2,14,4,1,socks); px_(8,14,4,1,socks);
     px_(1,15,3,1,boots); px_(10,15,3,1,boots);
     px_(4,12,2,1,'#ffffff55');
   } else if (isKicking) {
-    /* KICK POSE: kaki penendang LURUS ke depan */
-    px_(SOCK_R.idle[0],SOCK_R.idle[1],SOCK_R.idle[2],SOCK_R.idle[3],socks);
+    px_(SOCK_R.kick[0],SOCK_R.kick[1],SOCK_R.kick[2],SOCK_R.kick[3],socks);
     px_(SOCK_L.kick[0],SOCK_L.kick[1],SOCK_L.kick[2],SOCK_L.kick[3],socks);
-    px_(BOOT_R.idle[0],BOOT_R.idle[1],BOOT_R.idle[2],BOOT_R.idle[3],boots);
+    px_(BOOT_R.kick[0],BOOT_R.kick[1],BOOT_R.kick[2],BOOT_R.kick[3],boots);
     px_(BOOT_L.kick[0],BOOT_L.kick[1],BOOT_L.kick[2],BOOT_L.kick[3],boots);
     px_(7,14,1,1,skin);
-    /* debu putih di kaki saat nendang */
-    x.fillStyle='rgba(255,255,255,0.4)';
-    px_(11,14,2,1,'rgba(255,255,255,0.3)');
+  } else if (armsUp || runSpeed===0) {
+    const k = armsUp?'up':'idle';
+    px_(SOCK_R[k][0],SOCK_R[k][1],SOCK_R[k][2],SOCK_R[k][3],socks);
+    px_(SOCK_L[k][0],SOCK_L[k][1],SOCK_L[k][2],SOCK_L[k][3],socks);
+    px_(BOOT_R[k][0],BOOT_R[k][1],BOOT_R[k][2],BOOT_R[k][3],boots);
+    px_(BOOT_L[k][0],BOOT_L[k][1],BOOT_L[k][2],BOOT_L[k][3],boots);
   } else {
-    /* normal/run: blend */
-    function ip(p){
-      const key = f0===99?'kick':f0===3?'up':f0===0?'idle':f0===1?'run1':'run2';
-      const key2 = f1===99?'kick':f1===3?'up':f1===0?'idle':f1===1?'run1':'run2';
-      const a = p[key], b = p[key2];
+    function ip2(p){
+      const a = p[key0], b = p[key1];
       return [Math.round(a[0]+(b[0]-a[0])*blend), Math.round(a[1]+(b[1]-a[1])*blend), Math.round(a[2]+(b[2]-a[2])*blend), Math.round(a[3]+(b[3]-a[3])*blend)];
     }
-    const sr=ip(SOCK_R), sl=ip(SOCK_L), br=ip(BOOT_R), bl_=ip(BOOT_L);
+    const sr=ip2(SOCK_R), sl=ip2(SOCK_L), br=ip2(BOOT_R), bl_=ip2(BOOT_L);
     px_(sr[0],sr[1],sr[2],sr[3],socks); px_(sl[0],sl[1],sl[2],sl[3],socks);
     px_(br[0],br[1],br[2],br[3],boots); px_(bl_[0],bl_[1],bl_[2],bl_[3],boots);
   }
-  /* ring pemilik bola: ELIPS menyusuri bentuk badan pemain (bukan lingkaran sembarangan) */
-  if (M.ball.owner===e && !slide && !isKicking) {
-    x.strokeStyle='#ffd75e'; x.lineWidth=1.8;
-    /* elips mengelilingi badan (lebih tinggi dari lebar, mengikuti bentuk chibi berdiri) */
-    x.beginPath(); x.ellipse(0, -14, 12, 18, 0, 0, 7); x.stroke();
-    /* tanda panah kecil di bawah kaki nunjuk siapa yang pegang */
-    x.fillStyle='#ffd75e';
-    x.beginPath(); x.moveTo(-4, 4); x.lineTo(4, 4); x.lineTo(0, 8); x.closePath(); x.fill();
-  }
+  /* Ring kuning DIHAPUS — permintaan user */
+  /* (dulu ada elips pemilik bola, sekarang dihapus total biar bersih) */
   x.restore();
   /* LABEL NAMA + OVR (tidak ke-flip) */
   x.save();
@@ -7360,10 +7353,11 @@ function draw(){
   const shx = 0, shy = 0;
   x.setTransform(1,0,0,1,0,0);
   x.fillStyle = '#080e16'; x.fillRect(0,0,W,H);
-  /* kamera smooth follow bola — ZOOM LEBIH DEKAT biar pemain keliatan DETAIL bukan kayak dari jauh */
-  if(!c._tx){ c._tx = M.ball.x; c._ty = M.ball.y; c._tz = c.z||1.45; }
-  const nearBox = M.ball.x<22||M.ball.x>78;
-  const zTarget = nearBox?1.6 : (M.phase==='celebration'?1.8 : (M.phase==='replay'?1.7 : (M.phase==='setpiece'?1.55 : (M.phase==='var'?1.6 : 1.45))));
+  /* kamera smooth follow bola — 1.3x zoom sedikit ZO-OUT dari sebelumnya, lapangan keliatan LEBIH LUAS
+     sementara pemain P=2 tetap; z 1.3 → 18*2*1.3 = 46.8px (vs dulu 18*2*1.45=52px) hampir sama ukuran pemainnya */
+  if(!c._tx){ c._tx = M.ball.x; c._ty = M.ball.y; c._tz = c.z||1.3; }
+  const nearBox = M.ball.x<18||M.ball.x>82;
+  const zTarget = nearBox?1.45 : (M.phase==='celebration'?1.6 : (M.phase==='replay'?1.5 : (M.phase==='setpiece'?1.38 : (M.phase==='var'?1.42 : 1.3))));
   c._tx += (M.ball.x-c._tx)*0.09;
   c._ty += ((M.ball.y-50)*0.35+50 - c._ty)*0.09;
   c._tz += (zTarget-c._tz)*0.06;
@@ -7383,33 +7377,33 @@ function draw(){
   x.fillRect(px(-14), py(-4), px(10), py(108));
   x.fillRect(px(104), py(-4), px(10), py(108));
   const crowd = makeCrowd();
-  /* TERIAKAN SUPORTER pas gol: SUPORTER LOMPAT-LOMPAT + OMBAK TANGAN (semua posisi dibulatkan, GA GETAR) */
+  /* SUPORTER: posisi SEMUA DIBULATKAN ke integer, TIDAK ADA gerakan sinus/float yang bikin getar mata.
+     Penonton DIAM total saat tidak sorak. Pas sorak: BLOK penonton loncat SERAGAM (bukan per-penonton acak sinus) */
   const shoutOn = M.shout && M.shout.t>0;
-  const nowMs0 = Math.floor(performance.now()/33); /* quantize 30fps diskrit, tidak pecahan */
-  const waveX = shoutOn? ((nowMs0*3)%150)-20 : -99;
+  const crowdTick = shoutOn ? Math.floor(performance.now()/100) : 0; /* per 100ms aja, jarang bgt, ga getar */
+  const waveX = shoutOn? ((crowdTick*5)%150)-20 : -99;
+  /* blok lompatan: 1 baris penonton lompat barengan per tick, tidak getar karena integer + frekuensi rendah */
+  const jyAll = shoutOn ? ((crowdTick%2===0)? 0 : -4) : 0;
   for (let ci=0; ci<crowd.length; ci++){
     const dd=crowd[ci];
-    let jy=0;
-    if (shoutOn) {
-      /* Langkah lompat diskrit (3 posisi: 0/-2/-4) — TIDAK floating point sinus yang bikin getar */
-      const phase = Math.floor(nowMs0/3 + ci*0.2) % 3;
-      jy = phase===0 ? 0 : (phase===1 ? -2 : -4);
-    }
-    x.fillStyle=dd.c; x.fillRect(px(dd.x), py(dd.y+jy), 3, 3);
-    if (shoutOn && Math.abs(dd.x-waveX)<8) {
+    const jy = jyAll;
+    const rx = Math.round(px(dd.x)), ry = Math.round(py(dd.y+jy));
+    x.fillStyle=dd.c; x.fillRect(rx, ry, 3, 3);
+    if (shoutOn && Math.abs(Math.round(dd.x)-waveX)<8) {
       x.strokeStyle=dd.c; x.lineWidth=2;
       x.beginPath();
-      x.moveTo(px(dd.x)-2, py(dd.y+jy)); x.lineTo(px(dd.x)-3, py(dd.y+jy-5));
-      x.moveTo(px(dd.x)+2, py(dd.y+jy)); x.lineTo(px(dd.x)+3, py(dd.y+jy-5));
+      x.moveTo(rx-2, ry); x.lineTo(rx-3, ry-6);
+      x.moveTo(rx+2, ry); x.lineTo(rx+3, ry-6);
       x.stroke();
     }
   }
   if (shoutOn) {
     const pr = 1 - M.shout.t/2.8;
-    const sc = pr<0.12? 0.3+(pr/0.12)*0.85 : (1.15 - Math.min(0.15,(pr-0.12)*0.4));
+    /* sc DIQUANTIZE ke 4 step, bukan floating berkelanjutan */
+    let sc = 0.3 + Math.round(Math.min(1,pr/0.12))*0.85;
+    if (pr>0.12) sc = 1.15 - Math.min(0.15, Math.round((pr-0.12)*0.4*10)/10);
     x.save();
-    /* posisi teks statis tidak goyang (dulu pake sin goyang) */
-    x.translate(px(50), py(-7.5));
+    x.translate(Math.round(px(50)), Math.round(py(-7.5)));
     x.scale(sc, sc);
     x.font='900 italic 42px Inter, sans-serif'; x.textAlign='center';
     x.lineWidth=7; x.strokeStyle='#000'; x.fillStyle= M.shout.sad? '#93c5fd' : '#ffe89a';
