@@ -5191,22 +5191,39 @@ function startMatch(cfg){
       if (!M || M.over) return;
       if (M.paused) return;
       try {
+        /* KICK SLOWMO: saat tembakan kerasa, waktu berjalan lebih lambat bentar ala TV (bullet time 0.3s).
+           Tapi total waktu match TETAP maju normal — slowmo cuma visual, kita cap jumlah frame biar
+           sim tidak kelamaan. Biar gamenya ga kerasa lag. */
+        let dtScale = 1;
+        if (M._kickSlow>0) {
+          dtScale = 0.5;
+          M._kickSlow -= FIXED_DT;
+          if (M._kickSlow<=0) M._kickSlow=0;
+        }
+        const simDt = FIXED_DT * dtScale;
         if (M.autoPvp && M._kickAtAbs) {
           const sNow = serverNow()/1000;
           if (M.phase==='play') {
-            simTick(FIXED_DT);
+            simTick(simDt);
           } else if (M.phase!=='wait') {
-            simTick(FIXED_DT);
+            simTick(simDt);
           }
           if (M._phaseEnd!=null && sNow >= M._phaseEnd && M.phase!=='play' && M.phase!=='ft' && M.phase!=='wait' && M.phase!=='ht') {
-            if (M.phase==='celebration') { startReplay('goal'); phaseUntil(1.2); }
+            if (M.phase==='celebration') { startReplay(); M._phaseEnd=null; }
             else if (M.phase==='replay') { resetKickoff(M.lastConceded==null?0:1-M.lastConceded); M._phaseEnd=null; }
             else if (M.phase==='var') applyVar();
             else if (M.phase==='setpiece') runSetPiece();
           }
         } else {
+          /* VS AI: phaseEnd pakai serverNow() agar selebrasi/replay otomatis lanjut */
           const spd = Math.min(M.spd||1, 8);
-          simTick(FIXED_DT*spd);
+          simTick(simDt*spd);
+          if (M._phaseEnd!=null && serverNow()/1000 >= M._phaseEnd && M.phase!=='play' && M.phase!=='ft' && M.phase!=='wait' && M.phase!=='ht') {
+            if (M.phase==='celebration') { startReplay(); M._phaseEnd=null; }
+            else if (M.phase==='replay') { resetKickoff(M.lastConceded==null?0:1-M.lastConceded); M._phaseEnd=null; }
+            else if (M.phase==='var') applyVar();
+            else if (M.phase==='setpiece') runSetPiece();
+          }
         }
       } catch(e){ console.error('simTick error', e); }
     }, Math.round(FIXED_DT*1000));
@@ -6281,13 +6298,19 @@ function shoot(e){
     b.sx = b.x; b.lob = true; b.lobH = (e.slotName==='ST'? 16 : 10); /* menukik: ST tinggi, RW/LW sedeng */
     M.lastTrick = { label:'BLITZ CURLER', team:e.team, t:M.t }; /* skill GOAT = tersembunyi: gak ada label, replay cuma bilang BLITZ CURLER */
   }
-  SFX.play('kick', 0.35); /* suara tendangan */
+  SFX.play('kick', 0.55); /* suara tendangan */
   M.shotN=(M.shotN||0)+1; b.shotId=M.shotN; /* id tembakan biar kiper cuma roll 1x */
   M.shotSnapId = M.snapId||0; /* frame tendangan, buat slowmo di replay */
   M.stats.shots[e.team]++;
   const t = (gx-b.x)/(b.vx||0.001); const yAt = b.y + b.vy*t;
   if (yAt>38&&yAt<62) M.stats.sot[e.team]++;
   M.attackStart = Math.max(M.attackStart, M.snaps.length - 60);
+  /* SLOWMO BENTAR + CAMERA SHAKE saat tembakan KERAS di area SHOOT (dekat kotak penalti), ala TV broadcast! */
+  const distToGoal = Math.abs(gx - b.x);
+  if (pow>=5 && distToGoal<45) {
+    M._kickSlow = 0.35;
+    if (M.cam) M.cam.shake = 4;
+  } else if (M.cam) M.cam.shake = Math.max(M.cam.shake||0, 2);
 }
 /* HASIL TACKLE: roll kena BOLA (rebut bersih) vs kena PEMAIN (agresi = pelanggaran) */
 function resolveTackle(e){
@@ -6694,7 +6717,11 @@ function tickCeleb(dt){
   if (d>1.5) { s.x += dx/d*7*dt; s.y += dy/d*7*dt; }
   else s.celeb = c.type;
   c.mates.forEach((m2,i)=>{ const tx = c.spot[0] + (i===0?-4:4), ty = c.spot[1]+ (i===0?3:-3); const ddx=tx-m2.x, ddy=ty-m2.y, dd=Math.hypot(ddx,ddy); if (dd>1.5){ m2.x+=ddx/dd*6*dt; m2.y+=ddy/dd*6*dt; } });
-  if (c.t>=c.dur) { startReplay(); }
+  if (c.t>=c.dur) {
+    /* selebrasi selesai. phaseEnd di simTicker yang manggil startReplay() otomatis.
+       Kita set phase dulu disini biar takutnya double-call gpp (startReplay idempotent soal replay object) */
+    if (M.phase==='celebration') startReplay();
+  }
   updUI();
 }
 function pushSnap(){
@@ -6706,49 +6733,68 @@ function pushSnap(){
 }
 function startReplay(){
   M.phase='replay';
-  phaseUntil(1.2); /* replay CEPET 1.2 detik, NO slowmo biar gak kerasa freeze */
+  /* REPLAY DURASI NORMAL: ~3.5 detik (kecepatan 1x) — ga dicicilin kayak dulu */
+  phaseUntil(3.5);
   const lastI = Math.max(0, M.snaps.length-1);
-  let from = Math.max(0, lastI-480);
+  let from = Math.max(0, lastI-300); /* mundur ~3 detik sebelum gol */
   let slowAt = null;
   if (M.shotSnapId!=null) {
-    const sIdx = M.snaps.findIndex((s)=>s.id===M.shotSnapId); /* cari via id, aman dari buffer shift */
+    const sIdx = M.snaps.findIndex((s)=>s.id===M.shotSnapId);
     if (sIdx>=0) slowAt = sIdx;
   }
-  /* mulai dari momen ASSIST (pengumpan) biar keliatan prosesnya; slowmo pas momen nendang */
+  /* mulai dari assist / 40 frame sebelum tembakan */
   if (M.assistSnapId!=null) {
     const aIdx = M.snaps.findIndex((s)=>s.id===M.assistSnapId);
     if (aIdx>=0) from = Math.max(0, aIdx-6);
     else if (slowAt!=null) from = Math.max(0, slowAt-40);
   } else if (slowAt!=null) from = Math.max(0, slowAt-40);
-  M.replay = { i: from, mode:'goal', slowAt };
+  M.replay = { i: from, mode:'goal', slowAt, slowT:0 };
 }
 function tickReplay(dt){
   const r = M.replay;
-  let step = 2.2; /* replay CEPET 2.2x speed, NO slowmo biar gak kerasa beku */
-  r.i += step;
+  /* KECEPATAN REPLAY:
+     - Normal 1x (step=1)
+     - PAS MOMEN NENDANG (sedetik sebelum shotSnapId → 2 detik sesudah): LAMBAT 0.35x ala TV! */
+  let step = 1.0;
   const idx = Math.min(M.snaps.length-1, Math.floor(r.i));
-  const s = M.snaps[idx];
+  if (r.slowAt!=null) {
+    const framesIntoKick = idx - r.slowAt;
+    if (framesIntoKick >= -6 && framesIntoKick <= 60) {
+      step = 0.35; /* slowmo intens pas moment nendang */
+      r.slowT = 0.4;
+    }
+  }
+  /* kick slowmo decay */
+  if (r.slowT>0) r.slowT -= dt;
+  r.i += step;
+  const idx2 = Math.min(M.snaps.length-1, Math.floor(r.i));
+  const s = M.snaps[idx2];
   if (s) {
     s.e.forEach((pos,i)=>{ if (M.ents[i]){ M.ents[i].x = pos[0]; M.ents[i].y = pos[1]; } });
     M.ents.forEach((e)=>{ if(e.isGK){ const bx=gkBox(e.team); e.x=Math.max(bx.x0,Math.min(bx.x1,e.x)); e.y=Math.max(bx.y0,Math.min(bx.y1,e.y)); } });
-    M.ball.x = s.b[0]; M.ball.y = s.b[1]; M.ball.z = s.b[2]||0; /* z: biar lengkungan/menukik GOAT keliatan di replay */
-    /* balikin tulisan OREN (ANTONY TURN/PASS/TRIVELA/dll) & animasi gocek persis momen aslinya */
+    M.ball.x = s.b[0]; M.ball.y = s.b[1]; M.ball.z = s.b[2]||0;
     M.ents.forEach((en,i)=>{
       const v = s.fx? s.fx[i] : '';
-      if (v && v[0]==='T' && v[1]===':'){ en.trick = { type:v.slice(2), t:0.5, dur:1, done:false }; en.skillLabel=null; }
+      if (v && v[0]==='T' && v[1]===':'){ en.trick = { type:v.slice(2), t:0.5, dur:1, done:false }; en.skillLabel=null; en.kickAnim=0; }
       else if (v){ en.trick=null; en.skillLabel = { label:v, t:1 }; }
       else { en.trick=null; en.skillLabel=null; }
     });
-    updCam(dt, M.ball.x, M.ball.y, camZoom(1.9));
+    /* animasi kick di replay tepat saat shotSnapId */
+    if (r.slowAt!=null && Math.abs(idx2 - r.slowAt) <= 2) {
+      const shooter = M.shotBy;
+      if (shooter) shooter.kickAnim = 0.3;
+    }
+    const camZ = r.slowT>0 ? 2.0 : 1.7;
+    updCam(dt, M.ball.x, M.ball.y, camZoom(camZ));
   }
   if (r.i >= M.snaps.length-1) {
     const mode = r.mode||'goal';
     const resume = r.resume;
     M.replay=null;
-    M.ents.forEach((en)=>{ en.trick=null; en.skillLabel=null; }); /* bersihin sisa label replay */
-    if (mode==='var') applyVar(); /* abis replay offside → free kick */
-    else if (mode==='save') { M.phase = resume==='setpiece'? 'setpiece' : 'play'; } /* lanjutin match biasa */
-    else resetKickoff(M.lastConceded==null? 0 : 1-M.lastConceded); /* yang kebobolan yg kickoff */
+    M.ents.forEach((en)=>{ en.trick=null; en.skillLabel=null; en.kickAnim=0; });
+    if (mode==='var') applyVar();
+    else if (mode==='save') { M.phase = resume==='setpiece'? 'setpiece' : 'play'; }
+    else resetKickoff(M.lastConceded==null? 0 : 1-M.lastConceded);
   }
 }
 function resetKickoff(kick, keepPause){
@@ -6761,6 +6807,7 @@ function resetKickoff(kick, keepPause){
   M.snaps=[]; M.attackStart=0; M.pendingOff=null; M.wall=[]; M.shotBy=null; M.assistBy=null; M.shotSnapId=null;
   M.lastConceded=null; M.ftPending=false; M.ftWait=0; M.assistSnapId=null; M.goalTrick=null;
   M.antonyTeamUsed=[false,false]; M.lastOwnerTeam=null; M.shout=null;
+  M._kickSlow = 0;
   M.phase='play'; M.paused = !!keepPause;
 }
 /* ── HT / FT ── */
