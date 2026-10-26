@@ -1,5 +1,7 @@
 node_modules/
 .env
 .env.local
-.vercel
-.env*
+.vercel/
+*.zip
+claude-code/
+*.bak
